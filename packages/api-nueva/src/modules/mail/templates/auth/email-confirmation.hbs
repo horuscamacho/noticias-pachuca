@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Confirma tu correo electrónico</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { text-align: center; background: #28a745; color: white; padding: 20px; border-radius: 8px 8px 0 0; }
+    .content { padding: 30px; background: #f9f9f9; }
+    .button {
+      display: inline-block;
+      padding: 12px 24px;
+      background: #28a745;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    .warning {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      padding: 15px;
+      border-radius: 4px;
+      margin: 20px 0;
+      border-left: 4px solid #ffc107;
+    }
+    .footer { text-align: center; padding: 20px; font-size: 14px; color: #666; background: #e9ecef; border-radius: 0 0 8px 8px; }
+    .logo { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+    .url-copy {
+      word-break: break-all;
+      font-size: 12px;
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid #dee2e6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">Template Universal</div>
+      <h1>Confirma tu correo electrónico</h1>
+    </div>
+
+    <div class="content">
+      <p>Hola <strong>{{recipientName}}</strong>,</p>
+
+      <p>Para completar tu registro en nuestra plataforma, necesitamos verificar tu dirección de correo electrónico: <strong>{{recipientEmail}}</strong></p>
+
+      <p>Por favor, haz clic en el siguiente botón para confirmar tu cuenta:</p>
+
+      <p style="text-align: center; margin: 30px 0;">
+        <a href="{{confirmationUrl}}" class="button">Confirmar Email</a>
+      </p>
+
+      <div class="warning">
+        <strong>⚠️ Importante:</strong> Este enlace expira en <strong>{{expirationHours}} horas</strong>. Si no confirmas tu email dentro de este tiempo, deberás solicitar un nuevo enlace de confirmación.
+      </div>
+
+      <h3>¿No puedes hacer clic en el botón?</h3>
+      <p>Si tienes problemas con el botón, copia y pega la siguiente URL en tu navegador:</p>
+      <div class="url-copy">{{confirmationUrl}}</div>
+
+      <h3>¿No solicitaste esta cuenta?</h3>
+      <p>Si no creaste una cuenta en nuestra plataforma, puedes ignorar este correo de forma segura.</p>
+    </div>
+
+    <div class="footer">
+      <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
+      <p>&copy; 2025 Template Universal. Todos los derechos reservados.</p>
+    </div>
+  </div>
+</body>
+</html>

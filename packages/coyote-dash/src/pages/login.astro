@@ -1,0 +1,45 @@
+---
+import { LoginFormAdvanced } from "@/components/forms/LoginFormAdvanced"
+import Layout from "@/layouts/main.astro"
+---
+
+<!-- Verificar si YA está autenticado y redirigir a dashboard -->
+<script>
+	// Verificar autenticación inmediatamente al cargar
+	if (typeof window !== 'undefined') {
+		const authData = localStorage.getItem('auth-state');
+
+		if (authData) {
+			try {
+				const parsedAuth = JSON.parse(authData);
+				if (parsedAuth.isAuthenticated && parsedAuth.accessToken) {
+					window.location.href = '/dashboard';
+				}
+			} catch (e) {
+				// Si hay error, limpiar y continuar
+				localStorage.removeItem('auth-state');
+			}
+		}
+	}
+</script>
+
+<Layout content={{title: "Login"}}>
+	<main class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+		<div class="max-w-md w-full space-y-8">
+			<div class="text-center">
+				<h2 class="mt-6 text-3xl font-bold tracking-tight text-gray-900">
+					Iniciar Sesión
+				</h2>
+				<p class="mt-2 text-sm text-gray-600">
+					Accede a tu cuenta del dashboard
+				</p>
+			</div>
+
+			<LoginFormAdvanced
+				client:load
+				onSuccess={() => window.location.href = '/dashboard'}
+				className="mt-8 space-y-6"
+			/>
+		</div>
+	</main>
+</Layout>

@@ -1,0 +1,23 @@
+{
+  "name": "noticias-pachuca",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Noticias Pachuca - NestJS API with Docker",
+  "scripts": {
+    "dev": "docker-compose up",
+    "dev:build": "docker-compose up --build",
+    "dev:detached": "docker-compose up -d",
+    "dev:stop": "docker-compose down",
+    "clean": "docker system prune -f"
+  },
+  "keywords": [
+    "news",
+    "pachuca",
+    "nestjs",
+    "redis",
+    "mongodb",
+    "docker"
+  ],
+  "author": "Coyotito",
+  "license": "MIT"
+}

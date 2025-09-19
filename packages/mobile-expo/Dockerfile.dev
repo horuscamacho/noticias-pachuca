@@ -1,0 +1,26 @@
+# Development Dockerfile for Expo Web
+FROM node:20-alpine
+WORKDIR /app
+
+# Install Expo CLI globally
+RUN yarn global add @expo/cli
+
+# Copy package.json files
+COPY package.json yarn.lock ./
+COPY packages/mobile-expo/package.json ./packages/mobile-expo/
+COPY packages/shared/package.json ./packages/shared/
+
+# Install dependencies
+RUN yarn install --frozen-lockfile
+
+# Copy source code
+COPY packages/mobile-expo ./packages/mobile-expo
+COPY packages/shared ./packages/shared
+
+# Set working directory to mobile package
+WORKDIR /app/packages/mobile-expo
+
+EXPOSE 3000
+
+# Development command
+CMD ["yarn", "web"]

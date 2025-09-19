@@ -1,0 +1,55 @@
+{
+  "project": "coyote-dash",
+  "framework": "astro",
+  "lastUpdated": "2025-01-17",
+  "currentPhase": "authentication-implementation",
+  "context": {
+    "description": "Dashboard con autenticación segura usando Astro + shadcn/ui + API existente",
+    "architecture": "Islands + React-heavy dashboard",
+    "stateManagement": "Nanostores (global) + Zustand (dashboard)",
+    "authentication": "JWT + HttpOnly cookies híbrido"
+  },
+  "currentState": {
+    "completed": [
+      "✅ Estructura base de Astro configurada",
+      "✅ shadcn/ui integrado con tema verde lima (#dbf01f)",
+      "✅ Componentes UI base creados (Button, Card, Input, Label)",
+      "✅ LoginForm component creado con shadcn",
+      "✅ Página /login funcional",
+      "✅ Integración React configurada",
+      "✅ Tailwind CSS v4 configurado",
+      "✅ API backend analizada (JWT + platform detection)",
+      "✅ Documentación de mejores prácticas actualizada"
+    ],
+    "pending": [
+      "❌ Estado de autenticación (Nanostores)",
+      "❌ Cliente API con interceptors",
+      "❌ Middleware de protección de rutas",
+      "❌ Integración LoginForm con API real",
+      "❌ Dashboard protegido",
+      "❌ Session management automático",
+      "❌ Auto-refresh de tokens",
+      "❌ Error handling y redirects"
+    ]
+  },
+  "api": {
+    "baseUrl": "API_URL_TO_BE_CONFIGURED",
+    "platform": "web",
+    "authEndpoints": {
+      "login": "POST /auth/login",
+      "refresh": "POST /auth/refresh",
+      "logout": "POST /auth/logout",
+      "profile": "GET /auth/me"
+    },
+    "headers": {
+      "required": ["Authorization: Bearer {token}", "x-platform: web"],
+      "optional": ["x-device-info"]
+    },
+    "tokenFlow": {
+      "accessToken": "15 minutes",
+      "refreshToken": "7 days",
+      "cookieSupport": true,
+      "rotation": true
+    }
+  }
+}

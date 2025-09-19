@@ -1,0 +1,32 @@
+{
+  "project_name": "noticias-pachuca",
+  "project_type": "news_website",
+  "framework": "monorepo-docker-compose-multi-container",
+  "architecture": {
+    "type": "multi_container",
+    "services": ["redis", "mongodb", "nestjs", "expo"],
+    "approach": "docker_compose",
+    "ports": {
+      "web": 3000,
+      "api": 3001,
+      "redis": 6379,
+      "mongodb": 27017,
+      "mongo_express": 8081,
+      "redis_commander": 8082
+    }
+  },
+  "workspace_structure": {
+    "root_manager": "yarn_workspaces",
+    "packages": ["mobile-expo", "api-nest", "shared"],
+    "containerization": "docker_compose_multi_service"
+  },
+  "aws_integration": {
+    "target": "ec2_instance",
+    "deployment": "docker_container",
+    "scaling_plan": "future_separation"
+  },
+  "initialized": true,
+  "setup_completed": true,
+  "created_at": "2025-09-15T14:00:00Z",
+  "last_modified": "2025-09-15T14:30:00Z"
+}

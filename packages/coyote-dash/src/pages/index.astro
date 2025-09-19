@@ -1,0 +1,54 @@
+---
+import '../styles/global.css';
+
+// 🔍 Verificar si hay sesión activa
+function getSessionFromCookies(): string | null {
+  const cookies = Astro.request.headers.get('cookie');
+  if (!cookies) return null;
+
+  const sessionCookie = cookies
+    .split(';')
+    .find(cookie => cookie.trim().startsWith('sessionId='));
+
+  return sessionCookie ? sessionCookie.split('=')[1] : null;
+}
+
+// 🔐 Verificar si el JWT de sesión es válido
+function isValidSession(sessionId: string): boolean {
+  try {
+    // Si hay sessionId, verificar que no esté vacío
+    return sessionId && sessionId.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+// 🚦 Lógica de redirección
+const sessionId = getSessionFromCookies();
+const hasValidSession = sessionId && isValidSession(sessionId);
+
+if (hasValidSession) {
+  // Si hay sesión válida, redirigir a dashboard
+  return Astro.redirect('/dashboard');
+} else {
+  // Si no hay sesión, redirigir a login
+  return Astro.redirect('/login');
+}
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Astro + TailwindCSS</title>
+	</head>
+
+	<body>
+		<div class="grid place-items-center h-screen content-center">
+			<Button>Tailwind Button in Astro!</Button>
+			<a href="/markdown-page" class="p-4 underline">Markdown is also supported...</a>
+		</div>
+	</body>
+</html>

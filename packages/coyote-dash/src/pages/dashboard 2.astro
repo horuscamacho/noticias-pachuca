@@ -1,0 +1,41 @@
+---
+import V0DashboardApp from "@/components/dashboard/V0DashboardApp.tsx"
+import Layout from "@/layouts/main.astro"
+---
+
+<!-- Client-side protection script -->
+<script>
+	// Verificar autenticación inmediatamente al cargar
+	if (typeof window !== 'undefined') {
+		const authData = localStorage.getItem('auth-state');
+
+		if (!authData) {
+			window.location.href = '/login';
+		} else {
+			try {
+				const parsedAuth = JSON.parse(authData);
+				if (!parsedAuth.isAuthenticated || !parsedAuth.accessToken) {
+					window.location.href = '/login';
+				}
+			} catch (e) {
+				window.location.href = '/login';
+			}
+		}
+	}
+</script>
+
+<!-- Full Screen Dashboard -->
+<html lang="es">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Dashboard - Coyote Apps</title>
+	<style>
+		@import "../styles/global.css";
+	</style>
+</head>
+<body class="antialiased">
+	<!-- Single Island Dashboard App with exact v0 structure -->
+	<V0DashboardApp client:load />
+</body>
+</html>

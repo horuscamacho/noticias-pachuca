@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>¡Bienvenido!</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { text-align: center; background: #007bff; color: white; padding: 20px; border-radius: 8px 8px 0 0; }
+    .content { padding: 30px; background: #f9f9f9; }
+    .button {
+      display: inline-block;
+      padding: 12px 24px;
+      background: #007bff;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    .footer { text-align: center; padding: 20px; font-size: 14px; color: #666; background: #e9ecef; border-radius: 0 0 8px 8px; }
+    .logo { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">Template Universal</div>
+      <h1>¡Bienvenido, {{recipientName}}!</h1>
+    </div>
+
+    <div class="content">
+      <p>Nos complace darte la bienvenida a nuestra plataforma.</p>
+
+      <p>Tu cuenta ha sido creada exitosamente con el email: <strong>{{recipientEmail}}</strong></p>
+
+      <p>Ahora puedes acceder a todas nuestras funcionalidades y comenzar a explorar todo lo que tenemos para ofrecerte.</p>
+
+      <p style="text-align: center; margin: 30px 0;">
+        <a href="{{loginUrl}}" class="button">Iniciar Sesión</a>
+      </p>
+
+      <h3>¿Necesitas ayuda?</h3>
+      <p>Si tienes alguna pregunta o necesitas asistencia, no dudes en contactarnos en <a href="mailto:{{supportEmail}}">{{supportEmail}}</a>.</p>
+
+      <p>¡Esperamos que disfrutes tu experiencia con nosotros!</p>
+    </div>
+
+    <div class="footer">
+      <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
+      <p>&copy; 2025 Template Universal. Todos los derechos reservados.</p>
+    </div>
+  </div>
+</body>
+</html>
