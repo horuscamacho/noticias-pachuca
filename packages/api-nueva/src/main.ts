@@ -9,6 +9,27 @@ import helmet from 'helmet';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // 🌐 CONFIGURAR CORS
+  app.enableCors({
+    origin: [
+      'http://localhost:3001',
+      'http://127.0.0.1:3001',
+      'http://[::1]:3001'
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    credentials: true,
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Platform',
+      'X-Requested-With',
+      'Accept',
+      'Origin',
+      'Access-Control-Request-Method',
+      'Access-Control-Request-Headers'
+    ]
+  });
+
   // 🔒 CONFIGURAR HELMET PARA SEGURIDAD
   app.use(helmet({
     contentSecurityPolicy: {
@@ -67,14 +88,14 @@ async function bootstrap() {
     .addTag('auth', 'Autenticación y gestión de usuarios')
     .addTag('users', 'Gestión de usuarios')
     .addBearerAuth()
-    .addServer('http://[::1]:3000', 'Desarrollo Local (IPv6)')
-    .addServer('http://localhost:3000', 'Desarrollo Local (IPv4)')
+    .addServer('http://[::1]:4000', 'Desarrollo Local (IPv6)')
+    .addServer('http://localhost:4000', 'Desarrollo Local (IPv4)')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 4000);
 
   const baseUrl = await app.getUrl();
   console.log(`🚀 Application is running on: ${baseUrl}/api`);

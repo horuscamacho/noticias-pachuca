@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { Model, Document } from 'mongoose';
+import { Model, Document, PopulateOptions } from 'mongoose';
 import { PaginationDto } from '../dto/pagination.dto';
 import { PaginatedResponse } from '../interfaces/paginated-response.interface';
 
 interface PaginationOptions {
   sort?: Record<string, 1 | -1>;
   select?: string;
-  populate?: string;
+  populate?: string | PopulateOptions | (string | PopulateOptions)[];
 }
 
 @Injectable()
@@ -14,7 +14,7 @@ export class PaginationService {
   async paginate<T extends Document>(
     model: Model<T>,
     paginationDto: PaginationDto,
-    filter: Record<string, any> = {},
+    filter: Record<string, unknown> = {},
     options: PaginationOptions = {},
   ): Promise<PaginatedResponse<T>> {
     const page = paginationDto.page || 1;
@@ -38,7 +38,7 @@ export class PaginationService {
 
     // Apply populate if provided
     if (options.populate) {
-      query = query.populate(options.populate);
+      query = query.populate(options.populate as PopulateOptions | (string | PopulateOptions)[]);
     }
 
     // Execute the query

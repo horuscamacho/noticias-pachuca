@@ -1,0 +1,11 @@
+export { RapidAPIFacebookModule } from './rapidapi-facebook.module';
+export * from './controllers/rapidapi-facebook.controller';
+export * from './services/rapidapi-facebook.service';
+export * from './services/rapidapi-config.service';
+export * from './services/rapidapi-page-management.service';
+export * from './schemas/rapidapi-config.schema';
+export * from './schemas/rapidapi-facebook-page.schema';
+export * from './schemas/rapidapi-facebook-post.schema';
+export * from './schemas/rapidapi-extraction-log.schema';
+export * from './dto/rapidapi-config.dto';
+export * from './dto/rapidapi-page-management.dto';

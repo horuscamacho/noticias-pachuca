@@ -30,6 +30,12 @@ export enum NotificationType {
   INVOICE_PAYMENT_SUCCEEDED = 'invoice_payment_succeeded',
   INVOICE_PAYMENT_FAILED = 'invoice_payment_failed',
   INVOICE_UPCOMING = 'invoice_upcoming',
+
+  // 📘 FACEBOOK EXTRACTION NOTIFICATIONS
+  FACEBOOK_EXTRACTION_STARTED = 'facebook-extraction-started',
+  FACEBOOK_EXTRACTION_PROGRESS = 'facebook-extraction-progress',
+  FACEBOOK_EXTRACTION_COMPLETED = 'facebook-extraction-completed',
+  FACEBOOK_EXTRACTION_FAILED = 'facebook-extraction-failed',
 }
 
 export enum DeliveryMethod {

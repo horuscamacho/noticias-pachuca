@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CacheModule } from '@nestjs/cache-manager';
 import { BullModule } from '@nestjs/bull';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import KeyvRedis from '@keyv/redis';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -16,6 +17,9 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { PaymentsModule } from './payments/payments.module';
+import { FacebookModule } from './facebook/facebook.module';
+import { ContentExtractionFacebookModule } from './content-extraction-facebook/content-extraction-facebook.module';
+import { RapidAPIFacebookModule } from './rapidapi-facebook/rapidapi-facebook.module';
 
 // Función para seleccionar .env por ambiente
 function getEnvFilePath() {
@@ -112,6 +116,12 @@ function getEnvFilePath() {
       inject: [ConfigService],
     }),
 
+    // 🎯 EVENT EMITTER MODULE - RESOLVER DEPENDENCIAS CIRCULARES
+    EventEmitterModule.forRoot(),
+
+    // 📘 RAPIDAPI FACEBOOK MODULE - MOVER AL INICIO PARA DEBUG
+    RapidAPIFacebookModule,
+
     // 🔐 AUTHENTICATION MODULE
     AuthModule,
 
@@ -129,6 +139,12 @@ function getEnvFilePath() {
 
     // 💳 PAYMENTS MODULE
     PaymentsModule,
+
+    // 📘 FACEBOOK MODULE
+    FacebookModule,
+
+    // 📘 CONTENT EXTRACTION FACEBOOK MODULE
+    ContentExtractionFacebookModule,
   ],
   controllers: [AppController],
   providers: [AppService, AppConfigService, CacheService],

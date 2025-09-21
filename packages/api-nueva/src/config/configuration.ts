@@ -173,4 +173,18 @@ export default registerAs('config', () => ({
     enableContentSanitization: process.env.ENABLE_CONTENT_SANITIZATION === 'true',
     presignedUrlExpiry: parseInt(process.env.PRESIGNED_URL_EXPIRY || '3600', 10), // 1 hour
   },
+
+  // 📘 CONFIGURACIÓN FACEBOOK GRAPH API
+  facebook: {
+    appId: process.env.FACEBOOK_APP_ID || '',
+    appSecret: process.env.FACEBOOK_APP_SECRET || '',
+    apiVersion: process.env.FACEBOOK_API_VERSION || 'v22.0',
+    webhookVerifyToken: process.env.FACEBOOK_WEBHOOK_VERIFY_TOKEN || '',
+    rateLimitBuffer: parseInt(process.env.FACEBOOK_RATE_LIMIT_BUFFER || '75', 10),
+    batchSize: parseInt(process.env.FACEBOOK_BATCH_SIZE || '50', 10),
+    baseUrl: 'https://graph.facebook.com',
+    defaultFields: ['id', 'name', 'category', 'fan_count', 'talking_about_count'],
+    cachePrefix: 'facebook:',
+    cacheTtl: 3600, // 1 hour cache for Facebook data
+  },
 }));

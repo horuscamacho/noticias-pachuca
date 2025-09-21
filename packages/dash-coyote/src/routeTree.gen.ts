@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRapidapiFacebookRouteImport } from './routes/_authenticated/rapidapi-facebook'
+import { Route as AuthenticatedFacebookRouteImport } from './routes/_authenticated/facebook'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCorreosRouteImport } from './routes/_authenticated/correos'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
@@ -29,6 +31,17 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRapidapiFacebookRoute =
+  AuthenticatedRapidapiFacebookRouteImport.update({
+    id: '/rapidapi-facebook',
+    path: '/rapidapi-facebook',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedFacebookRoute = AuthenticatedFacebookRouteImport.update({
+  id: '/facebook',
+  path: '/facebook',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
@@ -57,6 +70,8 @@ export interface FileRoutesByFullPath {
   '/clientes': typeof AuthenticatedClientesRoute
   '/correos': typeof AuthenticatedCorreosRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/facebook': typeof AuthenticatedFacebookRoute
+  '/rapidapi-facebook': typeof AuthenticatedRapidapiFacebookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -64,6 +79,8 @@ export interface FileRoutesByTo {
   '/clientes': typeof AuthenticatedClientesRoute
   '/correos': typeof AuthenticatedCorreosRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/facebook': typeof AuthenticatedFacebookRoute
+  '/rapidapi-facebook': typeof AuthenticatedRapidapiFacebookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -74,12 +91,28 @@ export interface FileRoutesById {
   '/_authenticated/clientes': typeof AuthenticatedClientesRoute
   '/_authenticated/correos': typeof AuthenticatedCorreosRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/facebook': typeof AuthenticatedFacebookRoute
+  '/_authenticated/rapidapi-facebook': typeof AuthenticatedRapidapiFacebookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/clientes' | '/correos' | '/dashboard'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/clientes'
+    | '/correos'
+    | '/dashboard'
+    | '/facebook'
+    | '/rapidapi-facebook'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/clientes' | '/correos' | '/dashboard'
+  to:
+    | '/'
+    | '/login'
+    | '/clientes'
+    | '/correos'
+    | '/dashboard'
+    | '/facebook'
+    | '/rapidapi-facebook'
   id:
     | '__root__'
     | '/'
@@ -89,6 +122,8 @@ export interface FileRouteTypes {
     | '/_authenticated/clientes'
     | '/_authenticated/correos'
     | '/_authenticated/dashboard'
+    | '/_authenticated/facebook'
+    | '/_authenticated/rapidapi-facebook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -119,6 +154,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/rapidapi-facebook': {
+      id: '/_authenticated/rapidapi-facebook'
+      path: '/rapidapi-facebook'
+      fullPath: '/rapidapi-facebook'
+      preLoaderRoute: typeof AuthenticatedRapidapiFacebookRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/facebook': {
+      id: '/_authenticated/facebook'
+      path: '/facebook'
+      fullPath: '/facebook'
+      preLoaderRoute: typeof AuthenticatedFacebookRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
@@ -165,12 +214,16 @@ interface AuthenticatedRouteChildren {
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute
   AuthenticatedCorreosRoute: typeof AuthenticatedCorreosRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedFacebookRoute: typeof AuthenticatedFacebookRoute
+  AuthenticatedRapidapiFacebookRoute: typeof AuthenticatedRapidapiFacebookRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedClientesRoute: AuthenticatedClientesRoute,
   AuthenticatedCorreosRoute: AuthenticatedCorreosRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedFacebookRoute: AuthenticatedFacebookRoute,
+  AuthenticatedRapidapiFacebookRoute: AuthenticatedRapidapiFacebookRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

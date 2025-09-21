@@ -2,6 +2,8 @@
 
 import * as React from "react"
 import {
+  IconApi,
+  IconBrandFacebook,
   IconCamera,
   IconChartBar,
   IconDashboard,
@@ -55,6 +57,16 @@ const data = {
       title: "Clientes",
       url: "/clientes",
       icon: IconUsers,
+    },
+    {
+      title: "Facebook",
+      url: "/facebook",
+      icon: IconBrandFacebook,
+    },
+    {
+      title: "RapidAPI Facebook",
+      url: "/rapidapi-facebook",
+      icon: IconApi,
     },
     {
       title: "Lifecycle",

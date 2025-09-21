@@ -9,7 +9,7 @@ import {
   SidebarInset,
   SidebarProvider,
 } from '@/components/ui/sidebar'
-import { dashboardData } from '@/data/mockData'
+import { tableData } from '@/data/mockData'
 
 // Socket.IO components
 import { useDashboardRealTime, ConnectionStatus, NotificationToast } from '@/socket'
@@ -64,7 +64,7 @@ function DashboardPage() {
                 <ChartAreaInteractive />
               </div>
               <div className="px-4 lg:px-6">
-                <DataTable data={dashboardData} />
+                <DataTable data={tableData} />
               </div>
 
               {/* Socket.IO Status */}
