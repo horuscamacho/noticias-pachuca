@@ -273,6 +273,117 @@ export class PuppeteerManagerService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
+   * 🌐 Obtener HTML renderizado de una URL
+   */
+  async getRenderedHTML(url: string, options?: {
+    waitForSelector?: string;
+    waitTime?: number;
+    timeout?: number;
+    useJavaScript?: boolean;
+  }): Promise<string> {
+    const startTime = Date.now();
+    this.logger.log(`Getting rendered HTML from: ${url}`);
+
+    // Retry logic para mayor estabilidad
+    let lastError: Error = new Error('Unknown error');
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        await this.ensureBrowserReady();
+
+        if (this.activePages >= this.maxConcurrentPages) {
+          throw new BadRequestException(
+            `Max concurrent pages limit reached (${this.maxConcurrentPages}). Please try again later.`,
+          );
+        }
+
+        this.activePages++;
+        const page = await this.browser!.newPage();
+
+        try {
+          // Configurar viewport
+          await page.setViewport({
+            width: 1280,
+            height: 1024,
+            deviceScaleFactor: 1,
+          });
+
+          // Configurar timeout más conservador
+          const timeout = Math.min(options?.timeout || 20000, 20000);
+          await page.setDefaultTimeout(timeout);
+
+          // Configurar user agent para evitar detección de bot
+          await page.setUserAgent(
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+          );
+
+          // Bloquear recursos pesados para mayor estabilidad
+          await page.setRequestInterception(true);
+          page.on('request', (request) => {
+            const resourceType = request.resourceType();
+            if (['image', 'stylesheet', 'font', 'media'].includes(resourceType)) {
+              request.abort();
+            } else {
+              request.continue();
+            }
+          });
+
+          // Navegar a la URL con configuración conservadora
+          await page.goto(url, {
+            waitUntil: 'domcontentloaded',
+            timeout,
+          });
+
+          // Esperar selector específico si se proporciona
+          if (options?.waitForSelector) {
+            try {
+              await page.waitForSelector(options.waitForSelector, { timeout: 5000 });
+            } catch (error) {
+              this.logger.warn(`Selector not found: ${options.waitForSelector}`);
+            }
+          }
+
+          // Esperar tiempo adicional si se especifica (máximo 2 segundos)
+          if (options?.waitTime) {
+            const waitTime = Math.min(options.waitTime, 2000);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+          }
+
+          // Obtener HTML renderizado
+          const html = await page.content();
+
+          const renderTime = Date.now() - startTime;
+          this.logger.log(`HTML rendered successfully in ${renderTime}ms for ${url} (attempt ${attempt})`);
+
+          return html;
+        } finally {
+          try {
+            await page.close();
+          } catch (e) {
+            this.logger.warn('Error closing page:', e.message);
+          }
+          this.activePages--;
+        }
+      } catch (error) {
+        this.activePages--;
+        lastError = error;
+        this.logger.warn(`Attempt ${attempt} failed for ${url}: ${error.message}`);
+
+        if (attempt < 2) {
+          // Reiniciar browser si hay problemas de conexión
+          if (error.message.includes('Connection closed') || error.message.includes('disconnected')) {
+            this.logger.log('Browser connection issue detected, restarting...');
+            await this.restartBrowser();
+          }
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Esperar 1 segundo antes del retry
+        }
+      }
+    }
+
+    this.logger.error(`Failed to get rendered HTML from ${url} after 2 attempts: ${lastError.message}`);
+    throw lastError;
+  }
+
+  /**
    * 🔧 MÉTODOS PRIVADOS
    */
 
@@ -293,22 +404,19 @@ export class PuppeteerManagerService implements OnModuleInit, OnModuleDestroy {
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
-          '--disable-accelerated-2d-canvas',
           '--no-first-run',
-          '--no-zygote',
-          '--single-process',
           '--disable-gpu',
           '--disable-background-timer-throttling',
           '--disable-backgrounding-occluded-windows',
           '--disable-renderer-backgrounding',
           '--disable-features=TranslateUI',
-          '--disable-ipc-flooding-protection',
+          '--disable-extensions',
+          '--disable-plugins',
+          '--disable-web-security',
+          '--disable-features=VizDisplayCompositor',
           // Optimizaciones de memoria
           '--memory-pressure-off',
-          '--max_old_space_size=4096',
-          // Configuración de fuentes
-          '--font-render-hinting=none',
-          '--disable-font-subpixel-positioning',
+          '--max_old_space_size=1024',
         ],
         timeout: 60000, // 60 segundos para inicializar
         defaultViewport: {

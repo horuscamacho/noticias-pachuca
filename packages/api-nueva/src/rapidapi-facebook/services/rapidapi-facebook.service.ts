@@ -504,18 +504,6 @@ export class RapidAPIFacebookService implements SocialMediaScraperProvider {
       try {
         this.logger.log(`🔍 Upserting post - ID: ${mappedPost.id}, URL: ${mappedPost.url}`);
 
-        // Prepare the data for upsert
-        const postData = {
-          facebookPostId: mappedPost.id,
-          pageId: pageId,
-          postUrl: mappedPost.url,
-          content: mappedPost.content,
-          publishedAt: mappedPost.publishedAt,
-          engagement: mappedPost.engagement,
-          extractedAt: new Date(), // Always update extraction time
-          rawData: mappedPost.rawData
-        };
-
         // Use findOneAndUpdate with upsert to avoid duplicates and update engagement
         const result = await this.postModel.findOneAndUpdate(
           {
@@ -524,14 +512,13 @@ export class RapidAPIFacebookService implements SocialMediaScraperProvider {
           },
           {
             $set: {
-              ...postData,
-              // Always update these fields
+              // Always update these fields on every upsert
               engagement: mappedPost.engagement,
               extractedAt: new Date(),
               rawData: mappedPost.rawData
             },
             $setOnInsert: {
-              // Only set these on insert (first time)
+              // Only set these on insert (first time) - avoid conflicts
               facebookPostId: mappedPost.id,
               pageId: pageId,
               postUrl: mappedPost.url,
@@ -559,6 +546,30 @@ export class RapidAPIFacebookService implements SocialMediaScraperProvider {
         this.logger.error(`❌ Error upserting post ${mappedPost.id} to DB:`, error);
         // Continue with other posts even if one fails
         mappedPosts.push(mappedPost);
+      }
+    }
+
+    // 🔍 Emit event to trigger URL detection for newly saved posts
+    if (mappedPosts.length > 0) {
+      try {
+        this.logger.log(`🔍 Emitting 'posts.saved' event for ${mappedPosts.length} posts from page ${pageId}`);
+
+        // Emit event for noticias module to handle URL detection
+        this.eventEmitter.emit('posts.saved', {
+          pageId,
+          postCount: mappedPosts.length,
+          posts: mappedPosts.map(post => ({
+            id: post.id,
+            url: post.url,
+            content: post.content
+          }))
+        });
+
+        this.logger.log(`✅ Event 'posts.saved' emitted successfully for page ${pageId}`);
+
+      } catch (error) {
+        this.logger.error('❌ Error emitting posts.saved event:', error);
+        // Don't throw error, just log it
       }
     }
 

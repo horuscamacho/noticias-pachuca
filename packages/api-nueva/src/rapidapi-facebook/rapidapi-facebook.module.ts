@@ -31,6 +31,8 @@ import { PaginationService } from '../common/services/pagination.service';
 import { CacheService } from '../services/cache.service';
 import { AppConfigService } from '../config/config.service';
 
+// EventEmitter2 para comunicación entre módulos sin dependencias circulares
+
 @Global() // Global para reutilizar en otros módulos
 @Module({
   imports: [
@@ -77,6 +79,8 @@ import { AppConfigService } from '../config/config.service';
     RapidAPIFacebookService,
     RapidAPIConfigService,
     RapidAPIPageManagementService,
+
+    // Comunicación con EventEmitter2 - sin servicios de noticias para evitar referencias circulares
 
     // Processors
     ExtractionProcessor,

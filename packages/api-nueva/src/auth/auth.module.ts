@@ -21,6 +21,9 @@ import { RefreshJwtStrategy } from './strategies/refresh-jwt.strategy';
 // Controllers
 import { AuthController } from './controllers/auth.controller';
 
+// Guards
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+
 @Global() // 🔥 Global para reutilizar en cualquier módulo
 @Module({
   imports: [
@@ -61,6 +64,9 @@ import { AuthController } from './controllers/auth.controller';
     // Strategies
     JwtStrategy,
     RefreshJwtStrategy,
+
+    // Guards
+    JwtAuthGuard,
   ],
 
   controllers: [AuthController],
@@ -70,6 +76,7 @@ import { AuthController } from './controllers/auth.controller';
     TokenManagerService,
     PlatformDetectionService,
     RedisAuthService,
+    JwtAuthGuard,
   ],
 })
 export class AuthModule {}

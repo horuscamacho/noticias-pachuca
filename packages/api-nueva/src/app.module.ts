@@ -20,6 +20,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { FacebookModule } from './facebook/facebook.module';
 import { ContentExtractionFacebookModule } from './content-extraction-facebook/content-extraction-facebook.module';
 import { RapidAPIFacebookModule } from './rapidapi-facebook/rapidapi-facebook.module';
+import { NoticiasModule } from './noticias/noticias.module';
 
 // Función para seleccionar .env por ambiente
 function getEnvFilePath() {
@@ -145,6 +146,9 @@ function getEnvFilePath() {
 
     // 📘 CONTENT EXTRACTION FACEBOOK MODULE
     ContentExtractionFacebookModule,
+
+    // 📰 NOTICIAS MODULE - WEB SCRAPING DE NOTICIAS
+    NoticiasModule,
   ],
   controllers: [AppController],
   providers: [AppService, AppConfigService, CacheService],
