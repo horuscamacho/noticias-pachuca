@@ -46,6 +46,7 @@
     "@types/facebook-nodejs-business-sdk": "^23.0.0",
     "@types/mime-types": "^2.1.4",
     "@types/multer": "^2.0.0",
+    "ansis": "^4.1.0",
     "axios": "^1.12.2",
     "bcryptjs": "^3.0.2",
     "bull": "^4.16.5",

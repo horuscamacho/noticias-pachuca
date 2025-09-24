@@ -1,0 +1,299 @@
+@import "tailwindcss";
+
+body {
+  @apply m-0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
+}
+
+/* 🎯 BRUTALIST CUSTOM SCROLLBARS - Modern CSS 2025 */
+
+/* Modern browsers with scrollbar-* support */
+@supports (scrollbar-width: auto) {
+  * {
+    scrollbar-color: #854836 #F7F7F7;
+    scrollbar-width: thin;
+  }
+}
+
+/* Legacy browsers with ::-webkit-scrollbar-* support */
+@supports selector(::-webkit-scrollbar) {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #F7F7F7;
+    border: 1px solid #000;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #854836;
+    border: 1px solid #000;
+    border-radius: 0;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #FF0000;
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: #F7F7F7;
+    border: 1px solid #000;
+  }
+}
+
+/* 🎯 BRUTALIST FORM CONTROLS - Modern CSS 2025 */
+
+/* Custom checkbox styling using accent-color + appearance reset */
+input[type="checkbox"] {
+  accent-color: #854836;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #000 !important;
+  border-radius: 0 !important;
+  background: #F7F7F7 !important;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+  position: relative;
+}
+
+input[type="checkbox"]:checked {
+  background: #854836 !important;
+  border: 2px solid #000 !important;
+}
+
+input[type="checkbox"]:checked::after {
+  content: '✓';
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  line-height: 1;
+}
+
+input[type="checkbox"]:focus {
+  outline: 2px solid #FFB22C;
+  outline-offset: 2px;
+}
+
+/* 🎯 BRUTALIST SELECT STYLING - Modern CSS 2025 */
+
+/* Base styling for all browsers */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  /* Custom brutalist arrow */
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath fill='%23000' stroke='%23000' stroke-width='2' d='M5 7l5 5 5-5H5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 20px;
+
+  /* Brutalist styling */
+  border: 2px solid #000;
+  border-radius: 0;
+  background-color: #F7F7F7;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+select:focus {
+  outline: none;
+  border-color: #854836;
+  background-color: white;
+  box-shadow: 0 0 0 2px #FFB22C;
+}
+
+select:hover {
+  background-color: white;
+  border-color: #854836;
+}
+
+/* Modern browsers with base-select support (Chrome 135+) */
+@supports (appearance: base-select) {
+  select {
+    &, &::picker(select) {
+      appearance: base-select;
+    }
+
+    /* Style the dropdown arrow */
+    &::picker-icon {
+      color: #000;
+      font-weight: bold;
+    }
+
+    /* Style the dropdown list */
+    &::picker(select) {
+      background: white;
+      border: 2px solid #000;
+      border-radius: 0;
+      box-shadow: 4px 4px 0 #000;
+      font-family: inherit;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    /* Style selected option checkmark */
+    &::checkmark {
+      color: #854836;
+      font-weight: bold;
+    }
+  }
+}
+
+/* Auto-resize if supported */
+@supports (field-sizing: content) {
+  select {
+    field-sizing: content;
+    max-width: 100%;
+  }
+}
+
+/* Custom radio button styling */
+input[type="radio"] {
+  accent-color: #854836;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #000 !important;
+  border-radius: 0 !important;
+  background: #F7F7F7 !important;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+  position: relative;
+}
+
+input[type="radio"]:checked {
+  background: #854836 !important;
+  border: 2px solid #000 !important;
+}
+
+input[type="radio"]:checked::after {
+  content: '';
+  display: block;
+  width: 8px;
+  height: 8px;
+  background: white;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+input[type="radio"]:focus {
+  outline: 2px solid #FFB22C;
+  outline-offset: 2px;
+}
+
+/* 🎯 BRUTALIST EDITOR LISTS - TipTap Styling */
+
+/* Editor container styling */
+.ProseMirror {
+  outline: none;
+  font-family: inherit;
+}
+
+/* Bullet Lists */
+.ProseMirror ul.brutalist-bullet-list,
+.ProseMirror ul {
+  list-style: none;
+  margin: 1rem 0;
+  padding-left: 2rem;
+  position: relative;
+}
+
+.ProseMirror ul.brutalist-bullet-list li,
+.ProseMirror ul li {
+  position: relative;
+  margin: 0.5rem 0;
+  padding-left: 0;
+}
+
+.ProseMirror ul.brutalist-bullet-list li::before,
+.ProseMirror ul li::before {
+  content: '';
+  position: absolute;
+  left: -1.5rem;
+  top: 0.7rem;
+  width: 8px;
+  height: 8px;
+  background: #000;
+  transform: rotate(45deg);
+  border: 1px solid #000;
+}
+
+/* Ordered Lists */
+.ProseMirror ol.brutalist-ordered-list,
+.ProseMirror ol {
+  margin: 1rem 0;
+  padding-left: 2rem;
+  counter-reset: list-counter;
+}
+
+.ProseMirror ol.brutalist-ordered-list li,
+.ProseMirror ol li {
+  position: relative;
+  margin: 0.5rem 0;
+  padding-left: 0;
+  counter-increment: list-counter;
+}
+
+.ProseMirror ol.brutalist-ordered-list li::before,
+.ProseMirror ol li::before {
+  content: counter(list-counter) '.';
+  position: absolute;
+  left: -2rem;
+  top: 0;
+  font-weight: bold;
+  font-size: 1rem;
+  color: #854836;
+  background: #FFB22C;
+  padding: 2px 6px;
+  border: 2px solid #000;
+  min-width: 20px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Nested lists */
+.ProseMirror ul ul,
+.ProseMirror ol ol,
+.ProseMirror ul ol,
+.ProseMirror ol ul {
+  margin: 0.5rem 0;
+  padding-left: 2rem;
+}
+
+/* Nested bullet styling */
+.ProseMirror ul ul li::before {
+  background: #854836;
+  transform: rotate(0deg);
+  border-radius: 50%;
+}
+
+/* List item content */
+.ProseMirror li p {
+  margin: 0;
+  padding: 0;
+}

@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -13,7 +14,7 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 
 import { NoticiasConfigService } from '../services/noticias-config.service';
 import { NoticiasExtractionService } from '../services/noticias-extraction.service';
@@ -308,6 +309,18 @@ export class NoticiasController {
     };
 
     return await this.extractionService.getExtractedNoticias(filters, pagination);
+  }
+
+  @Patch('extracted/:id/processed')
+  @ApiOperation({
+    summary: 'Marcar noticia como procesada',
+    description: 'Marca una noticia extraída como procesada para generación de contenido'
+  })
+  @ApiParam({ name: 'id', description: 'ID de la noticia extraída' })
+  @ApiResponse({ status: 200, description: 'Noticia marcada como procesada exitosamente' })
+  @ApiResponse({ status: 404, description: 'Noticia no encontrada' })
+  async markAsProcessed(@Param('id') id: string) {
+    return await this.extractionService.markAsProcessed(id);
   }
 
   // ============================================================================

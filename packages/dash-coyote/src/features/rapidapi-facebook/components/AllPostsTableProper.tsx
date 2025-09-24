@@ -43,6 +43,7 @@ import {
   IconEye,
   IconSortAscending,
   IconSortDescending,
+  IconVideo,
 } from '@tabler/icons-react'
 import { PostDetailsModal } from './PostDetailsModal'
 
@@ -116,6 +117,7 @@ interface ColumnVisibility {
   type: boolean
   text: boolean
   image: boolean
+  video: boolean
   url: boolean
   likes: boolean
   comments: boolean
@@ -142,6 +144,7 @@ export function AllPostsTableProper() {
     type: true,
     text: true,
     image: true,
+    video: true,
     url: true,
     likes: true,
     comments: true,
@@ -345,6 +348,12 @@ export function AllPostsTableProper() {
                   Imagen
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
+                  checked={columnVisibility.video}
+                  onCheckedChange={() => toggleColumn('video')}
+                >
+                  Video
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
                   checked={columnVisibility.url}
                   onCheckedChange={() => toggleColumn('url')}
                 >
@@ -490,6 +499,9 @@ export function AllPostsTableProper() {
                     {columnVisibility.image && (
                       <TableHead>Imagen</TableHead>
                     )}
+                    {columnVisibility.video && (
+                      <TableHead>Video</TableHead>
+                    )}
                     {columnVisibility.url && (
                       <TableHead>URL Externa</TableHead>
                     )}
@@ -560,6 +572,24 @@ export function AllPostsTableProper() {
                           ) : (
                             <div className="w-12 h-12 bg-gray-100 rounded border flex items-center justify-center">
                               <span className="text-[10px] text-gray-400 text-center leading-tight">Sin<br/>imagen</span>
+                            </div>
+                          )}
+                        </TableCell>
+                      )}
+                      {columnVisibility.video && (
+                        <TableCell>
+                          {post.content?.videos && post.content.videos.length > 0 ? (
+                            <div className="flex items-center gap-1">
+                              <div className="w-12 h-12 bg-purple-100 rounded border flex items-center justify-center">
+                                <IconVideo className="w-6 h-6 text-purple-600" />
+                              </div>
+                              <span className="text-xs text-purple-600 font-medium">
+                                {post.content.videos.length}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="w-12 h-12 bg-gray-100 rounded border flex items-center justify-center">
+                              <span className="text-[10px] text-gray-400 text-center leading-tight">Sin<br/>video</span>
                             </div>
                           )}
                         </TableCell>

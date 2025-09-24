@@ -527,4 +527,23 @@ export class NoticiasExtractionService {
     const result = await this.extractedNoticiaModel.aggregate(pipeline);
     return result.length > 0 ? Math.round(result[0].avgTime) : 0;
   }
+
+  /**
+   * ✅ Marcar noticia como procesada
+   */
+  async markAsProcessed(id: string): Promise<{ message: string }> {
+    const noticia = await this.extractedNoticiaModel.findById(id);
+    if (!noticia) {
+      throw new Error(`Noticia with ID ${id} not found`);
+    }
+
+    await this.extractedNoticiaModel.findByIdAndUpdate(id, {
+      isProcessed: true,
+      processedAt: new Date()
+    });
+
+    this.logger.log(`Noticia ${id} marked as processed`);
+
+    return { message: 'Noticia marked as processed successfully' };
+  }
 }

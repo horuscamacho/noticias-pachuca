@@ -21,6 +21,7 @@ import { FacebookModule } from './facebook/facebook.module';
 import { ContentExtractionFacebookModule } from './content-extraction-facebook/content-extraction-facebook.module';
 import { RapidAPIFacebookModule } from './rapidapi-facebook/rapidapi-facebook.module';
 import { NoticiasModule } from './noticias/noticias.module';
+import { ContentAIModule } from './content-ai/content-ai.module';
 
 // Función para seleccionar .env por ambiente
 function getEnvFilePath() {
@@ -149,6 +150,9 @@ function getEnvFilePath() {
 
     // 📰 NOTICIAS MODULE - WEB SCRAPING DE NOTICIAS
     NoticiasModule,
+
+    // 🤖 CONTENT AI MODULE - AI CONTENT GENERATION SYSTEM
+    ContentAIModule,
   ],
   controllers: [AppController],
   providers: [AppService, AppConfigService, CacheService],

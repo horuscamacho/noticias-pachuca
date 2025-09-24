@@ -258,6 +258,93 @@ export function PostDetailsModal({ post, isOpen, onClose }: PostDetailsModalProp
                 </div>
               )}
 
+              {/* Videos */}
+              {post.content?.videos && post.content.videos.length > 0 && (
+                <div>
+                  <h4 className="font-medium mb-2">Videos ({post.content.videos.length})</h4>
+                  <div className="space-y-4">
+                    {post.content.videos.map((video, index) => (
+                      <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                        <div className="flex items-center gap-2 mb-3">
+                          <IconVideo className="w-5 h-5 text-purple-600" />
+                          <span className="font-medium text-sm">Video {index + 1}</span>
+                        </div>
+
+                        {/* Video Player */}
+                        <div className="relative bg-black rounded-lg overflow-hidden">
+                          <video
+                            className="w-full max-h-80 object-contain"
+                            controls
+                            preload="metadata"
+                            onError={(e) => {
+                              console.error('❌ Failed to load video:', video)
+                              e.currentTarget.style.display = 'none'
+                              const fallback = e.currentTarget.nextElementSibling as HTMLElement
+                              if (fallback) fallback.style.display = 'block'
+                            }}
+                          >
+                            <source src={video} type="video/mp4" />
+                            <source src={video} type="video/webm" />
+                            <source src={video} type="video/ogg" />
+                            Tu navegador no soporta el elemento video.
+                          </video>
+
+                          {/* Fallback for videos that can't be played */}
+                          <div className="hidden p-8 text-center text-white">
+                            <IconVideo className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                            <p className="text-sm text-gray-300 mb-4">
+                              No se puede reproducir este video en el navegador
+                            </p>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              asChild
+                            >
+                              <a
+                                href={video}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2"
+                              >
+                                <IconExternalLink className="w-4 h-4" />
+                                Ver video en nueva pestaña
+                              </a>
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Video URL */}
+                        <div className="mt-3 flex items-center gap-2">
+                          <code className="bg-white px-2 py-1 rounded text-xs flex-1 truncate">
+                            {video}
+                          </code>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copyToClipboard(video)}
+                          >
+                            <IconCopy className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            asChild
+                          >
+                            <a
+                              href={video}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <IconExternalLink className="w-4 h-4" />
+                            </a>
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* External Links */}
               {post.content?.links && post.content.links.length > 0 && (
                 <div>

@@ -16,6 +16,7 @@ import {
   IconInnerShadowTop,
   IconListDetails,
   IconMail,
+  IconNews,
   IconReport,
   IconSearch,
   IconSettings,
@@ -67,6 +68,16 @@ const data = {
       title: "RapidAPI Facebook",
       url: "/rapidapi-facebook",
       icon: IconApi,
+    },
+    {
+      title: "Noticias",
+      url: "/noticias",
+      icon: IconNews,
+    },
+    {
+      title: "Content AI",
+      url: "/content-ai",
+      icon: IconFileAi,
     },
     {
       title: "Lifecycle",

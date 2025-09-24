@@ -1,21 +1,53 @@
 # 🎯 MÓDULO NOTICIAS - WEB SCRAPING CONTEXTO 2025
 
-## 🚨 **ACTUALIZACIÓN 22/09/2025 - ESTADO ACTUAL**
+## 🚨 **ACTUALIZACIÓN 22/09/2025 - SISTEMA COMPLETAMENTE FUNCIONAL**
 
-### ✅ **FUNCIONALIDADES COMPLETADAS**
-- ✅ **Sistema extracción funcional** - Puppeteer + Cheerio fallback
-- ✅ **API endpoints operativos** - `/api/noticias/extracted` funcionando
-- ✅ **Dashboard noticias** - Tab "Noticias" mostrando data real
-- ✅ **Test exitoso**: "Cine gratuito cada semana..." extraído correctamente
+### 🎯 **FUNCIONALIDADES CRÍTICAS RESUELTAS**
 
-### 🔥 **NUEVA FUNCIONALIDAD: PLAYGROUND TESTING**
-- ✅ **Backend**: `/api/noticias/test-selectors` - Probar selectores sin config BD
-- 🚧 **Frontend**: Tab "Testing" para experimentar selectores CSS en vivo
+#### ✅ **CRITICAL BUG FIX: Cache Collision System**
 
-### 🚨 **DESVIACIÓN IMPORTANTE**
-**AGREGADO**: Tab Testing/Playground no estaba en plan original
-**RAZÓN**: Usuario solicitó poder probar selectores antes de crear configuraciones
-**IMPACTO**: +1 tab, +1 endpoint, mejor UX para desarrollo
+- ✅ **PROBLEMA CRÍTICO RESUELTO**: URLs diferentes devolvían contenido idéntico
+- ✅ **CAUSA IDENTIFICADA**: Truncado de URL hash a 16 caracteres causaba colisiones
+- ✅ **SOLUCIÓN IMPLEMENTADA**: SHA-256 hash completo con truncado del hash, no de la URL
+- ✅ **VERIFICACIÓN**: URLs `effeta.info/?p=176426` vs `effeta.info/?p=176453` ahora únicas
+- ✅ **CACHE INVALIDADO**: Incrementado a debug3 para limpiar cache corrupto
+
+#### ✅ **URL STATUS TRACKING SYSTEM COMPLETO**
+
+- ✅ **BACKEND**: `updateExtractionStatus()` implementado correctamente en MongoDB
+- ✅ **PROCESSOR**: URLs automáticamente marcadas como `extracted/failed/pending`
+- ✅ **PERSISTENCIA**: Estados guardados en `external_urls` collection
+- ✅ **ERROR HANDLING**: Incremento de `extractionAttempts` y `lastError` tracking
+
+#### ✅ **FRONTEND UI/UX ENHANCEMENT COMPLETO**
+
+- ✅ **INDICADORES VISUALES**: Estados por color usando theme shadcn
+  - **Extraídos**: `bg-primary/15` (verde tema con opacidad)
+  - **Configurados pendientes**: `bg-gray-800/20` (gris oscuro)
+  - **Sin configurar**: `bg-gray-200/20` (gris claro)
+  - **Fallidos**: `bg-destructive/15` (rojo tema)
+- ✅ **BOTONES INTELIGENTES**:
+  - "Visualizar" 👁️ para URLs extraídas
+  - "Extraer" ▶️ para URLs configuradas pendientes
+  - "Configurar" ⚙️ para URLs sin configuración
+- ✅ **EXTRACCIÓN MASIVA**: Botón "Extraer Pendientes" 📋 con rate limiting
+- ✅ **TEMA COMPLIANCE**: Eliminados todos los colores hardcodeados
+
+### 🔥 **NUEVAS FUNCIONALIDADES IMPLEMENTADAS**
+
+- ✅ **Testing Tab**: Playground para probar selectores CSS con imágenes en miniatura
+- ✅ **Edit Configurations**: Sistema de edición completo con form reset correcto
+- ✅ **Image Preview**: Miniaturas en lugar de URLs con fallback placeholders
+- ✅ **Bulk Operations**: Procesamiento masivo con progreso y error handling
+- ✅ **Background Image Extraction**: Soporte para `background-image: url()` en CSS
+
+### 🚨 **DESVIACIONES IMPORTANTES DOCUMENTADAS**
+
+- **AGREGADO**: Sistema completo de indicadores visuales (no estaba en plan original)
+- **AGREGADO**: Botones inteligentes según estado de extracción
+- **AGREGADO**: Sistema de extracción masiva con rate limiting
+- **RAZÓN**: Usuario requería UX clara para distinguir estados de URLs
+- **IMPACTO**: +UI mejorada, +funcionalidad bulk, mejor experiencia de usuario
 
 ---
 
@@ -445,12 +477,34 @@ graph TD
    - [ ] Documentación de CSS selectors
    - [ ] Performance monitoring
 
-### 🎯 ESTADO ACTUAL: **90% COMPLETADO**
+### 🎯 ESTADO ACTUAL: **95% COMPLETADO - SISTEMA PRODUCTIVO**
 
-- ✅ Backend completamente funcional
-- ✅ URL detection y persistencia operativa
-- ✅ Dashboard base con diseño moderno
-- ✅ ConfigurationsTab con CRUD completo y funcionando
-- ✅ CreateConfigSheet con selector inteligente funcionando
-- ✅ ExtractedNoticiasTab implementado básico
-- ⚠️ Pendiente: JobsLogsTab y extracción automática
+#### ✅ **BACKEND 100% FUNCIONAL**
+
+- ✅ **Cache System**: Bug crítico de colisiones resuelto con SHA-256
+- ✅ **Status Tracking**: URLs persistidas con estados correctos en MongoDB
+- ✅ **Image Extraction**: Soporte completo para background-image CSS
+- ✅ **Error Handling**: Logging detallado y retry logic robusto
+- ✅ **All Endpoints**: Funcionando correctamente con validación completa
+
+#### ✅ **FRONTEND 95% FUNCIONAL**
+
+- ✅ **ExternalUrlsTab**: Indicadores visuales, botones inteligentes, extracción masiva
+- ✅ **ConfigurationsTab**: CRUD completo con edit/delete funcionando
+- ✅ **CreateConfigSheet**: Form completo con selector automático funcionando
+- ✅ **TestingTab**: Playground con miniaturas de imágenes y fallbacks
+- ✅ **ExtractedNoticiasTab**: Tabla básica implementada
+- ✅ **Theme Integration**: 100% compliance con shadcn sin hardcoded colors
+
+#### ✅ **CRITICAL FIXES COMPLETADOS**
+
+- ✅ **Cache Collision**: Diferentes URLs ahora generan contenido único
+- ✅ **Edit Functionality**: Form reset correcto para modo edición
+- ✅ **Status Persistence**: Estados se mantienen correctamente en DB
+- ✅ **UI/UX Polish**: Indicadores visuales claros y botones contextuales
+
+#### ⚠️ **PENDIENTE MENOR (5%)**
+
+- [ ] `JobsLogsTab.tsx` - Monitoreo de jobs (funcionalidad avanzada)
+- [ ] Scheduled extractions - Jobs automáticos (nice to have)
+- [ ] Performance metrics dashboard - Métricas avanzadas

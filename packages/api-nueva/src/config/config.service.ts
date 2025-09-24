@@ -303,4 +303,50 @@ export class AppConfigService {
       maxChunks: 1000,
     };
   }
+
+  // 🤖 OpenAI Config
+  get openAIApiKey(): string {
+    return this.configService.get<string>('OPENAI_API_KEY')!;
+  }
+
+  get openAIOrganizationId(): string | undefined {
+    return this.configService.get<string>('OPENAI_ORGANIZATION_ID') || undefined;
+  }
+
+  get openAIProjectId(): string | undefined {
+    return this.configService.get<string>('OPENAI_PROJECT_ID') || undefined;
+  }
+
+  get openAIModel(): string {
+    return this.configService.get<string>('OPENAI_MODEL') || 'gpt-4o-mini';
+  }
+
+  get openAIMaxTokens(): number {
+    return parseInt(this.configService.get<string>('OPENAI_MAX_TOKENS') || '4000', 10);
+  }
+
+  get openAITemperature(): number {
+    return parseFloat(this.configService.get<string>('OPENAI_TEMPERATURE') || '0.7');
+  }
+
+  get openAITimeout(): number {
+    return parseInt(this.configService.get<string>('OPENAI_TIMEOUT') || '30000', 10);
+  }
+
+  get openAIMaxRetries(): number {
+    return parseInt(this.configService.get<string>('OPENAI_MAX_RETRIES') || '3', 10);
+  }
+
+  get openAIConfig() {
+    return {
+      apiKey: this.openAIApiKey,
+      organizationId: this.openAIOrganizationId,
+      projectId: this.openAIProjectId,
+      model: this.openAIModel,
+      maxTokens: this.openAIMaxTokens,
+      temperature: this.openAITemperature,
+      timeout: this.openAITimeout,
+      maxRetries: this.openAIMaxRetries,
+    };
+  }
 }
