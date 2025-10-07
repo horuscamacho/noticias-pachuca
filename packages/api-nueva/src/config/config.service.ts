@@ -230,6 +230,32 @@ export class AppConfigService {
     };
   }
 
+  // 📰 Pachuca CDN Config (específico para Noticias Pachuca)
+  get pachucaS3Bucket(): string {
+    return this.configService.get<string>('config.pachucaCdn.bucket')!;
+  }
+
+  get pachucaS3Region(): string {
+    return this.configService.get<string>('config.pachucaCdn.region')!;
+  }
+
+  get pachucaCdnUrl(): string {
+    return this.configService.get<string>('config.pachucaCdn.cdnUrl')!;
+  }
+
+  get pachucaDistributionId(): string {
+    return this.configService.get<string>('config.pachucaCdn.distributionId')!;
+  }
+
+  get pachucaCdnConfig() {
+    return {
+      bucket: this.pachucaS3Bucket,
+      region: this.pachucaS3Region,
+      cdnUrl: this.pachucaCdnUrl,
+      distributionId: this.pachucaDistributionId,
+    };
+  }
+
   // 📁 Files Config
   get maxFileSize(): number {
     return this.configService.get<number>('config.files.maxFileSize')!;

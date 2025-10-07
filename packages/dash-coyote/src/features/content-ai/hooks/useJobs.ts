@@ -114,7 +114,7 @@ interface OptimizationRecommendation {
 interface DLQEntry {
   id: string
   originalJobId: string
-  jobData: any
+  jobData: GenerationJob['data']
   failureReason: string
   failureCount: number
   firstFailedAt: Date
@@ -128,32 +128,41 @@ interface DLQEntry {
   }
 }
 
+interface DLQFilters {
+  resolved?: boolean
+  failureReason?: string
+  provider?: string
+  contentId?: string
+  userId?: string
+  limit?: number
+  offset?: number
+}
+
+interface DLQRetryOptions {
+  forceDifferentProvider?: boolean
+  resolvedBy?: string
+  notes?: string
+}
+
+interface DLQResolution {
+  method: 'manual_retry' | 'data_fix' | 'provider_fix' | 'abandoned'
+  resolvedBy: string
+  notes?: string
+}
+
 // API functions
 const jobsApi = {
   // Jobs
   getJobStatus: async (jobId: string): Promise<GenerationJob> => {
-    const response = await fetch(`${API_BASE_URL}/content-ai/generate/status/${jobId}`)
-    if (!response.ok) {
-      throw new Error('Failed to fetch job status')
-    }
-    return response.json()
+    return apiClient.get<GenerationJob>(`/content-ai/generate/status/${jobId}`)
   },
 
   getQueueStats: async (): Promise<JobStats> => {
-    const response = await fetch(`${API_BASE_URL}/content-ai/generate/queue/stats`)
-    if (!response.ok) {
-      throw new Error('Failed to fetch queue stats')
-    }
-    return response.json()
+    return apiClient.get<JobStats>('/content-ai/generate/queue/stats')
   },
 
   cancelJob: async (jobId: string): Promise<void> => {
-    const response = await fetch(`${API_BASE_URL}/content-ai/generate/${jobId}`, {
-      method: 'DELETE',
-    })
-    if (!response.ok) {
-      throw new Error('Failed to cancel job')
-    }
+    await apiClient.delete(`/content-ai/generate/${jobId}`)
   },
 
   cleanQueue: async (options?: {
@@ -161,16 +170,7 @@ const jobsApi = {
     limit?: number
     type?: 'completed' | 'failed' | 'active'
   }): Promise<void> => {
-    const response = await fetch(`${API_BASE_URL}/content-ai/admin/queue/clean`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(options || {}),
-    })
-    if (!response.ok) {
-      throw new Error('Failed to clean queue')
-    }
+    await apiClient.post('/content-ai/admin/queue/clean', options || {})
   },
 
   // Costs
@@ -183,36 +183,19 @@ const jobsApi = {
     if (startDate) searchParams.append('startDate', startDate.toISOString())
     if (endDate) searchParams.append('endDate', endDate.toISOString())
 
-    const response = await fetch(`${API_BASE_URL}/content-ai/costs/report?${searchParams}`)
-    if (!response.ok) {
-      throw new Error('Failed to fetch cost report')
-    }
-    return response.json()
+    return apiClient.get<CostReport>(`/content-ai/costs/report?${searchParams}`)
   },
 
   getActiveAlerts: async (): Promise<CostAlert[]> => {
-    const response = await fetch(`${API_BASE_URL}/content-ai/costs/alerts`)
-    if (!response.ok) {
-      throw new Error('Failed to fetch active alerts')
-    }
-    return response.json()
+    return apiClient.get<CostAlert[]>('/content-ai/costs/alerts')
   },
 
   acknowledgeAlert: async (alertId: string): Promise<void> => {
-    const response = await fetch(`${API_BASE_URL}/content-ai/costs/alerts/${alertId}/acknowledge`, {
-      method: 'POST',
-    })
-    if (!response.ok) {
-      throw new Error('Failed to acknowledge alert')
-    }
+    await apiClient.post(`/content-ai/costs/alerts/${alertId}/acknowledge`)
   },
 
   getOptimizationRecommendations: async (): Promise<OptimizationRecommendation[]> => {
-    const response = await fetch(`${API_BASE_URL}/content-ai/costs/recommendations`)
-    if (!response.ok) {
-      throw new Error('Failed to fetch optimization recommendations')
-    }
-    return response.json()
+    return apiClient.get<OptimizationRecommendation[]>('/content-ai/costs/recommendations')
   },
 
   // Dead Letter Queue
@@ -222,22 +205,15 @@ const jobsApi = {
     topFailureReasons: Array<{ reason: string; count: number }>
     oldestUnresolvedEntry?: Date
   }> => {
-    const response = await fetch(`${API_BASE_URL}/content-ai/dlq/stats`)
-    if (!response.ok) {
-      throw new Error('Failed to fetch DLQ stats')
-    }
-    return response.json()
+    return apiClient.get<{
+      totalEntries: number
+      unresolvedEntries: number
+      topFailureReasons: Array<{ reason: string; count: number }>
+      oldestUnresolvedEntry?: Date
+    }>('/content-ai/dlq/stats')
   },
 
-  getDLQEntries: async (filters?: {
-    resolved?: boolean
-    failureReason?: string
-    provider?: string
-    contentId?: string
-    userId?: string
-    limit?: number
-    offset?: number
-  }): Promise<DLQEntry[]> => {
+  getDLQEntries: async (filters?: DLQFilters): Promise<DLQEntry[]> => {
     const searchParams = new URLSearchParams()
     if (filters?.resolved !== undefined) searchParams.append('resolved', filters.resolved.toString())
     if (filters?.failureReason) searchParams.append('failureReason', filters.failureReason)
@@ -247,52 +223,29 @@ const jobsApi = {
     if (filters?.limit) searchParams.append('limit', filters.limit.toString())
     if (filters?.offset) searchParams.append('offset', filters.offset.toString())
 
-    const response = await fetch(`${API_BASE_URL}/content-ai/dlq/entries?${searchParams}`)
-    if (!response.ok) {
-      throw new Error('Failed to fetch DLQ entries')
-    }
-    return response.json()
+    return apiClient.get<DLQEntry[]>(`/content-ai/dlq/entries?${searchParams}`)
   },
 
-  retryDLQEntry: async (entryId: string, options?: {
-    forceDifferentProvider?: boolean
-    resolvedBy?: string
-    notes?: string
-  }): Promise<{ success: boolean; newJobId?: string; error?: string }> => {
-    const response = await fetch(`${API_BASE_URL}/content-ai/dlq/entries/${entryId}/retry`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(options || {}),
-    })
-    if (!response.ok) {
-      throw new Error('Failed to retry DLQ entry')
-    }
-    return response.json()
+  retryDLQEntry: async (entryId: string, options?: DLQRetryOptions): Promise<{ success: boolean; newJobId?: string; error?: string }> => {
+    return apiClient.post<{ success: boolean; newJobId?: string; error?: string }>(
+      `/content-ai/dlq/entries/${entryId}/retry`,
+      options || {}
+    )
   },
 
-  resolveDLQEntry: async (entryId: string, resolution: {
-    method: 'manual_retry' | 'data_fix' | 'provider_fix' | 'abandoned'
-    resolvedBy: string
-    notes?: string
-  }): Promise<void> => {
-    const response = await fetch(`${API_BASE_URL}/content-ai/dlq/entries/${entryId}/resolve`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(resolution),
-    })
-    if (!response.ok) {
-      throw new Error('Failed to resolve DLQ entry')
-    }
+  resolveDLQEntry: async (entryId: string, resolution: DLQResolution): Promise<void> => {
+    await apiClient.post(`/content-ai/dlq/entries/${entryId}/resolve`, resolution)
   },
 
   // System metrics
   getSystemMetrics: async (): Promise<{
     queue: JobStats
-    deadLetterQueue: any
+    deadLetterQueue: {
+      totalEntries: number
+      unresolvedEntries: number
+      topFailureReasons: Array<{ reason: string; count: number }>
+      oldestUnresolvedEntry?: Date
+    }
     alerts: {
       active: number
       critical: number
@@ -304,11 +257,25 @@ const jobsApi = {
     }
     timestamp: Date
   }> => {
-    const response = await fetch(`${API_BASE_URL}/content-ai/admin/metrics`)
-    if (!response.ok) {
-      throw new Error('Failed to fetch system metrics')
-    }
-    return response.json()
+    return apiClient.get<{
+      queue: JobStats
+      deadLetterQueue: {
+        totalEntries: number
+        unresolvedEntries: number
+        topFailureReasons: Array<{ reason: string; count: number }>
+        oldestUnresolvedEntry?: Date
+      }
+      alerts: {
+        active: number
+        critical: number
+      }
+      costs: {
+        today: number
+        totalJobs: number
+        averageCostPerJob: number
+      }
+      timestamp: Date
+    }>('/content-ai/admin/metrics')
   }
 }
 
@@ -321,7 +288,7 @@ export const jobsKeys = {
   alerts: ['costs', 'alerts'] as const,
   recommendations: ['costs', 'recommendations'] as const,
   dlqStats: ['dlq', 'stats'] as const,
-  dlqEntries: (filters?: any) => ['dlq', 'entries', filters] as const,
+  dlqEntries: (filters?: DLQFilters) => ['dlq', 'entries', filters] as const,
   systemMetrics: ['system', 'metrics'] as const,
 }
 
@@ -385,7 +352,7 @@ export function useDLQStats() {
   })
 }
 
-export function useDLQEntries(filters?: any) {
+export function useDLQEntries(filters?: DLQFilters) {
   return useQuery({
     queryKey: jobsKeys.dlqEntries(filters),
     queryFn: () => jobsApi.getDLQEntries(filters),
@@ -438,7 +405,7 @@ export function useRetryDLQEntry() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ entryId, options }: { entryId: string; options?: any }) =>
+    mutationFn: ({ entryId, options }: { entryId: string; options?: DLQRetryOptions }) =>
       jobsApi.retryDLQEntry(entryId, options),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: jobsKeys.dlqStats })
@@ -451,7 +418,7 @@ export function useResolveDLQEntry() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ entryId, resolution }: { entryId: string; resolution: any }) =>
+    mutationFn: ({ entryId, resolution }: { entryId: string; resolution: DLQResolution }) =>
       jobsApi.resolveDLQEntry(entryId, resolution),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: jobsKeys.dlqStats })

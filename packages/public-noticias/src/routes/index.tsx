@@ -1,98 +1,93 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { getNoticias } from '../features/noticias'
+import { getCategories } from '../features/public-content/server'
+import { OptimizedImage } from '../components/OptimizedImage'
+import { SubscribeForm } from '../components/newsletter/SubscribeForm'
+import { useState } from 'react'
 
 export const Route = createFileRoute('/')({
   component: NoticiasPage,
+  loader: async () => {
+    // Fetch noticias publicadas con paginación
+    const noticiasResponse = await getNoticias({
+      data: {
+        page: 1,
+        limit: 10,
+        status: 'published',
+        sortBy: 'publishedAt',
+        sortOrder: 'desc',
+      }
+    })
+
+    // Fetch categorías dinámicas
+    const categoriesResponse = await getCategories()
+
+    return {
+      noticias: noticiasResponse.data || [],
+      pagination: noticiasResponse.pagination,
+      categories: categoriesResponse.success ? categoriesResponse.data : [],
+    }
+  },
 })
 
 function NoticiasPage() {
-  // Datos mock para el desarrollo
-  const mockArticles = [
-    {
-      id: '1',
-      title: 'NUEVO HOSPITAL GENERAL ABRE SUS PUERTAS EN PACHUCA',
-      summary: 'El moderno centro médico cuenta con tecnología de última generación y atenderá a más de 500,000 habitantes de la región.',
-      category: 'SALUD',
-      author: 'MARÍA GARCÍA',
-      publishedAt: '2025-01-19T10:30:00Z',
-      readTime: '4',
-      imageUrl: 'https://via.placeholder.com/800x400/854836/FFFFFF?text=HOSPITAL',
-      isFeatured: true,
-      isBreaking: false,
-    },
-    {
-      id: '2',
-      title: 'INVERSIÓN MILLONARIA PARA INFRAESTRUCTURA VIAL',
-      summary: 'El gobierno estatal anunció una inversión de 2,500 millones de pesos para modernizar las principales arterias de Pachuca.',
-      category: 'POLÍTICA',
-      author: 'CARLOS MENDOZA',
-      publishedAt: '2025-01-19T09:15:00Z',
-      readTime: '3',
-      imageUrl: 'https://via.placeholder.com/400x250/FFB22C/000000?text=CARRETERA',
-      isFeatured: false,
-      isBreaking: false,
-    },
-    {
-      id: '3',
-      title: 'ALERTA ROJA: TEMPERATURAS BAJO CERO ESTA SEMANA',
-      summary: 'El Servicio Meteorológico Nacional emite alerta por frente frío que traerá temperaturas de hasta -5°C.',
-      category: 'CLIMA',
-      author: 'LUIS TORRES',
-      publishedAt: '2025-01-19T08:45:00Z',
-      readTime: '2',
-      imageUrl: 'https://via.placeholder.com/400x250/FF0000/FFFFFF?text=CLIMA',
-      isFeatured: false,
-      isBreaking: true,
-    },
-    {
-      id: '4',
-      title: 'PACHUCA FC BUSCA REFUERZOS PARA EL CLAUSURA 2025',
-      summary: 'Los Tuzos evalúan la llegada de tres jugadores extranjeros para fortalecer el plantel.',
-      category: 'DEPORTES',
-      author: 'FERNANDO SILVA',
-      publishedAt: '2025-01-19T07:20:00Z',
-      readTime: '5',
-      imageUrl: 'https://via.placeholder.com/400x250/854836/FFFFFF?text=FUTBOL',
-      isFeatured: false,
-      isBreaking: false,
-    },
-    {
-      id: '5',
-      title: 'FESTIVAL CULTURAL CELEBRA TRADICIONES HIDALGUENSES',
-      summary: 'Más de 200 artistas participarán en el evento que se realizará en el centro histórico de Pachuca.',
-      category: 'CULTURA',
-      author: 'ANA LÓPEZ',
-      publishedAt: '2025-01-19T06:30:00Z',
-      readTime: '3',
-      imageUrl: 'https://via.placeholder.com/400x250/FFB22C/000000?text=CULTURA',
-      isFeatured: false,
-      isBreaking: false,
-    },
-  ]
+  const { noticias, categories } = Route.useLoaderData()
+  const navigate = useNavigate()
+  const [searchQuery, setSearchQuery] = useState('')
 
-  const sidebarArticles = [
-    {
-      id: '6',
-      title: 'Nueva Línea de Metrobús Conectará Pachuca con Mineral de la Reforma',
-      readTime: '2',
-      publishedAt: '2025-01-18T14:00:00Z',
-    },
-    {
-      id: '7',
-      title: 'Empresa Hidalguense Desarrolla Tecnología Verde Innovadora',
-      readTime: '4',
-      publishedAt: '2025-01-18T12:30:00Z',
-    },
-    {
-      id: '8',
-      title: 'Récord de Turistas en Prismas Basálticos Durante Vacaciones',
-      readTime: '3',
-      publishedAt: '2025-01-18T11:15:00Z',
-    },
-  ]
+  // Formatear fecha de hoy para el header
+  const formatHeaderDate = () => {
+    return new Intl.DateTimeFormat('es-MX', {
+      weekday: 'short',
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    }).format(new Date()).toUpperCase()
+  }
 
-  const featuredArticle = mockArticles.find(article => article.isFeatured)
-  const breakingNews = mockArticles.filter(article => article.isBreaking)
-  const regularArticles = mockArticles.filter(article => !article.isFeatured && !article.isBreaking)
+  // Manejar búsqueda
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      navigate({ to: '/busqueda/$query', params: { query: searchQuery.trim() } })
+    }
+  }
+
+  // Mapear noticias de la API al formato que espera la UI
+  const articles = noticias.map((noticia) => ({
+    id: noticia._id,
+    slug: noticia.slug,
+    title: (noticia.title || 'Sin título').toUpperCase(),
+    summary: noticia.summary || noticia.excerpt || '',
+    category: (noticia.category || 'General').toUpperCase(),
+    author: (noticia.author || 'Redacción').toUpperCase(),
+    publishedAt: noticia.publishedAt,
+    readTime: noticia.stats?.readTime || 0,
+    imageUrl: noticia.featuredImage?.large || noticia.featuredImage?.medium || noticia.featuredImage?.thumbnail || null,
+    imageAlt: noticia.featuredImage?.alt || noticia.title || 'Imagen de noticia',
+    isFeatured: noticia.isFeatured || false,
+    isBreaking: noticia.isBreaking || false,
+  }))
+
+  const featuredArticle = articles.find(article => article.isFeatured) || articles[0]
+  const breakingNews = articles.filter(article => article.isBreaking)
+
+  // Mostrar SOLO la primera breaking news en el banner, las demás van al grid regular
+  const breakingForBanner = breakingNews.length > 0 ? [breakingNews[0]] : []
+  const otherBreaking = breakingNews.slice(1) // Breaking news 2, 3, 4...
+
+  const regularArticles = articles.filter(article =>
+    article.id !== featuredArticle?.id &&
+    article.id !== breakingForBanner[0]?.id // Excluir solo la breaking del banner
+  )
+
+  // Para el sidebar: usar las últimas 3 noticias (excluyendo featured y breaking)
+  const sidebarArticles = regularArticles.slice(0, 3).map(article => ({
+    id: article.id,
+    slug: article.slug,
+    title: article.title,
+    readTime: article.readTime,
+  }))
 
   return (
     <div className="min-h-screen bg-[#F7F7F7]">
@@ -103,23 +98,16 @@ function NoticiasPage() {
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:justify-between md:items-center space-y-2 md:space-y-0 text-sm">
             <div className="flex items-center justify-center md:justify-start space-x-2 md:space-x-4">
               <span className="font-bold uppercase tracking-wider text-black text-xs md:text-sm">
-                VIE, 19 ENE 2025
+                {formatHeaderDate()}
               </span>
               <span className="text-[#854836] font-bold text-xs md:text-sm">EDICIÓN DE HOY</span>
             </div>
             <div className="flex items-center justify-center md:justify-end space-x-2 md:space-x-4">
-              <span className="text-[#854836] font-bold text-xs md:text-sm">DOW +0.41% ↑</span>
               <Link
                 to="/login"
                 className="bg-black text-white px-3 md:px-4 py-1 font-bold uppercase text-xs border-2 border-black hover:bg-[#FF0000] transition-colors"
               >
                 INICIAR SESIÓN
-              </Link>
-              <Link
-                to="/design-system"
-                className="bg-[#854836] text-white px-3 md:px-4 py-1 font-bold uppercase text-xs border-2 border-black hover:bg-[#FF0000] transition-colors"
-              >
-                DESIGN SYSTEM
               </Link>
             </div>
           </div>
@@ -131,16 +119,21 @@ function NoticiasPage() {
             <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 space-y-4 md:space-y-0">
               {/* Search - Full width on mobile */}
               <div className="md:flex-1 order-2 md:order-1">
-                <div className="relative max-w-md mx-auto md:mx-0">
+                <form onSubmit={handleSearch} className="relative max-w-md mx-auto md:mx-0">
                   <input
                     type="search"
                     placeholder="BUSCAR..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full px-4 py-2 border-2 border-black bg-[#F7F7F7] font-bold uppercase text-sm placeholder-black focus:outline-none focus:bg-white"
                   />
-                  <div className="absolute right-2 top-2 w-6 h-6 bg-black flex items-center justify-center">
+                  <button
+                    type="submit"
+                    className="absolute right-2 top-2 w-6 h-6 bg-black flex items-center justify-center hover:bg-[#FF0000] transition-colors"
+                  >
                     <div className="w-3 h-3 border-2 border-white rounded-full"></div>
-                  </div>
-                </div>
+                  </button>
+                </form>
               </div>
 
               {/* Logo - Centered and larger on mobile */}
@@ -162,9 +155,6 @@ function NoticiasPage() {
                   <div className="text-sm font-bold uppercase tracking-wider text-black">
                     HIDALGO, MÉXICO
                   </div>
-                  <div className="text-sm text-[#854836] font-bold">
-                    ARQUITECTURA DIGITAL
-                  </div>
                 </div>
               </div>
             </div>
@@ -176,14 +166,23 @@ function NoticiasPage() {
           <div className="max-w-7xl mx-auto px-4">
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center justify-center space-x-4 lg:space-x-8 py-3">
-              {['LOCAL', 'POLÍTICA', 'DEPORTES', 'ECONOMÍA', 'CULTURA', 'TECNOLOGÍA', 'INTERNACIONAL', 'SALUD'].map((section) => (
-                <button
-                  key={section}
+              <Link
+                to="/"
+                className="font-bold uppercase text-sm tracking-wider hover:text-[#FFB22C] transition-colors relative group"
+              >
+                INICIO
+                <div className="absolute -bottom-1 left-0 w-0 h-1 bg-[#FFB22C] group-hover:w-full transition-all duration-300"></div>
+              </Link>
+              {categories.slice(0, 8).map((category) => (
+                <Link
+                  key={category.id}
+                  to="/categoria/$slug"
+                  params={{ slug: category.slug }}
                   className="font-bold uppercase text-sm tracking-wider hover:text-[#FFB22C] transition-colors relative group"
                 >
-                  {section}
+                  {category.name}
                   <div className="absolute -bottom-1 left-0 w-0 h-1 bg-[#FFB22C] group-hover:w-full transition-all duration-300"></div>
-                </button>
+                </Link>
               ))}
             </div>
 
@@ -208,13 +207,21 @@ function NoticiasPage() {
 
               {/* Mobile Menu */}
               <div id="mobile-menu" className="hidden mt-4 grid grid-cols-2 gap-2">
-                {['LOCAL', 'POLÍTICA', 'DEPORTES', 'ECONOMÍA', 'CULTURA', 'TECNOLOGÍA', 'INTERNACIONAL', 'SALUD'].map((section) => (
-                  <button
-                    key={section}
-                    className="bg-[#854836] text-white px-3 py-2 font-bold uppercase text-xs tracking-wider border border-[#FFB22C] hover:bg-[#FF0000] transition-colors"
+                <Link
+                  to="/"
+                  className="bg-black text-white px-3 py-2 font-bold uppercase text-xs tracking-wider border border-[#FFB22C] hover:bg-[#FF0000] transition-colors text-center"
+                >
+                  INICIO
+                </Link>
+                {categories.map((category) => (
+                  <Link
+                    key={category.id}
+                    to="/categoria/$slug"
+                    params={{ slug: category.slug }}
+                    className="bg-[#854836] text-white px-3 py-2 font-bold uppercase text-xs tracking-wider border border-[#FFB22C] hover:bg-[#FF0000] transition-colors text-center"
                   >
-                    {section}
-                  </button>
+                    {category.name}
+                  </Link>
                 ))}
               </div>
             </div>
@@ -223,7 +230,7 @@ function NoticiasPage() {
       </header>
 
       {/* Breaking News Banner */}
-      {breakingNews.length > 0 && (
+      {breakingForBanner.length > 0 && (
         <div className="bg-[#FF0000] text-white py-3 border-b-4 border-black relative overflow-hidden">
           <div className="absolute left-0 top-0 w-8 h-8 bg-black transform rotate-45 -translate-x-4 -translate-y-4"></div>
           <div className="max-w-7xl mx-auto px-4">
@@ -232,7 +239,7 @@ function NoticiasPage() {
                 ÚLTIMO MOMENTO
               </div>
               <div className="font-bold uppercase text-lg tracking-wide">
-                {breakingNews[0].title}
+                {breakingForBanner[0].title}
               </div>
             </div>
           </div>
@@ -276,7 +283,8 @@ function NoticiasPage() {
                         POR {featuredArticle.author}
                       </div>
                       <Link
-                        to={`/articulo/${featuredArticle.id}`}
+                        to="/noticia/$slug"
+                        params={{ slug: featuredArticle.slug }}
                         className="bg-black text-white px-6 py-2 font-bold uppercase text-sm border-2 border-black hover:bg-[#FF0000] transition-colors relative group inline-block"
                       >
                         <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#FFB22C] transform rotate-45 group-hover:bg-white transition-colors"></div>
@@ -285,14 +293,18 @@ function NoticiasPage() {
                     </div>
                   </div>
 
-                  <div className="relative">
-                    <img
-                      src={featuredArticle.imageUrl}
-                      alt={featuredArticle.title}
-                      className="w-full h-64 md:h-full object-cover border-2 border-black"
-                    />
-                    <div className="absolute bottom-2 right-2 w-6 h-6 bg-[#FF0000] transform rotate-45"></div>
-                  </div>
+                  {featuredArticle.imageUrl && (
+                    <div className="relative">
+                      <img
+                        src={featuredArticle.imageUrl}
+                        alt={featuredArticle.imageAlt}
+                        className="w-full h-64 md:h-full object-cover border-2 border-black"
+                        loading="eager"
+                        decoding="async"
+                      />
+                      <div className="absolute bottom-2 right-2 w-6 h-6 bg-[#FF0000] transform rotate-45"></div>
+                    </div>
+                  )}
                 </div>
               </article>
             )}
@@ -303,42 +315,86 @@ function NoticiasPage() {
                 <article key={article.id} className="bg-white border-2 border-black p-4 relative hover:shadow-[4px_4px_0px_0px_#000000] transition-shadow group">
                   <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#FFB22C] transform rotate-45 group-hover:bg-[#FF0000] transition-colors"></div>
 
-                  <img
-                    src={article.imageUrl}
-                    alt={article.title}
-                    className="w-full h-40 object-cover border-2 border-black mb-4"
-                  />
+                  {article.imageUrl ? (
+                    <OptimizedImage
+                      src={article.imageUrl}
+                      alt={article.imageAlt}
+                      className="w-full h-40 object-cover border-2 border-black mb-4"
+                      priority={false}
+                    />
+                  ) : (
+                    <div className="w-full h-40 bg-[#FFB22C] border-2 border-black mb-4 p-4 flex flex-col justify-between relative">
+                      <div className="absolute top-2 left-2 right-2 border-t-2 border-black"></div>
+                      <div className="absolute bottom-2 left-2 right-2 border-b-2 border-black"></div>
+                      <div className="flex-1 flex items-center justify-center px-2">
+                        <p className="text-black font-bold text-sm leading-tight text-center uppercase tracking-wider line-clamp-4">
+                          {article.summary || 'NOTICIA SIN EXTRACTO DISPONIBLE'}
+                        </p>
+                      </div>
+                      <div className="absolute top-1 right-1 w-4 h-4 bg-black transform rotate-45"></div>
+                      <div className="absolute bottom-1 left-1 w-4 h-4 bg-[#854836] transform rotate-45"></div>
+                    </div>
+                  )}
 
-                  <div className="flex items-center space-x-2 mb-2">
-                    <span className="bg-[#854836] text-white px-2 py-1 font-bold uppercase text-xs tracking-wider">
+                  <div className="flex items-center flex-wrap gap-2 mb-2">
+                    <span className="bg-[#854836] text-white px-2 py-1 font-bold uppercase text-xs tracking-wider border-2 border-black">
                       {article.category}
                     </span>
-                    <span className="text-xs text-[#854836] font-bold uppercase">
-                      {article.readTime} MIN
-                    </span>
+                    {article.readTime > 0 && (
+                      <span className="text-xs text-[#854836] font-bold uppercase">
+                        {article.readTime} MIN
+                      </span>
+                    )}
+                    {article.isFeatured && (
+                      <span className="bg-[#FF0000] text-white px-2 py-1 font-bold uppercase text-xs tracking-wider border-2 border-black">
+                        ⭐ DESTACADA
+                      </span>
+                    )}
                   </div>
 
-                  <h3 className="text-lg font-bold uppercase tracking-tight text-black mb-2 leading-tight">
+                  <h3 className="text-lg font-bold uppercase tracking-tight text-black mb-2 leading-tight line-clamp-3">
                     {article.title}
                   </h3>
 
-                  <p className="text-sm leading-relaxed text-black mb-3">
+                  <p className="text-sm leading-relaxed text-black mb-3 line-clamp-2">
                     {article.summary}
                   </p>
 
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold uppercase tracking-wider text-[#854836]">
-                      {article.author}
-                    </span>
+                  <div className="flex items-center justify-between text-xs border-t-2 border-black pt-3">
+                    <div className="flex flex-col gap-1">
+                      <span className="font-bold uppercase tracking-wider text-[#854836]">
+                        {article.author}
+                      </span>
+                      <span className="text-black font-bold text-[10px] uppercase">
+                        {new Intl.DateTimeFormat('es-MX', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                        }).format(new Date(article.publishedAt)).toUpperCase()}
+                      </span>
+                    </div>
                     <Link
-                      to={`/articulo/${article.id}`}
-                      className="text-black font-bold uppercase hover:text-[#FF0000] transition-colors"
+                      to="/noticia/$slug"
+                      params={{ slug: article.slug }}
+                      className="bg-black text-white px-3 py-2 font-bold uppercase text-xs border-2 border-black hover:bg-[#FF0000] transition-colors"
                     >
                       LEER →
                     </Link>
                   </div>
                 </article>
               ))}
+            </div>
+
+            {/* Ver Todas las Noticias */}
+            <div className="mt-8 text-center">
+              <Link
+                to="/noticias"
+                className="inline-block bg-black text-white px-8 py-4 font-black uppercase text-lg border-4 border-black hover:bg-[#FF0000] transition-colors relative group"
+              >
+                <div className="absolute -top-2 -left-2 w-6 h-6 bg-[#FFB22C] transform rotate-45 group-hover:bg-white transition-colors"></div>
+                VER TODAS LAS NOTICIAS →
+                <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-[#854836] transform rotate-45 group-hover:bg-[#FF0000] transition-colors"></div>
+              </Link>
             </div>
           </div>
 
@@ -355,14 +411,19 @@ function NoticiasPage() {
 
               <div className="space-y-4">
                 {sidebarArticles.map((article, index) => (
-                  <div key={article.id} className="border-b border-[#F7F7F7] pb-3 last:border-b-0">
+                  <Link
+                    key={article.id}
+                    to="/noticia/$slug"
+                    params={{ slug: article.slug }}
+                    className="border-b border-[#F7F7F7] pb-3 last:border-b-0 block"
+                  >
                     <h4 className="text-sm font-bold text-black leading-tight mb-2 hover:text-[#854836] transition-colors cursor-pointer">
                       {article.title}
                     </h4>
                     <div className="text-xs text-[#854836] font-bold uppercase">
                       {article.readTime} MIN LECTURA
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -425,8 +486,29 @@ function NoticiasPage() {
         </div>
       </main>
 
+      {/* Sección de Suscripción a Boletines */}
+      <section id="suscribirse" className="bg-[#854836] border-t-8 border-b-8 border-black py-16 px-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tight text-white mb-4">
+              RECIBE NUESTROS BOLETINES
+            </h2>
+            <p className="text-xl text-white max-w-2xl mx-auto">
+              Mantente informado con las noticias más importantes de Pachuca.
+              Elige los boletines que quieres recibir.
+            </p>
+          </div>
+
+          <div className="bg-white border-4 border-black p-8 relative">
+            <div className="absolute -top-2 -left-2 w-8 h-8 bg-[#FFB22C] transform rotate-45"></div>
+            <SubscribeForm />
+            <div className="absolute -bottom-2 -right-2 w-0 h-0 border-l-[16px] border-r-[16px] border-b-[16px] border-l-transparent border-r-transparent border-b-[#FFB22C]"></div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
-      <footer className="bg-black text-white border-t-4 border-[#FFB22C] mt-12">
+      <footer className="bg-black text-white border-t-4 border-[#FFB22C]">
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
 
@@ -435,18 +517,6 @@ function NoticiasPage() {
               <h4 className="font-black uppercase text-[#FFB22C] mb-3 tracking-wider">SECCIONES</h4>
               <ul className="space-y-2 text-sm">
                 {['Página Principal', 'LOCAL', 'POLÍTICA', 'DEPORTES', 'ECONOMÍA', 'CULTURA', 'TECNOLOGÍA'].map((item) => (
-                  <li key={item}>
-                    <button className="hover:text-[#FFB22C] transition-colors uppercase font-bold">{item}</button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Multimedia */}
-            <div>
-              <h4 className="font-black uppercase text-[#FFB22C] mb-3 tracking-wider">MULTIMEDIA</h4>
-              <ul className="space-y-2 text-sm">
-                {['PODCASTS', 'VIDEOS', 'FOTOGRAFÍA', 'GALERÍA', 'EN VIVO'].map((item) => (
                   <li key={item}>
                     <button className="hover:text-[#FFB22C] transition-colors uppercase font-bold">{item}</button>
                   </li>
@@ -470,11 +540,26 @@ function NoticiasPage() {
             <div>
               <h4 className="font-black uppercase text-[#FFB22C] mb-3 tracking-wider">MÁS</h4>
               <ul className="space-y-2 text-sm">
-                {['CONTACTO', 'PUBLICIDAD', 'SUSCRIPCIONES', 'AVISO DE PRIVACIDAD', 'TÉRMINOS DE USO'].map((item) => (
-                  <li key={item}>
-                    <button className="hover:text-[#FFB22C] transition-colors uppercase font-bold">{item}</button>
-                  </li>
-                ))}
+                <li>
+                  <Link to="/contacto" className="hover:text-[#FFB22C] transition-colors uppercase font-bold">
+                    CONTACTO
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/publicidad" className="hover:text-[#FFB22C] transition-colors uppercase font-bold">
+                    PUBLICIDAD
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/suscripciones" className="hover:text-[#FFB22C] transition-colors uppercase font-bold">
+                    SUSCRIPCIONES
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/aviso-privacidad" className="hover:text-[#FFB22C] transition-colors uppercase font-bold">
+                    AVISO DE PRIVACIDAD
+                  </Link>
+                </li>
               </ul>
             </div>
 
@@ -496,7 +581,7 @@ function NoticiasPage() {
               © 2025 NOTICIAS PACHUCA. TODOS LOS DERECHOS RESERVADOS.
             </p>
             <p className="text-xs text-[#FFB22C] mt-1 font-bold uppercase">
-              ARQUITECTURA DIGITAL BRUTALIST | HIDALGO, MÉXICO
+              HIDALGO, MÉXICO
             </p>
           </div>
         </div>

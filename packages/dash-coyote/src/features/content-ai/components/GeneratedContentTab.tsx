@@ -168,7 +168,7 @@ export function GeneratedContentTab() {
 
   // Build filters for query
   const filters = {
-    ...(statusFilter !== "all" && { status: statusFilter as any }),
+    ...(statusFilter !== "all" && { status: statusFilter as 'pending' | 'processing' | 'completed' | 'failed' }),
     // limit: 50  // Temporalmente deshabilitado para debug
   }
 

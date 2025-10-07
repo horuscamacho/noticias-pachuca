@@ -54,8 +54,20 @@ export class AIContentGeneration {
 
   @Prop({ type: Object })
   socialMediaCopies?: {
-    facebook?: string; // Copy para Facebook con hashtags
-    twitter?: string; // Tweet con hashtags (máx 280 chars)
+    facebook?: {
+      hook: string;
+      copy: string;
+      emojis: string[];
+      hookType: 'Scary' | 'FreeValue' | 'Strange' | 'Sexy' | 'Familiar';
+      estimatedEngagement: 'high' | 'medium' | 'low';
+    };
+    twitter?: {
+      tweet: string;
+      hook: string;
+      emojis: string[];
+      hookType: string;
+      threadIdeas: string[];
+    };
     instagram?: string; // Caption para Instagram con emojis y hashtags
     linkedin?: string; // Post profesional para LinkedIn
   };
@@ -97,6 +109,10 @@ export class AIContentGeneration {
     temperature: number; // Temperatura usada
     maxTokens: number; // Límite de tokens
     finishReason: string; // Razón de finalización
+    contentQuality?: number; // Calidad del contenido (0-100)
+    aiProvider?: string; // Proveedor de IA usado
+    tokensUsed?: number; // Tokens usados (alias)
+    costEstimate?: number; // Estimado de costo (alias)
   };
 
   @Prop({ type: Object })
@@ -154,6 +170,16 @@ export class AIContentGeneration {
 
   @Prop({ default: Date.now })
   generatedAt: Date; // Timestamp de generación
+
+  // Propiedades adicionales para Generator-Pro
+  @Prop({ trim: true })
+  category?: string; // Categoría del contenido
+
+  @Prop({ trim: true })
+  summary?: string; // Resumen del contenido
+
+  @Prop()
+  completedAt?: Date; // Fecha de completado
 
   @Prop({ default: Date.now })
   createdAt: Date;

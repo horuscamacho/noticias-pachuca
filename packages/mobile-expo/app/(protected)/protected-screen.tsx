@@ -4,7 +4,6 @@ import {
   StyleSheet,
   SafeAreaView,
   ScrollView,
-  TouchableOpacity,
   Alert
 } from 'react-native'
 import { useRouter } from 'expo-router'
@@ -12,6 +11,8 @@ import { ThemedText } from '@/src/components/ThemedText'
 import { useAuth } from '@/src/hooks/useAuth'
 import { useSocket } from '@/src/features/socket/hooks/useSocket'
 import { useResponsive } from '@/src/features/responsive'
+import { Button } from '@/components/ui/button'
+import { Text } from '@/components/ui/text'
 
 const ProtectedScreen = () => {
   const router = useRouter()
@@ -216,16 +217,25 @@ const ProtectedScreen = () => {
           </View>
         </View>
 
-        {/* Logout Button */}
+        {/* Action Buttons */}
         <View style={[styles.buttonContainer, isTablet && styles.buttonContainerTablet]}>
-          <TouchableOpacity
-            style={[styles.logoutButton, isTablet && styles.logoutButtonTablet]}
-            onPress={handleLogout}
+          <Button
+            variant="default"
+            size="lg"
+            onPress={() => Alert.alert('Enviar', 'Funcionalidad de envío')}
+            className={isTablet ? 'max-w-[300px] w-full mb-4' : 'w-full mb-4'}
           >
-            <ThemedText variant="label-large" style={styles.logoutButtonText}>
-              Cerrar Sesión
-            </ThemedText>
-          </TouchableOpacity>
+            <Text className="text-primary-foreground font-semibold">Enviar</Text>
+          </Button>
+
+          <Button
+            variant="destructive"
+            size="lg"
+            onPress={handleLogout}
+            className={isTablet ? 'max-w-[300px] w-full' : 'w-full'}
+          >
+            <Text className="text-white font-semibold">Cerrar Sesión</Text>
+          </Button>
         </View>
       </ScrollView>
     </SafeAreaView>

@@ -31,7 +31,7 @@ const LoginScreen: React.FC = () => {
       clearError()
       await login({ emailOrUsername: email, password })
       // Redirigir manualmente después del login exitoso
-      router.replace('/(protected)/protected-screen')
+      router.replace('/(tabs)/home')
     } catch (error) {
       console.error('Login failed:', error)
       Alert.alert(

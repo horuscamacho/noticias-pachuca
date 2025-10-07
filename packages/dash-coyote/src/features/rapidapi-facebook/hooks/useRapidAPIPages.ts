@@ -61,8 +61,8 @@ const updateExtractionConfig = async (pageId: string, extractionConfig: UpdateRa
 }
 
 // 📄 Get Posts for a page
-const getPagePosts = async (pageId: string, pagination: { page?: number; limit?: number } = {}): Promise<{ data: RapidAPIPost[]; pagination: any }> => {
-  return await apiClient.get<{ data: RapidAPIPost[]; pagination: any }>(`/rapidapi-facebook/pages/${pageId}/posts`, {
+const getPagePosts = async (pageId: string, pagination: { page?: number; limit?: number } = {}): Promise<{ data: RapidAPIPost[]; pagination: PaginatedResponse<RapidAPIPost>['pagination'] }> => {
+  return await apiClient.get<{ data: RapidAPIPost[]; pagination: PaginatedResponse<RapidAPIPost>['pagination'] }>(`/rapidapi-facebook/pages/${pageId}/posts`, {
     params: pagination
   })
 }

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{boletinTitle}} - Noticias Pachuca</title>
+  <style>
+    @media only screen and (max-width: 600px) {
+      .mobile-padding { padding: 16px !important; }
+      .mobile-text { font-size: 14px !important; }
+      .mobile-heading { font-size: 16px !important; }
+      .mobile-image { height: 120px !important; }
+    }
+  </style>
+</head>
+<body style="margin: 0; padding: 0; font-family: Inter, Arial, sans-serif; background-color: #F7F7F7;">
+  <!-- Main Container -->
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+
+    <!-- Logo Header - BRUTAL STYLE -->
+    <div style="background-color: #000000; border: 4px solid #000000; padding: 24px; margin-bottom: 0; text-align: center;">
+      <h1 style="font-family: 'Roboto Mono', 'Courier New', monospace; font-size: 32px; font-weight: 900; margin: 0; color: #FFFFFF; text-transform: uppercase; letter-spacing: 4px; line-height: 1.2;">
+        NOTICIAS<br>PACHUCA
+      </h1>
+      <div style="margin-top: 12px; height: 4px; background-color: #FFB22C; width: 80px; margin-left: auto; margin-right: auto;"></div>
+    </div>
+
+    <!-- Boletin Type Banner - Dynamic color based on type -->
+    <div style="background-color: {{#if (eq boletinType 'MAÑANA')}}#FFB22C{{else if (eq boletinType 'TARDE')}}#854836{{else if (eq boletinType 'SEMANAL')}}#000000{{else if (eq boletinType 'DEPORTES')}}#FF0000{{else}}#000000{{/if}};
+                border-left: 4px solid #000000;
+                border-right: 4px solid #000000;
+                padding: 16px 24px;
+                margin-bottom: 0;
+                text-align: center;">
+      <div style="font-family: 'Roboto Mono', 'Courier New', monospace; font-size: 20px; font-weight: 900; color: #FFFFFF; text-transform: uppercase; letter-spacing: 3px;">
+        {{#if (eq boletinType 'MAÑANA')}}☀️ BOLETÍN MAÑANA{{/if}}
+        {{#if (eq boletinType 'TARDE')}}🌆 BOLETÍN TARDE{{/if}}
+        {{#if (eq boletinType 'SEMANAL')}}📅 BOLETÍN SEMANAL{{/if}}
+        {{#if (eq boletinType 'DEPORTES')}}⚽ BOLETÍN DEPORTES{{/if}}
+      </div>
+      <div style="font-family: 'Roboto Mono', 'Courier New', monospace; font-size: 12px; font-weight: 700; color: #FFFFFF; text-transform: uppercase; letter-spacing: 2px; margin-top: 8px;">
+        {{fecha}}
+      </div>
+    </div>
+
+    <!-- Main Content Card -->
+    <div style="background-color: #FFFFFF; border-left: 4px solid #000000; border-right: 4px solid #000000; border-bottom: 4px solid #000000; padding: 32px 24px;">
+
+      <!-- Intro Text -->
+      <p style="margin: 0 0 32px 0; font-size: 16px; line-height: 1.7; color: #000000; font-weight: 500; text-align: center; background-color: #F7F7F7; border-left: 4px solid #FFB22C; padding: 16px;">
+        {{#if (eq boletinType 'MAÑANA')}}Las <strong>5 noticias más importantes</strong> para comenzar tu día informado.{{/if}}
+        {{#if (eq boletinType 'TARDE')}}Las <strong>3 noticias más leídas</strong> del día en Pachuca.{{/if}}
+        {{#if (eq boletinType 'SEMANAL')}}El <strong>resumen semanal</strong> con las 10 noticias que marcaron la semana.{{/if}}
+        {{#if (eq boletinType 'DEPORTES')}}Las <strong>noticias deportivas más relevantes</strong> de la región y los Tuzos.{{/if}}
+      </p>
+
+      <!-- Decorative Divider -->
+      <div style="height: 4px; background-color: #000000; margin: 0 0 32px 0;"></div>
+
+      <!-- News Loop -->
+      {{#each noticias}}
+      <div style="margin-bottom: 32px; border: 4px solid #000000; background-color: #FFFFFF;">
+
+        <!-- News Image -->
+        {{#if imagen}}
+        <div style="position: relative;">
+          <img src="{{imagen}}"
+               alt="{{titulo}}"
+               style="width: 100%;
+                      height: 240px;
+                      object-fit: cover;
+                      display: block;
+                      border-bottom: 4px solid #000000;">
+
+          <!-- Category Badge on Image -->
+          {{#if categoria}}
+          <div style="position: absolute;
+                      top: 16px;
+                      left: 16px;
+                      background-color: #FFB22C;
+                      border: 2px solid #000000;
+                      padding: 6px 12px;
+                      box-shadow: 2px 2px 0px 0px rgba(0,0,0,1);">
+            <span style="font-family: 'Roboto Mono', 'Courier New', monospace;
+                         font-size: 11px;
+                         font-weight: 900;
+                         color: #000000;
+                         text-transform: uppercase;
+                         letter-spacing: 1px;">
+              {{categoria}}
+            </span>
+          </div>
+          {{/if}}
+        </div>
+        {{/if}}
+
+        <!-- News Content -->
+        <div style="padding: 24px;">
+
+          <!-- Category (if no image) -->
+          {{#unless imagen}}
+          {{#if categoria}}
+          <div style="margin-bottom: 12px;">
+            <span style="font-family: 'Roboto Mono', 'Courier New', monospace;
+                         font-size: 11px;
+                         font-weight: 900;
+                         color: #000000;
+                         text-transform: uppercase;
+                         letter-spacing: 1px;
+                         background-color: #FFB22C;
+                         border: 2px solid #000000;
+                         padding: 4px 10px;
+                         display: inline-block;">
+              {{categoria}}
+            </span>
+          </div>
+          {{/if}}
+          {{/unless}}
+
+          <!-- Title -->
+          <h2 style="font-family: 'Roboto Mono', 'Courier New', monospace;
+                     font-size: 20px;
+                     font-weight: 900;
+                     margin: 0 0 16px 0;
+                     color: #000000;
+                     text-transform: uppercase;
+                     letter-spacing: 1px;
+                     line-height: 1.3;">
+            {{titulo}}
+          </h2>
+
+          <!-- Excerpt -->
+          {{#if resumen}}
+          <p style="margin: 0 0 20px 0;
+                    font-size: 15px;
+                    line-height: 1.7;
+                    color: #000000;">
+            {{resumen}}
+          </p>
+          {{/if}}
+
+          <!-- Metadata -->
+          <div style="display: table; width: 100%; margin-bottom: 20px; padding-top: 12px; border-top: 2px solid #F7F7F7;">
+            <div style="display: table-cell; vertical-align: middle;">
+              <span style="font-size: 12px; color: #854836; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">
+                {{#if autor}}{{autor}} | {{/if}}{{#if fecha_publicacion}}{{fecha_publicacion}}{{/if}}
+              </span>
+            </div>
+          </div>
+
+          <!-- CTA Button -->
+          <div style="text-align: left;">
+            <a href="{{link}}"
+               style="display: inline-block;
+                      background-color: #000000;
+                      color: #FFFFFF;
+                      text-decoration: none;
+                      padding: 14px 28px;
+                      font-family: 'Roboto Mono', 'Courier New', monospace;
+                      font-weight: 900;
+                      font-size: 14px;
+                      text-transform: uppercase;
+                      letter-spacing: 2px;
+                      border: 4px solid #000000;
+                      box-shadow: 4px 4px 0px 0px rgba(0,0,0,1);">
+              LEER MÁS →
+            </a>
+          </div>
+        </div>
+      </div>
+      {{/each}}
+
+      <!-- Decorative Divider -->
+      <div style="height: 4px; background-color: #000000; margin: 32px 0;"></div>
+
+      <!-- Social Share Section -->
+      <div style="background-color: #F7F7F7; border: 4px solid #000000; padding: 24px; text-align: center;">
+        <h3 style="font-family: 'Roboto Mono', 'Courier New', monospace;
+                   font-size: 16px;
+                   font-weight: 900;
+                   margin: 0 0 16px 0;
+                   color: #000000;
+                   text-transform: uppercase;
+                   letter-spacing: 2px;">
+          COMPARTE ESTE BOLETÍN
+        </h3>
+
+        <div style="margin-top: 16px;">
+          <!-- Social Buttons -->
+          <a href="#" style="display: inline-block;
+                             background-color: #000000;
+                             color: #FFFFFF;
+                             text-decoration: none;
+                             padding: 12px 16px;
+                             border: 2px solid #000000;
+                             margin: 0 4px;
+                             font-family: 'Roboto Mono', 'Courier New', monospace;
+                             font-weight: 900;
+                             font-size: 12px;">
+            FB
+          </a>
+          <a href="#" style="display: inline-block;
+                             background-color: #000000;
+                             color: #FFFFFF;
+                             text-decoration: none;
+                             padding: 12px 16px;
+                             border: 2px solid #000000;
+                             margin: 0 4px;
+                             font-family: 'Roboto Mono', 'Courier New', monospace;
+                             font-weight: 900;
+                             font-size: 12px;">
+            TW
+          </a>
+          <a href="#" style="display: inline-block;
+                             background-color: #000000;
+                             color: #FFFFFF;
+                             text-decoration: none;
+                             padding: 12px 16px;
+                             border: 2px solid #000000;
+                             margin: 0 4px;
+                             font-family: 'Roboto Mono', 'Courier New', monospace;
+                             font-weight: 900;
+                             font-size: 12px;">
+            WA
+          </a>
+        </div>
+      </div>
+
+      <!-- Preferences CTA -->
+      <div style="margin-top: 32px; background-color: #FFFFFF; border: 4px solid #FFB22C; padding: 20px; text-align: center;">
+        <p style="margin: 0 0 12px 0; font-size: 14px; color: #000000; font-weight: 600;">
+          ¿Quieres cambiar tus preferencias de boletines?
+        </p>
+        <a href="{{FRONTEND_URL}}/suscripciones"
+           style="display: inline-block;
+                  background-color: #FFB22C;
+                  color: #000000;
+                  text-decoration: none;
+                  padding: 10px 24px;
+                  font-family: 'Roboto Mono', 'Courier New', monospace;
+                  font-weight: 900;
+                  font-size: 12px;
+                  text-transform: uppercase;
+                  letter-spacing: 1px;
+                  border: 2px solid #000000;">
+          GESTIONAR SUSCRIPCIÓN
+        </a>
+      </div>
+
+    </div>
+
+    <!-- Footer - BRUTAL STYLE -->
+    <div style="background-color: #000000; border: 4px solid #000000; border-top: 0; padding: 24px; text-align: center;">
+      <p style="margin: 0 0 8px 0; font-family: 'Roboto Mono', 'Courier New', monospace; font-size: 12px; color: #FFFFFF; text-transform: uppercase; letter-spacing: 2px; font-weight: 700;">
+        NOTICIAS PACHUCA
+      </p>
+      <p style="margin: 0 0 12px 0; font-size: 11px; color: #FFB22C; font-weight: 600;">
+        INFORMACIÓN BRUTAL. SIEMPRE DIRECTA.
+      </p>
+      <div style="height: 2px; background-color: #FFB22C; width: 60px; margin: 12px auto;"></div>
+      <p style="margin: 0 0 12px 0; font-size: 11px; color: #FFFFFF;">
+        © 2024 Noticias Pachuca. Todos los derechos reservados.
+      </p>
+      <p style="margin: 0 0 12px 0; font-size: 11px; color: #FFFFFF;">
+        Hidalgo, México
+      </p>
+
+      <!-- Unsubscribe Link -->
+      <div style="margin-top: 16px; padding-top: 16px; border-top: 2px solid #854836;">
+        <p style="margin: 0 0 8px 0; font-size: 10px; color: #854836;">
+          ¿No quieres recibir más estos emails?
+        </p>
+        <a href="{{FRONTEND_URL}}/desuscribir?token={{unsubscribeToken}}"
+           style="color: #FF0000;
+                  font-size: 10px;
+                  text-decoration: underline;
+                  font-family: 'Roboto Mono', 'Courier New', monospace;
+                  font-weight: 700;
+                  text-transform: uppercase;
+                  letter-spacing: 1px;">
+          DARSE DE BAJA
+        </a>
+      </div>
+    </div>
+
+    <!-- Triangular Decorations -->
+    <div style="text-align: center; margin-top: 16px;">
+      <div style="width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 12px solid #000000; display: inline-block; margin: 0 4px;"></div>
+      <div style="width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 12px solid #FFB22C; display: inline-block; margin: 0 4px;"></div>
+      <div style="width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 12px solid #854836; display: inline-block; margin: 0 4px;"></div>
+      <div style="width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 12px solid #FF0000; display: inline-block; margin: 0 4px;"></div>
+    </div>
+
+  </div>
+</body>
+</html>

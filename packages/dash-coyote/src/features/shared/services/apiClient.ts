@@ -13,10 +13,27 @@ class ApiClient {
     resolve: (value: string) => void;
     reject: (error: Error) => void;
   }> = [];
+  // Referencia mutable para tokens (actualizada via subscription)
+  private tokensRef: { current: AuthTokens | null } = { current: null };
+  private isAuthenticatedRef: { current: boolean } = { current: false };
 
   constructor() {
     this.client = this.createAxiosInstance();
+    this.setupTokenSubscription();
     this.setupInterceptors();
+  }
+
+  private setupTokenSubscription(): void {
+    // Suscribirse a cambios en authStore para mantener ref actualizada
+    useAuthStore.subscribe((state) => {
+      this.tokensRef.current = state.tokens;
+      this.isAuthenticatedRef.current = state.isAuthenticated;
+    });
+
+    // Inicializar con valores actuales
+    const currentState = useAuthStore.getState();
+    this.tokensRef.current = currentState.tokens;
+    this.isAuthenticatedRef.current = currentState.isAuthenticated;
   }
 
   private createAxiosInstance(): AxiosInstance {
@@ -24,7 +41,7 @@ class ApiClient {
 
     return axios.create({
       baseURL,
-      timeout: 10000,
+      timeout: 60000, // 60s para generación de contenido con IA
       // 🍪 IMPORTANT: Include cookies for session management
       withCredentials: true,
       headers: {
@@ -37,14 +54,12 @@ class ApiClient {
     // 📤 REQUEST INTERCEPTOR - Platform detection + auth
     this.client.interceptors.request.use(
       (config) => {
-        const { tokens, isAuthenticated } = useAuthStore.getState();
-
         // 🌐 Platform detection header (required by NestJS API)
         config.headers["X-Platform"] = "web";
 
         // 🔑 JWT Token for API auth (if available)
-        if (tokens?.accessToken && isAuthenticated) {
-          config.headers.Authorization = `Bearer ${tokens.accessToken}`;
+        if (this.tokensRef.current?.accessToken && this.isAuthenticatedRef.current) {
+          config.headers.Authorization = `Bearer ${this.tokensRef.current.accessToken}`;
         }
 
         return config;
@@ -94,7 +109,8 @@ class ApiClient {
   private async handleTokenRefresh(
     originalRequest: AxiosRequestConfig
   ): Promise<AxiosResponse> {
-    const { tokens, refreshSession, logout } = useAuthStore.getState();
+    const tokens = this.tokensRef.current;
+    const { refreshSession, logout } = useAuthStore.getState();
 
     if (!tokens?.refreshToken) {
       this.handleAuthFailure();

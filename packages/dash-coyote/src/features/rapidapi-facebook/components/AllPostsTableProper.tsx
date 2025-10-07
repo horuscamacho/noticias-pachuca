@@ -240,8 +240,8 @@ export function AllPostsTableProper() {
       return matchesSearch && matchesPage && matchesType
     })
     .sort((a, b) => {
-      let aValue: any
-      let bValue: any
+      let aValue: number | string
+      let bValue: number | string
 
       switch (sortField) {
         case 'publishedAt':

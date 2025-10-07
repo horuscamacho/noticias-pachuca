@@ -110,6 +110,45 @@ export interface ServerToClientEvents {
 
   'analytics:updated': (data: any) => void;
 
+  // 🤖 GENERACIÓN DE CONTENIDO CON IA
+  'content:generation-started': (data: {
+    extractedContentId: string;
+    agentId: string;
+    agentName: string;
+    timestamp: string;
+  }) => void;
+
+  'content:generation-progress': (data: {
+    extractedContentId: string;
+    step: 'extracting' | 'generating' | 'validating' | 'saving';
+    progress: number;
+    message: string;
+    timestamp: string;
+  }) => void;
+
+  'content:generation-completed': (data: {
+    extractedContentId: string;
+    generatedContentId: string;
+    agentId: string;
+    agentName: string;
+    hasSocialCopies: boolean;
+    validationWarnings: string[];
+    metadata: {
+      processingTime: number;
+      totalTokens: number;
+      cost: number;
+    };
+    timestamp: string;
+  }) => void;
+
+  'content:generation-failed': (data: {
+    extractedContentId: string;
+    agentId: string;
+    error: string;
+    reason: string;
+    timestamp: string;
+  }) => void;
+
   // ⚠️ SISTEMA
   'system:alert': (alert: {
     id: string;

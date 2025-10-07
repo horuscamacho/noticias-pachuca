@@ -36,9 +36,13 @@ import { MailEventListeners } from './events/mail.listeners';
             },
             template: {
               dir: join(__dirname, 'templates'),
-              adapter: new HandlebarsAdapter(),
+              adapter: new HandlebarsAdapter({
+                eq: (a: any, b: any) => a === b,
+              }, {
+                inlineCssEnabled: false,
+              }),
               options: {
-                strict: true,
+                strict: false,
               },
             },
           };
@@ -60,9 +64,13 @@ import { MailEventListeners } from './events/mail.listeners';
           },
           template: {
             dir: join(__dirname, 'templates'),
-            adapter: new HandlebarsAdapter(),
+            adapter: new HandlebarsAdapter({
+              eq: (a: any, b: any) => a === b,
+            }, {
+              inlineCssEnabled: false,
+            }),
             options: {
-              strict: true,
+              strict: false,
             },
           },
         };

@@ -123,7 +123,7 @@ export function RapidAPIFacebookDashboard() {
   const handleActionWithLoading = async (
     pageId: string,
     action: string,
-    asyncAction: () => Promise<any>,
+    asyncAction: () => Promise<unknown>,
     successMessage?: string
   ) => {
     try {

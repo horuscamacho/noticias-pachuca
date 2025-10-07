@@ -32,8 +32,8 @@ const AppScreen: React.FC = () => {
     // Redirigir una vez que la inicialización esté completa
     if (isInitialized && !isLoading) {
       if (isAuthenticated) {
-        // Usuario autenticado -> ir a pantalla protegida
-        router.replace('/(protected)/protected-screen')
+        // Usuario autenticado -> ir a tabs
+        router.replace('/(tabs)/home')
       } else {
         // Usuario no autenticado -> ir a login
         router.replace('/(auth)/login')

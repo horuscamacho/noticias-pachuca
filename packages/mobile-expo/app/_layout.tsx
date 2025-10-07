@@ -1,13 +1,13 @@
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
-
+import "../global.css";
 import { StatusBar } from "expo-status-bar";
-import "react-native-reanimated";
+import { PortalHost } from '@rn-primitives/portal';
 
 import { AnalyticsProvider } from "@/src/features/analytics/components/AnalyticsProvider";
 import { ResponsiveProvider } from "@/src/features/responsive";
 import { QueryClientProvider } from "@tanstack/react-query";
-import queryClient from '@/src/config/queryClient';
+import queryClient from "@/src/config/queryClient";
 export const unstable_settings = {
   anchor: "(tabs)",
 };
@@ -42,13 +42,17 @@ export default function RootLayout() {
         <AnalyticsProvider>
           <Stack>
             <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="(auth)/login"
+              options={{ headerShown: false }}
+            />
             <Stack.Screen
               name="(protected)/protected-screen"
               options={{ headerShown: false }}
             />
           </Stack>
           <StatusBar style="auto" />
+          <PortalHost />
         </AnalyticsProvider>
       </ResponsiveProvider>
     </QueryClientProvider>

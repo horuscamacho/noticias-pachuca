@@ -32,13 +32,14 @@ import {
   TemplateTestRequest,
   TemplateTestResponse,
   GeneratedContentResponse,
-  GeneratedContentFilters,
   GeneratedContentStats,
   ContentType,
   WizardPromptRequest,
   WizardPromptResponse,
   CreateTemplateFromWizardRequest
 } from '../interfaces';
+import { GeneratedContentFiltersDto } from '../dto/generated-content-filters.dto';
+import { PaginatedResponse } from '../../common/interfaces/paginated-response.interface';
 
 // DTOs específicos del controller
 export class GenerateContentDto {
@@ -61,22 +62,6 @@ export class BatchGenerateDto {
     failFast?: boolean;
     costLimit?: number;
   };
-}
-
-export class GeneratedContentFiltersDto {
-  status?: GenerationStatus[];
-  agentId?: string;
-  templateId?: string;
-  providerId?: string;
-  dateFrom?: string;
-  dateTo?: string;
-  minQualityScore?: number;
-  hasReview?: boolean;
-  isPublished?: boolean;
-  category?: string;
-  tags?: string[];
-  limit?: number;
-  offset?: number;
 }
 
 /**
@@ -486,23 +471,25 @@ export class ContentAIController {
   // ==================== GENERATED CONTENT ENDPOINTS ====================
 
   /**
-   * 📋 Listar contenido generado
+   * 📋 Listar contenido generado con paginación
    */
   @Get('generated')
-  @ApiOperation({ summary: 'Obtener lista de contenido generado' })
-  @ApiResponse({ status: 200, description: 'Lista de contenido generado' })
+  @ApiOperation({ summary: 'Obtener lista paginada de contenido generado' })
+  @ApiResponse({ status: 200, description: 'Lista paginada de contenido generado' })
   async getGeneratedContent(
     @Query() filters: GeneratedContentFiltersDto
-  ): Promise<GeneratedContentResponse[]> {
-    // Convertir strings a tipos apropiados
-    const processedFilters: GeneratedContentFilters = {
-      ...filters,
-      dateFrom: filters.dateFrom ? new Date(filters.dateFrom) : undefined,
-      dateTo: filters.dateTo ? new Date(filters.dateTo) : undefined,
-      tags: filters.tags ? (Array.isArray(filters.tags) ? filters.tags : [filters.tags]) : undefined,
-    };
+  ): Promise<PaginatedResponse<GeneratedContentResponse>> {
+    return this.contentGenerationService.findAllPaginated(filters);
+  }
 
-    return this.contentGenerationService.findAll(processedFilters);
+  /**
+   * 🏷️ Obtener todas las categorías únicas de contenidos generados
+   */
+  @Get('generated/categories/all')
+  @ApiOperation({ summary: 'Obtener todas las categorías únicas' })
+  @ApiResponse({ status: 200, description: 'Lista de categorías obtenida' })
+  async getCategories(): Promise<string[]> {
+    return this.contentGenerationService.getCategories();
   }
 
   /**

@@ -12,14 +12,18 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRapidapiTwitterRouteImport } from './routes/_authenticated/rapidapi-twitter'
 import { Route as AuthenticatedRapidapiFacebookRouteImport } from './routes/_authenticated/rapidapi-facebook'
+import { Route as AuthenticatedPachucaNoticiasRouteImport } from './routes/_authenticated/pachuca-noticias'
 import { Route as AuthenticatedNoticiasRouteImport } from './routes/_authenticated/noticias'
+import { Route as AuthenticatedGeneratorProRouteImport } from './routes/_authenticated/generator-pro'
 import { Route as AuthenticatedFacebookRouteImport } from './routes/_authenticated/facebook'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCorreosRouteImport } from './routes/_authenticated/correos'
 import { Route as AuthenticatedContentAiRouteImport } from './routes/_authenticated/content-ai'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
+import { Route as AuthenticatedPachucaNoticiasQueueRouteImport } from './routes/_authenticated/pachuca-noticias.queue'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -34,10 +38,22 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRapidapiTwitterRoute =
+  AuthenticatedRapidapiTwitterRouteImport.update({
+    id: '/rapidapi-twitter',
+    path: '/rapidapi-twitter',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedRapidapiFacebookRoute =
   AuthenticatedRapidapiFacebookRouteImport.update({
     id: '/rapidapi-facebook',
     path: '/rapidapi-facebook',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedPachucaNoticiasRoute =
+  AuthenticatedPachucaNoticiasRouteImport.update({
+    id: '/pachuca-noticias',
+    path: '/pachuca-noticias',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedNoticiasRoute = AuthenticatedNoticiasRouteImport.update({
@@ -45,6 +61,12 @@ const AuthenticatedNoticiasRoute = AuthenticatedNoticiasRouteImport.update({
   path: '/noticias',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedGeneratorProRoute =
+  AuthenticatedGeneratorProRouteImport.update({
+    id: '/generator-pro',
+    path: '/generator-pro',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedFacebookRoute = AuthenticatedFacebookRouteImport.update({
   id: '/facebook',
   path: '/facebook',
@@ -75,6 +97,12 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthenticatedPachucaNoticiasQueueRoute =
+  AuthenticatedPachucaNoticiasQueueRouteImport.update({
+    id: '/queue',
+    path: '/queue',
+    getParentRoute: () => AuthenticatedPachucaNoticiasRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -84,8 +112,12 @@ export interface FileRoutesByFullPath {
   '/correos': typeof AuthenticatedCorreosRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/facebook': typeof AuthenticatedFacebookRoute
+  '/generator-pro': typeof AuthenticatedGeneratorProRoute
   '/noticias': typeof AuthenticatedNoticiasRoute
+  '/pachuca-noticias': typeof AuthenticatedPachucaNoticiasRouteWithChildren
   '/rapidapi-facebook': typeof AuthenticatedRapidapiFacebookRoute
+  '/rapidapi-twitter': typeof AuthenticatedRapidapiTwitterRoute
+  '/pachuca-noticias/queue': typeof AuthenticatedPachucaNoticiasQueueRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -95,8 +127,12 @@ export interface FileRoutesByTo {
   '/correos': typeof AuthenticatedCorreosRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/facebook': typeof AuthenticatedFacebookRoute
+  '/generator-pro': typeof AuthenticatedGeneratorProRoute
   '/noticias': typeof AuthenticatedNoticiasRoute
+  '/pachuca-noticias': typeof AuthenticatedPachucaNoticiasRouteWithChildren
   '/rapidapi-facebook': typeof AuthenticatedRapidapiFacebookRoute
+  '/rapidapi-twitter': typeof AuthenticatedRapidapiTwitterRoute
+  '/pachuca-noticias/queue': typeof AuthenticatedPachucaNoticiasQueueRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -109,8 +145,12 @@ export interface FileRoutesById {
   '/_authenticated/correos': typeof AuthenticatedCorreosRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/facebook': typeof AuthenticatedFacebookRoute
+  '/_authenticated/generator-pro': typeof AuthenticatedGeneratorProRoute
   '/_authenticated/noticias': typeof AuthenticatedNoticiasRoute
+  '/_authenticated/pachuca-noticias': typeof AuthenticatedPachucaNoticiasRouteWithChildren
   '/_authenticated/rapidapi-facebook': typeof AuthenticatedRapidapiFacebookRoute
+  '/_authenticated/rapidapi-twitter': typeof AuthenticatedRapidapiTwitterRoute
+  '/_authenticated/pachuca-noticias/queue': typeof AuthenticatedPachucaNoticiasQueueRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -122,8 +162,12 @@ export interface FileRouteTypes {
     | '/correos'
     | '/dashboard'
     | '/facebook'
+    | '/generator-pro'
     | '/noticias'
+    | '/pachuca-noticias'
     | '/rapidapi-facebook'
+    | '/rapidapi-twitter'
+    | '/pachuca-noticias/queue'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -133,8 +177,12 @@ export interface FileRouteTypes {
     | '/correos'
     | '/dashboard'
     | '/facebook'
+    | '/generator-pro'
     | '/noticias'
+    | '/pachuca-noticias'
     | '/rapidapi-facebook'
+    | '/rapidapi-twitter'
+    | '/pachuca-noticias/queue'
   id:
     | '__root__'
     | '/'
@@ -146,8 +194,12 @@ export interface FileRouteTypes {
     | '/_authenticated/correos'
     | '/_authenticated/dashboard'
     | '/_authenticated/facebook'
+    | '/_authenticated/generator-pro'
     | '/_authenticated/noticias'
+    | '/_authenticated/pachuca-noticias'
     | '/_authenticated/rapidapi-facebook'
+    | '/_authenticated/rapidapi-twitter'
+    | '/_authenticated/pachuca-noticias/queue'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -179,6 +231,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/rapidapi-twitter': {
+      id: '/_authenticated/rapidapi-twitter'
+      path: '/rapidapi-twitter'
+      fullPath: '/rapidapi-twitter'
+      preLoaderRoute: typeof AuthenticatedRapidapiTwitterRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/rapidapi-facebook': {
       id: '/_authenticated/rapidapi-facebook'
       path: '/rapidapi-facebook'
@@ -186,11 +245,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRapidapiFacebookRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/pachuca-noticias': {
+      id: '/_authenticated/pachuca-noticias'
+      path: '/pachuca-noticias'
+      fullPath: '/pachuca-noticias'
+      preLoaderRoute: typeof AuthenticatedPachucaNoticiasRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/noticias': {
       id: '/_authenticated/noticias'
       path: '/noticias'
       fullPath: '/noticias'
       preLoaderRoute: typeof AuthenticatedNoticiasRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/generator-pro': {
+      id: '/_authenticated/generator-pro'
+      path: '/generator-pro'
+      fullPath: '/generator-pro'
+      preLoaderRoute: typeof AuthenticatedGeneratorProRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/facebook': {
@@ -235,6 +308,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_authenticated/pachuca-noticias/queue': {
+      id: '/_authenticated/pachuca-noticias/queue'
+      path: '/queue'
+      fullPath: '/pachuca-noticias/queue'
+      preLoaderRoute: typeof AuthenticatedPachucaNoticiasQueueRouteImport
+      parentRoute: typeof AuthenticatedPachucaNoticiasRoute
+    }
   }
 }
 
@@ -248,14 +328,32 @@ const AuthRouteChildren: AuthRouteChildren = {
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
+interface AuthenticatedPachucaNoticiasRouteChildren {
+  AuthenticatedPachucaNoticiasQueueRoute: typeof AuthenticatedPachucaNoticiasQueueRoute
+}
+
+const AuthenticatedPachucaNoticiasRouteChildren: AuthenticatedPachucaNoticiasRouteChildren =
+  {
+    AuthenticatedPachucaNoticiasQueueRoute:
+      AuthenticatedPachucaNoticiasQueueRoute,
+  }
+
+const AuthenticatedPachucaNoticiasRouteWithChildren =
+  AuthenticatedPachucaNoticiasRoute._addFileChildren(
+    AuthenticatedPachucaNoticiasRouteChildren,
+  )
+
 interface AuthenticatedRouteChildren {
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute
   AuthenticatedContentAiRoute: typeof AuthenticatedContentAiRoute
   AuthenticatedCorreosRoute: typeof AuthenticatedCorreosRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFacebookRoute: typeof AuthenticatedFacebookRoute
+  AuthenticatedGeneratorProRoute: typeof AuthenticatedGeneratorProRoute
   AuthenticatedNoticiasRoute: typeof AuthenticatedNoticiasRoute
+  AuthenticatedPachucaNoticiasRoute: typeof AuthenticatedPachucaNoticiasRouteWithChildren
   AuthenticatedRapidapiFacebookRoute: typeof AuthenticatedRapidapiFacebookRoute
+  AuthenticatedRapidapiTwitterRoute: typeof AuthenticatedRapidapiTwitterRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -264,8 +362,12 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCorreosRoute: AuthenticatedCorreosRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFacebookRoute: AuthenticatedFacebookRoute,
+  AuthenticatedGeneratorProRoute: AuthenticatedGeneratorProRoute,
   AuthenticatedNoticiasRoute: AuthenticatedNoticiasRoute,
+  AuthenticatedPachucaNoticiasRoute:
+    AuthenticatedPachucaNoticiasRouteWithChildren,
   AuthenticatedRapidapiFacebookRoute: AuthenticatedRapidapiFacebookRoute,
+  AuthenticatedRapidapiTwitterRoute: AuthenticatedRapidapiTwitterRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

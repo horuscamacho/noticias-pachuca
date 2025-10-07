@@ -71,7 +71,9 @@ export class PuppeteerManagerService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleInit() {
-    await this.initializeBrowser();
+    // 🔧 LAZY INITIALIZATION: No bloquear el startup del servidor
+    // El browser se inicializará automáticamente cuando se necesite
+    this.logger.log('PuppeteerManagerService initialized (browser will start on first use)');
   }
 
   async onModuleDestroy() {
@@ -418,7 +420,7 @@ export class PuppeteerManagerService implements OnModuleInit, OnModuleDestroy {
           '--memory-pressure-off',
           '--max_old_space_size=1024',
         ],
-        timeout: 60000, // 60 segundos para inicializar
+        timeout: 30000, // Reducido a 30 segundos
         defaultViewport: {
           width: 1280,
           height: 1024,
@@ -450,12 +452,17 @@ export class PuppeteerManagerService implements OnModuleInit, OnModuleDestroy {
       );
     } catch (error) {
       this.logger.error(
-        `Failed to initialize browser: ${error.message}`,
+        `⚠️ Failed to initialize Puppeteer browser: ${error.message}`,
         error.stack,
       );
+      this.logger.warn('⚠️ PDF generation and web scraping features will be unavailable');
+      this.logger.warn('💡 To fix this, ensure Chrome/Chromium is installed on your system');
+
       this.isInitialized = false;
       this.browser = null;
-      throw error;
+
+      // 🔧 NO LANZAR ERROR - permitir que la app continúe
+      // Los métodos que usen Puppeteer manejarán el error apropiadamente
     }
   }
 
@@ -497,6 +504,14 @@ export class PuppeteerManagerService implements OnModuleInit, OnModuleDestroy {
   private async ensureBrowserReady(): Promise<void> {
     if (!this.isInitialized || !this.browser) {
       await this.initializeBrowser();
+    }
+
+    // 🔧 Si después de inicializar sigue sin browser, lanzar error descriptivo
+    if (!this.browser) {
+      throw new BadRequestException(
+        'Puppeteer browser is not available. PDF generation and web scraping features are disabled. ' +
+        'Please ensure Chrome/Chromium is installed on your system.'
+      );
     }
 
     // Verificar salud del browser

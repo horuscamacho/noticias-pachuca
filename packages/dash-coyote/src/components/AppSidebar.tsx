@@ -4,6 +4,7 @@ import * as React from "react"
 import {
   IconApi,
   IconBrandFacebook,
+  IconBrandTwitter,
   IconCamera,
   IconChartBar,
   IconDashboard,
@@ -17,6 +18,7 @@ import {
   IconListDetails,
   IconMail,
   IconNews,
+  IconRobot,
   IconReport,
   IconSearch,
   IconSettings,
@@ -70,6 +72,11 @@ const data = {
       icon: IconApi,
     },
     {
+      title: "RapidAPI Twitter",
+      url: "/rapidapi-twitter",
+      icon: IconBrandTwitter,
+    },
+    {
       title: "Noticias",
       url: "/noticias",
       icon: IconNews,
@@ -78,6 +85,26 @@ const data = {
       title: "Content AI",
       url: "/content-ai",
       icon: IconFileAi,
+    },
+    {
+      title: "Generator Pro",
+      url: "/generator-pro",
+      icon: IconRobot,
+    },
+    {
+      title: "Pachuca Noticias",
+      url: "/pachuca-noticias",
+      icon: IconNews,
+      items: [
+        {
+          title: "Contenidos",
+          url: "/pachuca-noticias",
+        },
+        {
+          title: "Cola Publicación",
+          url: "/pachuca-noticias/queue",
+        },
+      ],
     },
     {
       title: "Lifecycle",

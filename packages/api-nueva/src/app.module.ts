@@ -9,7 +9,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import configuration from './config/configuration';
 import { validationSchema } from './config/validation.schema';
-import { AppConfigService } from './config/config.service';
+import { AppConfigModule } from './config/config.module';
 import { CacheService } from './services/cache.service';
 import { AuthModule } from './auth/auth.module';
 import { MailModule } from './modules/mail/mail.module';
@@ -20,8 +20,11 @@ import { PaymentsModule } from './payments/payments.module';
 import { FacebookModule } from './facebook/facebook.module';
 import { ContentExtractionFacebookModule } from './content-extraction-facebook/content-extraction-facebook.module';
 import { RapidAPIFacebookModule } from './rapidapi-facebook/rapidapi-facebook.module';
+import { RapidAPITwitterModule } from './rapidapi-twitter/rapidapi-twitter.module';
 import { NoticiasModule } from './noticias/noticias.module';
-import { ContentAIModule } from './content-ai/content-ai.module';
+// import { ContentAIModule } from './content-ai/content-ai.module';
+import { GeneratorProModule } from './generator-pro/generator-pro.module';
+import { PachucaNoticiasModule } from './pachuca-noticias/pachuca-noticias.module';
 
 // Función para seleccionar .env por ambiente
 function getEnvFilePath() {
@@ -43,6 +46,9 @@ function getEnvFilePath() {
       },
     }),
 
+    // 🔧 AppConfigModule - Global configuration wrapper
+    AppConfigModule,
+
     // 🔥 CONFIGURACIÓN MONGOOSE 2025 CON MEJORES PRÁCTICAS
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
@@ -61,8 +67,10 @@ function getEnvFilePath() {
         readPreference: 'primary',
 
         // 🛡️ Configuraciones de seguridad
-        authSource: 'admin',
-        ssl: configService.get<string>('config.app.nodeEnv') === 'production',
+        // SSL siempre habilitado para MongoDB Atlas (detecta mongodb+srv://)
+        ssl: configService.get<string>('config.database.url')?.includes('mongodb+srv://') ||
+             configService.get<string>('config.app.nodeEnv') === 'production',
+        authSource: configService.get<string>('config.database.url')?.includes('mongodb+srv://') ? undefined : 'admin',
 
         // 📊 Configuraciones de performance
         bufferCommands: false,
@@ -104,15 +112,22 @@ function getEnvFilePath() {
           port: configService.get<number>('config.redis.port') || 6379,
           password: configService.get<string>('config.redis.password'),
           db: configService.get<number>('config.redis.db') || 0,
+          enableOfflineQueue: true, // 🔥 FIX: Persistir cuando Redis está offline
+          maxRetriesPerRequest: 3,  // 🔥 FIX: Reintentar conexión
         },
         defaultJobOptions: {
-          removeOnComplete: 10,
-          removeOnFail: 50,
+          removeOnComplete: false,  // 🔥 FIX: No eliminar jobs completados
+          removeOnFail: false,      // 🔥 FIX: No eliminar jobs fallidos
           attempts: 3,
           backoff: {
             type: 'exponential',
             delay: 2000,
           },
+        },
+        settings: {
+          lockDuration: 30000,       // 30 segundos
+          stalledInterval: 5000,     // Check cada 5s si jobs están stalled
+          maxStalledCount: 3,        // Máximo 3 veces stalled antes de fail
         },
       }),
       inject: [ConfigService],
@@ -123,6 +138,9 @@ function getEnvFilePath() {
 
     // 📘 RAPIDAPI FACEBOOK MODULE - MOVER AL INICIO PARA DEBUG
     RapidAPIFacebookModule,
+
+    // 🐦 RAPIDAPI TWITTER MODULE
+    RapidAPITwitterModule,
 
     // 🔐 AUTHENTICATION MODULE
     AuthModule,
@@ -151,11 +169,17 @@ function getEnvFilePath() {
     // 📰 NOTICIAS MODULE - WEB SCRAPING DE NOTICIAS
     NoticiasModule,
 
-    // 🤖 CONTENT AI MODULE - AI CONTENT GENERATION SYSTEM
-    ContentAIModule,
+    // 🤖 CONTENT AI MODULE - AI CONTENT GENERATION SYSTEM (Temporalmente deshabilitado para testing manual workflow)
+    // ContentAIModule,
+
+    // 🤖 GENERATOR PRO MODULE - AUTOMATED NEWS SYSTEM
+    GeneratorProModule,
+
+    // 📰 PACHUCA NOTICIAS MODULE - PUBLICACIÓN DE CONTENIDO GENERADO
+    PachucaNoticiasModule,
   ],
   controllers: [AppController],
-  providers: [AppService, AppConfigService, CacheService],
-  exports: [AppConfigService, CacheService],
+  providers: [AppService, CacheService],
+  exports: [CacheService],
 })
 export class AppModule {}

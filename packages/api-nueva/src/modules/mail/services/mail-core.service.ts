@@ -34,6 +34,9 @@ export class MailCoreService implements IMailProvider {
   private async sendEmailImmediate(options: EmailOptions): Promise<void> {
     const defaultFrom = `${this.configService.get('DEFAULT_FROM_NAME')} <${this.configService.get('DEFAULT_FROM_EMAIL')}>`;
 
+    this.logger.debug(`📧 Attempting to send email with template: ${options.template}`);
+    this.logger.debug(`📧 Context: ${JSON.stringify(options.context)}`);
+
     await this.mailerService.sendMail({
       from: defaultFrom,
       to: options.to,

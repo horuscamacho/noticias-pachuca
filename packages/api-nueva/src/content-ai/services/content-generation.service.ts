@@ -13,6 +13,7 @@ import {
   GeneratedContentStats,
   GenerationStatus
 } from '../interfaces';
+import { PaginatedResponse } from '../../common/interfaces/paginated-response.interface';
 import { ProviderFactoryService } from './provider-factory.service';
 import { PromptTemplateService } from './prompt-template.service';
 import { ContentAgentService } from './content-agent.service';
@@ -43,7 +44,7 @@ export class ContentGenerationService {
 
     const content = await this.aiContentGenerationModel
       .find(query)
-      .populate('originalContentId', 'title content sourceUrl publishedAt')
+      .populate('originalContentId', 'title content sourceUrl publishedAt images')
       .populate('agentId', 'name agentType')
       .populate('templateId', 'name type')
       .populate('providerId', 'name model')
@@ -51,6 +52,91 @@ export class ContentGenerationService {
       .exec();
 
     return content.map(item => this.toDetailedResponse(item));
+  }
+
+  /**
+   * 📋 Obtener contenido generado con paginación
+   */
+  async findAllPaginated(filters: {
+    status?: GenerationStatus[];
+    agentId?: string;
+    templateId?: string;
+    providerId?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    minQualityScore?: number;
+    hasReview?: boolean;
+    isPublished?: boolean;
+    category?: string;
+    tags?: string[];
+    search?: string;
+    page?: number;
+    limit?: number;
+    skip?: number; // Viene del getter de PaginationDto
+  }): Promise<PaginatedResponse<GeneratedContentResponse>> {
+    // Convertir strings a Date para buildFilterQuery
+    const processedFilters: GeneratedContentFilters = {
+      status: filters.status,
+      agentId: filters.agentId,
+      templateId: filters.templateId,
+      providerId: filters.providerId,
+      dateFrom: filters.dateFrom ? new Date(filters.dateFrom) : undefined,
+      dateTo: filters.dateTo ? new Date(filters.dateTo) : undefined,
+      minQualityScore: filters.minQualityScore,
+      hasReview: filters.hasReview,
+      isPublished: filters.isPublished,
+      category: filters.category,
+      tags: filters.tags,
+      search: filters.search,
+    };
+
+    const query = this.buildFilterQuery(processedFilters);
+
+    const page = filters.page || 1;
+    const limit = Math.min(filters.limit || 20, 100); // Max 100
+    const skip = filters.skip || (page - 1) * limit;
+
+    const [content, total] = await Promise.all([
+      this.aiContentGenerationModel
+        .find(query)
+        .populate('originalContentId', 'title content sourceUrl publishedAt images')
+        .populate('agentId', 'name agentType')
+        .populate('templateId', 'name type')
+        .populate('providerId', 'name model')
+        .sort({ generatedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.aiContentGenerationModel.countDocuments(query),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: content.map(item => this.toDetailedResponse(item)),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+    };
+  }
+
+  /**
+   * 🏷️ Obtener todas las categorías únicas de contenidos generados
+   */
+  async getCategories(): Promise<string[]> {
+    const categories = await this.aiContentGenerationModel
+      .distinct('generatedCategory')
+      .exec();
+
+    // Filtrar vacíos y ordenar alfabéticamente
+    return categories
+      .filter(cat => cat && cat.trim().length > 0)
+      .sort();
   }
 
   /**
@@ -63,7 +149,7 @@ export class ContentGenerationService {
 
     const content = await this.aiContentGenerationModel
       .findById(id)
-      .populate('originalContentId', 'title content sourceUrl publishedAt')
+      .populate('originalContentId', 'title content sourceUrl publishedAt images')
       .populate('agentId', 'name agentType')
       .populate('templateId', 'name type')
       .populate('providerId', 'name model')
@@ -117,11 +203,11 @@ export class ContentGenerationService {
       const response = await provider.generateContent({
         systemPrompt: context.systemPrompt,
         userPrompt: context.userPrompt,
-        maxTokens: template.configuration?.maxTokens || 2000,
-        temperature: template.configuration?.temperature || 0.7,
+        maxTokens: template.configuration?.maxTokens || 4000,
+        temperature: template.configuration?.temperature || 0.85,
         topP: template.configuration?.topP,
-        frequencyPenalty: template.configuration?.frequencyPenalty,
-        presencePenalty: template.configuration?.presencePenalty,
+        frequencyPenalty: template.configuration?.frequencyPenalty || 0.3,
+        presencePenalty: template.configuration?.presencePenalty || 0.3,
       });
 
       const processingTime = Date.now() - startTime;
@@ -136,7 +222,7 @@ export class ContentGenerationService {
         agentId: request.agentId,
         templateId: request.templateId,
         providerId: provider.providerName,
-        generatedTitle: parsedContent.title as string || originalContent.title,
+        generatedTitle: (parsedContent.title as string) || originalContent.title || 'Sin título',
         generatedContent: parsedContent.content as string || response.content,
         generatedKeywords: parsedContent.keywords as string[] || [],
         generatedTags: parsedContent.tags as string[] || [],
@@ -362,12 +448,12 @@ export class ContentGenerationService {
   ): { systemPrompt: string; userPrompt: string } {
     // Variables base del contenido original
     const baseVariables = {
-      title: originalContent.title,
-      content: originalContent.content,
+      title: originalContent.title || 'Sin título',
+      content: originalContent.content || '',
       author: originalContent.author || 'Desconocido',
       sourceUrl: originalContent.sourceUrl,
       publishedAt: originalContent.publishedAt?.toISOString() || '',
-      domain: originalContent.domain,
+      domain: originalContent.domain || '',
       categories: originalContent.categories.join(', '),
       tags: originalContent.tags.join(', '),
       excerpt: originalContent.excerpt || '',
@@ -482,6 +568,23 @@ export class ContentGenerationService {
       } else {
         query['publishingInfo.publishedAt'] = { $exists: false };
       }
+    }
+
+    if (filters.category) {
+      query.generatedCategory = filters.category;
+    }
+
+    if (filters.tags && filters.tags.length > 0) {
+      query.generatedTags = { $all: filters.tags };
+    }
+
+    if (filters.search) {
+      const searchRegex = new RegExp(filters.search, 'i');
+      query.$or = [
+        { generatedTitle: searchRegex },
+        { generatedContent: searchRegex },
+        { generatedSummary: searchRegex },
+      ];
     }
 
     return query;
@@ -638,7 +741,7 @@ export class ContentGenerationService {
   private toDetailedResponse(content: AIContentGenerationDocument): GeneratedContentResponse {
     // Obtener datos poblados correctamente
     const originalContent = content.populated('originalContentId')
-      ? (content.originalContentId as unknown as { title: string; content: string; sourceUrl: string; publishedAt: Date })
+      ? (content.originalContentId as unknown as { title: string; content: string; sourceUrl: string; publishedAt: Date; images?: string[] })
       : null;
 
     const agent = content.populated('agentId')
@@ -661,6 +764,7 @@ export class ContentGenerationService {
         content: originalContent?.content || content.originalContent || '',
         sourceUrl: originalContent?.sourceUrl || content.originalSourceUrl || '',
         publishedAt: originalContent?.publishedAt || new Date(),
+        images: originalContent?.images || [],
       },
       agent: {
         id: content.agentId?.toString() || '',
@@ -724,44 +828,123 @@ export class ContentGenerationService {
    */
   private preparePromptFromTemplate(template: any, variables: Record<string, string>): string {
     // Prompt optimizado basado en mejores prácticas 2025
-    const optimizedPrompt = `Eres Jarvis, el asistente editorial de Pachuca Noticias, especializado en transformar noticias en contenido editorial estructurado.
+    const optimizedPrompt = `Eres Jarvis, el asistente editorial de Pachuca Noticias, especializado en transformar noticias en contenido editorial estructurado de alta calidad.
 
 <thinking>
 Voy a procesar esta noticia siguiendo estos pasos:
-1. Extraer SOLO los hechos presentes en el input
-2. Identificar personajes, fechas, lugares y cifras específicas
-3. Determinar el ángulo editorial más relevante para Pachuca
-4. Clasificar según nuestras categorías establecidas
-5. Generar keywords basadas únicamente en el contenido real
-6. Crear summary que capture la esencia única de ESTA noticia específica
+1. Extraer TODOS los hechos relevantes del input
+2. Identificar personajes, fechas, lugares, cifras, declaraciones
+3. Determinar múltiples ángulos editoriales posibles
+4. Crear título ÚNICO y CREATIVO usando técnicas de variación
+5. Desarrollar contenido EXTENSO y DETALLADO
+6. Generar keywords y tags basados en el contenido real
+7. Crear copys sociales con hooks únicos y llamativos
 </thinking>
 
-REGLAS ESTRICTAS:
-- OBLIGATORIO reinterpretar y transformar la información con nuevo enfoque editorial
-- PROHIBIDO copiar frases o párrafos completos del original
-- REQUERIDO crear nueva narrativa con los mismos hechos pero diferente estructura
-- OBLIGATORIO cambiar el ángulo periodístico manteniendo veracidad
-- PROHIBIDO usar más del 20% de palabras idénticas al texto original
+🎯 REGLAS CRÍTICAS PARA TÍTULOS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ TÉCNICAS DE VARIACIÓN OBLIGATORIAS:
+• Usa SINÓNIMOS creativos (no repetir palabras comunes)
+• Alterna estructuras: pregunta, afirmación, revelación, contraste
+• Varía longitud: cortos impactantes vs descriptivos detallados
+• Cambia el foco: protagonista, acción, resultado, contexto
+• Experimenta con formatos: números, citas, metáforas
 
-FÓRMULAS PARA REDES SOCIALES (USA ESTAS TÉCNICAS):
-FACEBOOK - Fórmula AIDA:
-• Atención: Hook con emoji (🚨📊⚡🔴)
-• Interés: Dato específico de la noticia
-• Deseo: "¿Por qué te importa?" + beneficio personal
-• Acción: CTA específico ("¿Qué opinas?", "Comparte si...", "Tag alguien que...")
+❌ EVITAR SIEMPRE:
+• Títulos genéricos tipo "Se realiza evento en..."
+• Comenzar con "El", "La", "Los", "Las" (busca alternativas)
+• Estructuras repetitivas como "X hace Y en Z"
+• Palabras trilladas: "importante", "relevante", "significativo"
 
-TWITTER - Hooks efectivos:
-• Estadístico: "📊 El X% de mexicanos/poblanos..."
-• Urgencia: "🚨 ÚLTIMA HORA:"
-• Pregunta: "¿Sabías que en Pachuca...?"
-• Problema-Solución: "[Problema] + [Consecuencia] + [Qué significa]"
+📊 EJEMPLOS DE VARIACIÓN:
+MALO: "Alcalde inaugura nueva biblioteca en Pachuca"
+BUENO: "Pachuca estrena espacio cultural con 50 mil libros"
+MEJOR: "50 mil libros encuentran nuevo hogar en el corazón de Pachuca"
 
-INSTAGRAM - Estructura ganadora:
-• Emoji + hook impactante primera línea
-• Párrafo corto contexto
-• Bullets con • para puntos clave
-• CTA con pregunta genuine
-• Hashtags: mix geográficos (#Pachuca) + temáticos
+MALO: "Aumentan precios de gasolina en la región"
+BUENO: "Combustibles registran alza histórica del 15%"
+MEJOR: "Tanque lleno costará $200 pesos más desde mañana"
+
+🔥 TÉCNICAS AVANZADAS DE TITULACIÓN:
+• Power words: revelar, transformar, impulsar, desafiar
+• Números específicos: "73%" mejor que "la mayoría"
+• Tiempo presente activo: "conquista" vs "conquistó"
+• Beneficio directo: "Así te afecta..." "Lo que significa para ti..."
+• Intriga calculada: revelar 80%, ocultar 20% clave
+
+📝 REGLAS PARA CONTENIDO EXTENSO:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EXTENSIÓN MÍNIMA OBLIGATORIA: 800-1200 palabras
+
+ESTRUCTURA DETALLADA (distribución de palabras):
+1. LEAD/ENTRADA (100-150 palabras)
+   • Hook potente + contexto inmediato
+   • Responder: qué, quién, cuándo, dónde
+   • Dato más impactante al inicio
+
+2. DESARROLLO CONTEXTUAL (200-300 palabras)
+   • Antecedentes del tema
+   • Por qué es relevante ahora
+   • Conexión con eventos actuales
+   • Comparación con situaciones similares
+
+3. CUERPO PRINCIPAL (300-400 palabras)
+   • Detalles específicos del evento
+   • Declaraciones y citas (inventadas pero verosímiles)
+   • Datos, cifras, estadísticas
+   • Múltiples perspectivas del tema
+
+4. ANÁLISIS DE IMPACTO (150-200 palabras)
+   • Consecuencias inmediatas
+   • Efectos a mediano plazo
+   • Quiénes se ven afectados
+   • Beneficios y riesgos
+
+5. PROYECCIÓN Y CIERRE (100-150 palabras)
+   • Próximos pasos esperados
+   • Qué seguir monitoreando
+   • Llamado a la acción o reflexión
+   • Conexión con el futuro de Pachuca
+
+TÉCNICAS DE EXPANSIÓN:
+• Agrega contexto histórico relevante
+• Incluye comparaciones con otras ciudades/países
+• Desarrolla múltiples ejemplos concretos
+• Crea mini-historias dentro del artículo
+• Usa transiciones elaboradas entre párrafos
+• Incluye datos complementarios y estadísticas
+• Desarrolla el "por qué importa" en profundidad
+
+TRANSFORMACIÓN EDITORIAL:
+• PROHIBIDO copiar párrafos del original
+• REQUERIDO reinterpretar con nueva estructura
+• OBLIGATORIO cambiar el ángulo narrativo
+• Máximo 15% de palabras idénticas al original
+• Crear nueva voz editorial distintiva
+
+🎨 FÓRMULAS PARA REDES SOCIALES MEJORADAS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FACEBOOK - Fórmula AIDA PLUS:
+• Hook: Pregunta provocativa o estadística sorprendente
+• Contexto: 2-3 líneas que amplían el hook
+• Beneficio personal: "Esto significa que tú..."
+• Prueba social: "Miles ya están..."
+• CTA específico con urgencia
+
+TWITTER - Técnicas Virales 2025:
+• Primera línea = mini-titular impactante
+• Segunda línea = dato concreto verificable
+• Tercera línea = implicación personal
+• Cuarta línea = pregunta de engagement
+• Hashtag local + trending topic
+
+INSTAGRAM - Estructura Scroll-Stopper:
+• Emoji + declaración controversial (con respeto)
+• Párrafo de contexto con espacios
+• 3-5 bullets con datos clave
+• Historia personal o anécdota
+• CTA genuino sin presión
+• Mix hashtags: 3 locales + 3 temáticos + 2 trending
 
 TÍTULO DE LA NOTICIA:
 ${variables.title}
@@ -771,38 +954,46 @@ ${variables.content}
 
 ${variables.referenceContent ? `CONTENIDO DE REFERENCIA:\n${variables.referenceContent}\n` : ''}
 
-ESQUEMA JSON OBLIGATORIO - DEBES LLENAR TODOS LOS CAMPOS:
+REQUISITOS DEL JSON - TODOS LOS CAMPOS SON OBLIGATORIOS:
 {
-  "title": "Título editorial TRANSFORMADO con nuevo ángulo periodístico",
-  "content": "Artículo de 400-600 palabras REINTERPRETANDO los hechos con nueva estructura narrativa y enfoque editorial diferente",
-  "keywords": ["OBLIGATORIO: mínimo 5 keywords extraídas del contenido real", "ejemplo: Pachuca", "ejemplo: Día de Muertos"],
-  "tags": ["OBLIGATORIO: mínimo 3 tags basados en temas específicos", "ejemplo: tradición", "ejemplo: cultura"],
-  "category": "Una de: deportes|política|cultura|economía|tecnología|salud|general",
-  "summary": "2-3 líneas con datos específicos de ESTA noticia",
-  "extended_summary": "Resumen ejecutivo detallado de 4-6 párrafos para uso interno o reportes",
+  "title": "Título CREATIVO y ÚNICO usando técnicas de variación, 10-15 palabras, evitando estructuras comunes",
+  "content": "Artículo COMPLETO de 800-1200 palabras con estructura detallada, múltiples párrafos, transiciones fluidas, contexto amplio, análisis profundo",
+  "keywords": ["mínimo 8 keywords específicas extraídas del contenido", "variadas", "no genéricas"],
+  "tags": ["mínimo 5 tags temáticos relevantes", "específicos", "categorizados"],
+  "category": "deportes|política|cultura|economía|tecnología|salud|seguridad|educación|medio ambiente|entretenimiento",
+  "summary": "Resumen ejecutivo de 3-4 líneas con los puntos más importantes y datos específicos",
+  "extended_summary": "Resumen detallado de 5-7 párrafos para reportes ejecutivos, incluyendo contexto, desarrollo, impacto y proyecciones",
   "social_media_copies": {
-    "facebook": "Post para Facebook siguiendo fórmula AIDA: Hook impactante con emoji inicial, contexto escanenable, beneficio personal, CTA específico. Usar 2-3 emojis moderados, máximo 2 hashtags. Ejemplo: '🚨 [Dato impactante]\\n[Contexto 1-2 líneas]\\n💡 ¿Por qué te importa? [beneficio]\\n👇 ¿Qué opinas? Comenta'",
-    "twitter": "Tweet usando PAS (Problema-Agitación-Solución) o hook estadístico. Máximo 280 chars, 1-2 hashtags relevantes, emoji inicial opcional. Ejemplo: '📊 El 73% de poblanos no sabía que... [dato clave] #Pachuca #Noticias'",
-    "instagram": "Caption estructura: Emoji + hook primera línea, párrafo contexto, bullets con puntos clave, CTA con pregunta, hashtags específicos (5-8). Usar líneas espaciadoras con puntos o guiones.",
-    "linkedin": "Post profesional para LinkedIn: Contexto profesional relevante, perspectiva de industria/negocio, datos concretos, sin emojis excesivos, hashtags profesionales (#Negocios #Economia #Pachuca), tono autoridad pero accesible."
+    "facebook": "Post CREATIVO de 80-120 palabras con hook único, desarrollo engaging, beneficio claro, CTA específico, 2-3 emojis estratégicos",
+    "twitter": "Tweet de 230-270 caracteres con hook potente, dato verificable, pregunta de engagement, 1-2 hashtags relevantes",
+    "instagram": "Caption de 150-200 palabras con hook visual, bullets informativos, mini-historia, CTA genuino, 8-10 hashtags mixtos",
+    "linkedin": "Post profesional de 100-150 palabras con perspectiva de negocio, datos del sector, análisis objetivo, 3-5 hashtags profesionales"
   },
   "seo_data": {
-    "meta_description": "Descripción SEO de 150-160 caracteres basada en el contenido",
-    "focus_keyword": "Palabra clave principal extraída del contenido",
-    "alt_text": "Texto alternativo descriptivo para imagen relacionada"
+    "meta_description": "Descripción SEO de 155-160 caracteres con keyword principal y llamada a la acción",
+    "focus_keyword": "Keyword principal más relevante del contenido",
+    "secondary_keywords": ["3-5 keywords secundarias de soporte"],
+    "alt_text": "Descripción de imagen relevante de 100-125 caracteres"
   },
   "metadata": {
-    "extracted_facts": ["hecho1 textual", "hecho2 textual"],
-    "key_people": ["nombres específicos mencionados"],
-    "locations": ["lugares específicos del input"],
-    "dates": ["fechas específicas mencionadas"],
-    "numbers": ["cifras específicas del texto"]
+    "extracted_facts": ["mínimo 5 hechos textuales específicos"],
+    "key_people": ["todos los nombres mencionados con sus cargos"],
+    "locations": ["todos los lugares específicos con detalles"],
+    "dates": ["todas las fechas y períodos temporales"],
+    "numbers": ["todas las cifras, porcentajes y cantidades"],
+    "quotes": ["citas textuales o declaraciones relevantes"]
   }
 }
 
-IMPORTANTE: TODOS los arrays (keywords, tags, etc.) DEBEN tener contenido. NO dejes arrays vacíos.
+⚠️ VALIDACIONES FINALES:
+• Título debe ser DIFERENTE en estructura a títulos anteriores
+• Contenido MÍNIMO 800 palabras (contar antes de enviar)
+• Keywords MÍNIMO 8 elementos únicos
+• Copys sociales deben usar hooks DIFERENTES
+• NO dejar arrays vacíos
+• NO usar plantillas genéricas
 
-RESPONDE ÚNICAMENTE CON EL JSON. NO INCLUYAS EXPLICACIONES ADICIONALES.`;
+RESPONDE ÚNICAMENTE CON EL JSON VÁLIDO. NO INCLUYAS EXPLICACIONES.`;
 
     return optimizedPrompt;
   }

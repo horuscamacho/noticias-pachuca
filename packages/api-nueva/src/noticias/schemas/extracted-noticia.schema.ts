@@ -12,17 +12,17 @@ export class ExtractedNoticia {
   @Prop({ required: true, trim: true })
   sourceUrl: string; // URL original de la noticia
 
-  @Prop({ required: true, trim: true })
-  domain: string; // Dominio extraído de sourceUrl
+  @Prop({ trim: true })
+  domain?: string; // Dominio extraído de sourceUrl
 
-  @Prop({ required: true, trim: true })
-  facebookPostId: string; // ID del post de Facebook que contenía esta URL
+  @Prop({ trim: true })
+  facebookPostId?: string; // ID del post de Facebook que contenía esta URL
 
-  @Prop({ required: true, trim: true })
-  title: string; // Título extraído
+  @Prop({ trim: true })
+  title?: string; // Título extraído
 
-  @Prop({ required: true, type: String })
-  content: string; // Contenido principal extraído
+  @Prop({ type: String })
+  content?: string; // Contenido principal extraído
 
   @Prop({ type: [String], default: [] })
   images: string[]; // URLs de imágenes extraídas
@@ -32,6 +32,9 @@ export class ExtractedNoticia {
 
   @Prop({ trim: true })
   author?: string; // Autor extraído
+
+  @Prop({ trim: true })
+  category?: string; // Categoría principal de la noticia
 
   @Prop({ type: [String], default: [] })
   categories: string[]; // Categorías extraídas
@@ -45,20 +48,13 @@ export class ExtractedNoticia {
   @Prop({ required: true })
   extractedAt: Date; // Timestamp de cuando se extrajo
 
-  @Prop({ type: Types.ObjectId, ref: 'NoticiasExtractionConfig', required: true })
-  extractionConfigId: Types.ObjectId; // Referencia a la configuración usada
+  @Prop({ type: Types.ObjectId, ref: 'NoticiasExtractionConfig' })
+  extractionConfigId?: Types.ObjectId; // Referencia a la configuración usada
 
-  @Prop({ type: Object })
-  extractionMetadata: {
-    method: 'cheerio' | 'puppeteer'; // Método usado para extracción
-    processingTime: number; // Tiempo de procesamiento (ms)
-    contentLength: number; // Longitud del contenido extraído
-    imagesCount: number; // Número de imágenes encontradas
-    success: boolean; // Si la extracción fue exitosa
-    errors?: string[]; // Errores durante extracción
-  };
-
-  @Prop({ enum: ['pending', 'extracted', 'failed', 'processing'], default: 'pending' })
+  @Prop({
+    enum: ['pending', 'extracted', 'failed', 'processing'],
+    default: 'pending',
+  })
   status: 'pending' | 'extracted' | 'failed' | 'processing';
 
   @Prop({ type: Object })
@@ -72,6 +68,36 @@ export class ExtractedNoticia {
     completeness?: number; // 0-100%
     confidence?: number; // 0-100%
   };
+
+  // Campos adicionales para Generator-Pro
+  @Prop({ default: false })
+  isProcessed?: boolean; // Si ya fue procesado para generación
+
+  @Prop()
+  processedAt?: Date; // Cuándo fue procesado
+
+  @Prop({ type: Types.ObjectId, ref: 'AIContentGeneration' })
+  generatedContentId?: Types.ObjectId; // ID del contenido generado
+
+  @Prop({ type: Types.ObjectId, ref: 'NewsWebsiteConfig' })
+  websiteConfigId?: Types.ObjectId; // Referencia config Generator-Pro
+
+  // Nuevas propiedades que faltaban
+  @Prop({ type: Object })
+  extractionMetadata?: {
+    method?: 'cheerio' | 'puppeteer';
+    processingTime?: number;
+    contentLength?: number;
+    imagesCount?: number;
+    success?: boolean;
+    errors?: string[];
+    discoveredBy?: string;
+    jobId?: string;
+    imageCount?: number; // Alias para imagesCount
+  };
+
+  @Prop()
+  discoveredAt?: Date; // Cuándo fue descubierta la URL
 
   // Referencia al post original de Facebook
   @Prop({ trim: true })
@@ -87,7 +113,8 @@ export class ExtractedNoticia {
   updatedAt: Date;
 }
 
-export const ExtractedNoticiaSchema = SchemaFactory.createForClass(ExtractedNoticia);
+export const ExtractedNoticiaSchema =
+  SchemaFactory.createForClass(ExtractedNoticia);
 
 // Índices para performance y queries comunes
 ExtractedNoticiaSchema.index({ sourceUrl: 1 });

@@ -8,27 +8,49 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { createServerRootRoute } from '@tanstack/react-start/server'
-
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SuscripcionesRouteImport } from './routes/suscripciones'
 import { Route as RegistroRouteImport } from './routes/registro'
+import { Route as PublicidadRouteImport } from './routes/publicidad'
 import { Route as PlanesRouteImport } from './routes/planes'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as PagoRouteImport } from './routes/pago'
+import { Route as NoticiasRouteImport } from './routes/noticias'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as DesuscribirRouteImport } from './routes/desuscribir'
 import { Route as DesignSystemRouteImport } from './routes/design-system'
 import { Route as CrearColumnaRouteImport } from './routes/crear-columna'
+import { Route as ContactoRouteImport } from './routes/contacto'
+import { Route as ConfirmarSuscripcionRouteImport } from './routes/confirmar-suscripcion'
+import { Route as AvisoPrivacidadRouteImport } from './routes/aviso-privacidad'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TagSlugRouteImport } from './routes/tag.$slug'
+import { Route as NoticiaSlugRouteImport } from './routes/noticia.$slug'
+import { Route as CategoriaSlugRouteImport } from './routes/categoria.$slug'
+import { Route as BusquedaQueryRouteImport } from './routes/busqueda.$query'
+import { Route as BoletinTardeRouteImport } from './routes/boletin.tarde'
+import { Route as BoletinSemanalRouteImport } from './routes/boletin.semanal'
+import { Route as BoletinMananaRouteImport } from './routes/boletin.manana'
+import { Route as BoletinDeportesRouteImport } from './routes/boletin.deportes'
+import { Route as AutorSlugRouteImport } from './routes/autor.$slug'
 import { Route as ArticuloIdRouteImport } from './routes/articulo.$id'
+import { Route as ApiDemoNamesRouteImport } from './routes/api.demo-names'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo.start.server-funcs'
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo.start.api-request'
-import { ServerRoute as ApiDemoNamesServerRouteImport } from './routes/api.demo-names'
 
-const rootServerRouteImport = createServerRootRoute()
-
+const SuscripcionesRoute = SuscripcionesRouteImport.update({
+  id: '/suscripciones',
+  path: '/suscripciones',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RegistroRoute = RegistroRouteImport.update({
   id: '/registro',
   path: '/registro',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PublicidadRoute = PublicidadRouteImport.update({
+  id: '/publicidad',
+  path: '/publicidad',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlanesRoute = PlanesRouteImport.update({
@@ -46,9 +68,19 @@ const PagoRoute = PagoRouteImport.update({
   path: '/pago',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NoticiasRoute = NoticiasRouteImport.update({
+  id: '/noticias',
+  path: '/noticias',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DesuscribirRoute = DesuscribirRouteImport.update({
+  id: '/desuscribir',
+  path: '/desuscribir',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DesignSystemRoute = DesignSystemRouteImport.update({
@@ -61,14 +93,79 @@ const CrearColumnaRoute = CrearColumnaRouteImport.update({
   path: '/crear-columna',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContactoRoute = ContactoRouteImport.update({
+  id: '/contacto',
+  path: '/contacto',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfirmarSuscripcionRoute = ConfirmarSuscripcionRouteImport.update({
+  id: '/confirmar-suscripcion',
+  path: '/confirmar-suscripcion',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AvisoPrivacidadRoute = AvisoPrivacidadRouteImport.update({
+  id: '/aviso-privacidad',
+  path: '/aviso-privacidad',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TagSlugRoute = TagSlugRouteImport.update({
+  id: '/tag/$slug',
+  path: '/tag/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NoticiaSlugRoute = NoticiaSlugRouteImport.update({
+  id: '/noticia/$slug',
+  path: '/noticia/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CategoriaSlugRoute = CategoriaSlugRouteImport.update({
+  id: '/categoria/$slug',
+  path: '/categoria/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BusquedaQueryRoute = BusquedaQueryRouteImport.update({
+  id: '/busqueda/$query',
+  path: '/busqueda/$query',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BoletinTardeRoute = BoletinTardeRouteImport.update({
+  id: '/boletin/tarde',
+  path: '/boletin/tarde',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BoletinSemanalRoute = BoletinSemanalRouteImport.update({
+  id: '/boletin/semanal',
+  path: '/boletin/semanal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BoletinMananaRoute = BoletinMananaRouteImport.update({
+  id: '/boletin/manana',
+  path: '/boletin/manana',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BoletinDeportesRoute = BoletinDeportesRouteImport.update({
+  id: '/boletin/deportes',
+  path: '/boletin/deportes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AutorSlugRoute = AutorSlugRouteImport.update({
+  id: '/autor/$slug',
+  path: '/autor/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ArticuloIdRoute = ArticuloIdRouteImport.update({
   id: '/articulo/$id',
   path: '/articulo/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDemoNamesRoute = ApiDemoNamesRouteImport.update({
+  id: '/api/demo-names',
+  path: '/api/demo-names',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DemoStartServerFuncsRoute = DemoStartServerFuncsRouteImport.update({
@@ -81,49 +178,95 @@ const DemoStartApiRequestRoute = DemoStartApiRequestRouteImport.update({
   path: '/demo/start/api-request',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiDemoNamesServerRoute = ApiDemoNamesServerRouteImport.update({
-  id: '/api/demo-names',
-  path: '/api/demo-names',
-  getParentRoute: () => rootServerRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/aviso-privacidad': typeof AvisoPrivacidadRoute
+  '/confirmar-suscripcion': typeof ConfirmarSuscripcionRoute
+  '/contacto': typeof ContactoRoute
   '/crear-columna': typeof CrearColumnaRoute
   '/design-system': typeof DesignSystemRoute
+  '/desuscribir': typeof DesuscribirRoute
   '/login': typeof LoginRoute
+  '/noticias': typeof NoticiasRoute
   '/pago': typeof PagoRoute
   '/perfil': typeof PerfilRoute
   '/planes': typeof PlanesRoute
+  '/publicidad': typeof PublicidadRoute
   '/registro': typeof RegistroRoute
+  '/suscripciones': typeof SuscripcionesRoute
+  '/api/demo-names': typeof ApiDemoNamesRoute
   '/articulo/$id': typeof ArticuloIdRoute
+  '/autor/$slug': typeof AutorSlugRoute
+  '/boletin/deportes': typeof BoletinDeportesRoute
+  '/boletin/manana': typeof BoletinMananaRoute
+  '/boletin/semanal': typeof BoletinSemanalRoute
+  '/boletin/tarde': typeof BoletinTardeRoute
+  '/busqueda/$query': typeof BusquedaQueryRoute
+  '/categoria/$slug': typeof CategoriaSlugRoute
+  '/noticia/$slug': typeof NoticiaSlugRoute
+  '/tag/$slug': typeof TagSlugRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/aviso-privacidad': typeof AvisoPrivacidadRoute
+  '/confirmar-suscripcion': typeof ConfirmarSuscripcionRoute
+  '/contacto': typeof ContactoRoute
   '/crear-columna': typeof CrearColumnaRoute
   '/design-system': typeof DesignSystemRoute
+  '/desuscribir': typeof DesuscribirRoute
   '/login': typeof LoginRoute
+  '/noticias': typeof NoticiasRoute
   '/pago': typeof PagoRoute
   '/perfil': typeof PerfilRoute
   '/planes': typeof PlanesRoute
+  '/publicidad': typeof PublicidadRoute
   '/registro': typeof RegistroRoute
+  '/suscripciones': typeof SuscripcionesRoute
+  '/api/demo-names': typeof ApiDemoNamesRoute
   '/articulo/$id': typeof ArticuloIdRoute
+  '/autor/$slug': typeof AutorSlugRoute
+  '/boletin/deportes': typeof BoletinDeportesRoute
+  '/boletin/manana': typeof BoletinMananaRoute
+  '/boletin/semanal': typeof BoletinSemanalRoute
+  '/boletin/tarde': typeof BoletinTardeRoute
+  '/busqueda/$query': typeof BusquedaQueryRoute
+  '/categoria/$slug': typeof CategoriaSlugRoute
+  '/noticia/$slug': typeof NoticiaSlugRoute
+  '/tag/$slug': typeof TagSlugRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/aviso-privacidad': typeof AvisoPrivacidadRoute
+  '/confirmar-suscripcion': typeof ConfirmarSuscripcionRoute
+  '/contacto': typeof ContactoRoute
   '/crear-columna': typeof CrearColumnaRoute
   '/design-system': typeof DesignSystemRoute
+  '/desuscribir': typeof DesuscribirRoute
   '/login': typeof LoginRoute
+  '/noticias': typeof NoticiasRoute
   '/pago': typeof PagoRoute
   '/perfil': typeof PerfilRoute
   '/planes': typeof PlanesRoute
+  '/publicidad': typeof PublicidadRoute
   '/registro': typeof RegistroRoute
+  '/suscripciones': typeof SuscripcionesRoute
+  '/api/demo-names': typeof ApiDemoNamesRoute
   '/articulo/$id': typeof ArticuloIdRoute
+  '/autor/$slug': typeof AutorSlugRoute
+  '/boletin/deportes': typeof BoletinDeportesRoute
+  '/boletin/manana': typeof BoletinMananaRoute
+  '/boletin/semanal': typeof BoletinSemanalRoute
+  '/boletin/tarde': typeof BoletinTardeRoute
+  '/busqueda/$query': typeof BusquedaQueryRoute
+  '/categoria/$slug': typeof CategoriaSlugRoute
+  '/noticia/$slug': typeof NoticiaSlugRoute
+  '/tag/$slug': typeof TagSlugRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
 }
@@ -131,86 +274,147 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/aviso-privacidad'
+    | '/confirmar-suscripcion'
+    | '/contacto'
     | '/crear-columna'
     | '/design-system'
+    | '/desuscribir'
     | '/login'
+    | '/noticias'
     | '/pago'
     | '/perfil'
     | '/planes'
+    | '/publicidad'
     | '/registro'
+    | '/suscripciones'
+    | '/api/demo-names'
     | '/articulo/$id'
+    | '/autor/$slug'
+    | '/boletin/deportes'
+    | '/boletin/manana'
+    | '/boletin/semanal'
+    | '/boletin/tarde'
+    | '/busqueda/$query'
+    | '/categoria/$slug'
+    | '/noticia/$slug'
+    | '/tag/$slug'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/aviso-privacidad'
+    | '/confirmar-suscripcion'
+    | '/contacto'
     | '/crear-columna'
     | '/design-system'
+    | '/desuscribir'
     | '/login'
+    | '/noticias'
     | '/pago'
     | '/perfil'
     | '/planes'
+    | '/publicidad'
     | '/registro'
+    | '/suscripciones'
+    | '/api/demo-names'
     | '/articulo/$id'
+    | '/autor/$slug'
+    | '/boletin/deportes'
+    | '/boletin/manana'
+    | '/boletin/semanal'
+    | '/boletin/tarde'
+    | '/busqueda/$query'
+    | '/categoria/$slug'
+    | '/noticia/$slug'
+    | '/tag/$slug'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
   id:
     | '__root__'
     | '/'
+    | '/aviso-privacidad'
+    | '/confirmar-suscripcion'
+    | '/contacto'
     | '/crear-columna'
     | '/design-system'
+    | '/desuscribir'
     | '/login'
+    | '/noticias'
     | '/pago'
     | '/perfil'
     | '/planes'
+    | '/publicidad'
     | '/registro'
+    | '/suscripciones'
+    | '/api/demo-names'
     | '/articulo/$id'
+    | '/autor/$slug'
+    | '/boletin/deportes'
+    | '/boletin/manana'
+    | '/boletin/semanal'
+    | '/boletin/tarde'
+    | '/busqueda/$query'
+    | '/categoria/$slug'
+    | '/noticia/$slug'
+    | '/tag/$slug'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AvisoPrivacidadRoute: typeof AvisoPrivacidadRoute
+  ConfirmarSuscripcionRoute: typeof ConfirmarSuscripcionRoute
+  ContactoRoute: typeof ContactoRoute
   CrearColumnaRoute: typeof CrearColumnaRoute
   DesignSystemRoute: typeof DesignSystemRoute
+  DesuscribirRoute: typeof DesuscribirRoute
   LoginRoute: typeof LoginRoute
+  NoticiasRoute: typeof NoticiasRoute
   PagoRoute: typeof PagoRoute
   PerfilRoute: typeof PerfilRoute
   PlanesRoute: typeof PlanesRoute
+  PublicidadRoute: typeof PublicidadRoute
   RegistroRoute: typeof RegistroRoute
+  SuscripcionesRoute: typeof SuscripcionesRoute
+  ApiDemoNamesRoute: typeof ApiDemoNamesRoute
   ArticuloIdRoute: typeof ArticuloIdRoute
+  AutorSlugRoute: typeof AutorSlugRoute
+  BoletinDeportesRoute: typeof BoletinDeportesRoute
+  BoletinMananaRoute: typeof BoletinMananaRoute
+  BoletinSemanalRoute: typeof BoletinSemanalRoute
+  BoletinTardeRoute: typeof BoletinTardeRoute
+  BusquedaQueryRoute: typeof BusquedaQueryRoute
+  CategoriaSlugRoute: typeof CategoriaSlugRoute
+  NoticiaSlugRoute: typeof NoticiaSlugRoute
+  TagSlugRoute: typeof TagSlugRoute
   DemoStartApiRequestRoute: typeof DemoStartApiRequestRoute
   DemoStartServerFuncsRoute: typeof DemoStartServerFuncsRoute
-}
-export interface FileServerRoutesByFullPath {
-  '/api/demo-names': typeof ApiDemoNamesServerRoute
-}
-export interface FileServerRoutesByTo {
-  '/api/demo-names': typeof ApiDemoNamesServerRoute
-}
-export interface FileServerRoutesById {
-  __root__: typeof rootServerRouteImport
-  '/api/demo-names': typeof ApiDemoNamesServerRoute
-}
-export interface FileServerRouteTypes {
-  fileServerRoutesByFullPath: FileServerRoutesByFullPath
-  fullPaths: '/api/demo-names'
-  fileServerRoutesByTo: FileServerRoutesByTo
-  to: '/api/demo-names'
-  id: '__root__' | '/api/demo-names'
-  fileServerRoutesById: FileServerRoutesById
-}
-export interface RootServerRouteChildren {
-  ApiDemoNamesServerRoute: typeof ApiDemoNamesServerRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/suscripciones': {
+      id: '/suscripciones'
+      path: '/suscripciones'
+      fullPath: '/suscripciones'
+      preLoaderRoute: typeof SuscripcionesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/registro': {
       id: '/registro'
       path: '/registro'
       fullPath: '/registro'
       preLoaderRoute: typeof RegistroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/publicidad': {
+      id: '/publicidad'
+      path: '/publicidad'
+      fullPath: '/publicidad'
+      preLoaderRoute: typeof PublicidadRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/planes': {
@@ -234,11 +438,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PagoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/noticias': {
+      id: '/noticias'
+      path: '/noticias'
+      fullPath: '/noticias'
+      preLoaderRoute: typeof NoticiasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/desuscribir': {
+      id: '/desuscribir'
+      path: '/desuscribir'
+      fullPath: '/desuscribir'
+      preLoaderRoute: typeof DesuscribirRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/design-system': {
@@ -255,6 +473,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CrearColumnaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contacto': {
+      id: '/contacto'
+      path: '/contacto'
+      fullPath: '/contacto'
+      preLoaderRoute: typeof ContactoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/confirmar-suscripcion': {
+      id: '/confirmar-suscripcion'
+      path: '/confirmar-suscripcion'
+      fullPath: '/confirmar-suscripcion'
+      preLoaderRoute: typeof ConfirmarSuscripcionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/aviso-privacidad': {
+      id: '/aviso-privacidad'
+      path: '/aviso-privacidad'
+      fullPath: '/aviso-privacidad'
+      preLoaderRoute: typeof AvisoPrivacidadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -262,11 +501,81 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tag/$slug': {
+      id: '/tag/$slug'
+      path: '/tag/$slug'
+      fullPath: '/tag/$slug'
+      preLoaderRoute: typeof TagSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/noticia/$slug': {
+      id: '/noticia/$slug'
+      path: '/noticia/$slug'
+      fullPath: '/noticia/$slug'
+      preLoaderRoute: typeof NoticiaSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/categoria/$slug': {
+      id: '/categoria/$slug'
+      path: '/categoria/$slug'
+      fullPath: '/categoria/$slug'
+      preLoaderRoute: typeof CategoriaSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/busqueda/$query': {
+      id: '/busqueda/$query'
+      path: '/busqueda/$query'
+      fullPath: '/busqueda/$query'
+      preLoaderRoute: typeof BusquedaQueryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/boletin/tarde': {
+      id: '/boletin/tarde'
+      path: '/boletin/tarde'
+      fullPath: '/boletin/tarde'
+      preLoaderRoute: typeof BoletinTardeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/boletin/semanal': {
+      id: '/boletin/semanal'
+      path: '/boletin/semanal'
+      fullPath: '/boletin/semanal'
+      preLoaderRoute: typeof BoletinSemanalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/boletin/manana': {
+      id: '/boletin/manana'
+      path: '/boletin/manana'
+      fullPath: '/boletin/manana'
+      preLoaderRoute: typeof BoletinMananaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/boletin/deportes': {
+      id: '/boletin/deportes'
+      path: '/boletin/deportes'
+      fullPath: '/boletin/deportes'
+      preLoaderRoute: typeof BoletinDeportesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/autor/$slug': {
+      id: '/autor/$slug'
+      path: '/autor/$slug'
+      fullPath: '/autor/$slug'
+      preLoaderRoute: typeof AutorSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/articulo/$id': {
       id: '/articulo/$id'
       path: '/articulo/$id'
       fullPath: '/articulo/$id'
       preLoaderRoute: typeof ArticuloIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/demo-names': {
+      id: '/api/demo-names'
+      path: '/api/demo-names'
+      fullPath: '/api/demo-names'
+      preLoaderRoute: typeof ApiDemoNamesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo/start/server-funcs': {
@@ -285,37 +594,46 @@ declare module '@tanstack/react-router' {
     }
   }
 }
-declare module '@tanstack/react-start/server' {
-  interface ServerFileRoutesByPath {
-    '/api/demo-names': {
-      id: '/api/demo-names'
-      path: '/api/demo-names'
-      fullPath: '/api/demo-names'
-      preLoaderRoute: typeof ApiDemoNamesServerRouteImport
-      parentRoute: typeof rootServerRouteImport
-    }
-  }
-}
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AvisoPrivacidadRoute: AvisoPrivacidadRoute,
+  ConfirmarSuscripcionRoute: ConfirmarSuscripcionRoute,
+  ContactoRoute: ContactoRoute,
   CrearColumnaRoute: CrearColumnaRoute,
   DesignSystemRoute: DesignSystemRoute,
+  DesuscribirRoute: DesuscribirRoute,
   LoginRoute: LoginRoute,
+  NoticiasRoute: NoticiasRoute,
   PagoRoute: PagoRoute,
   PerfilRoute: PerfilRoute,
   PlanesRoute: PlanesRoute,
+  PublicidadRoute: PublicidadRoute,
   RegistroRoute: RegistroRoute,
+  SuscripcionesRoute: SuscripcionesRoute,
+  ApiDemoNamesRoute: ApiDemoNamesRoute,
   ArticuloIdRoute: ArticuloIdRoute,
+  AutorSlugRoute: AutorSlugRoute,
+  BoletinDeportesRoute: BoletinDeportesRoute,
+  BoletinMananaRoute: BoletinMananaRoute,
+  BoletinSemanalRoute: BoletinSemanalRoute,
+  BoletinTardeRoute: BoletinTardeRoute,
+  BusquedaQueryRoute: BusquedaQueryRoute,
+  CategoriaSlugRoute: CategoriaSlugRoute,
+  NoticiaSlugRoute: NoticiaSlugRoute,
+  TagSlugRoute: TagSlugRoute,
   DemoStartApiRequestRoute: DemoStartApiRequestRoute,
   DemoStartServerFuncsRoute: DemoStartServerFuncsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-const rootServerRouteChildren: RootServerRouteChildren = {
-  ApiDemoNamesServerRoute: ApiDemoNamesServerRoute,
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
 }
-export const serverRouteTree = rootServerRouteImport
-  ._addFileChildren(rootServerRouteChildren)
-  ._addFileTypes<FileServerRouteTypes>()

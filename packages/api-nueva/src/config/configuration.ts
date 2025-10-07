@@ -159,6 +159,14 @@ export default registerAs('config', () => ({
     customDomain: process.env.AWS_S3_CUSTOM_URL || '',
   },
 
+  // 📰 CONFIGURACIÓN CDN ESPECÍFICO PARA PACHUCA NOTICIAS
+  pachucaCdn: {
+    bucket: process.env.PACHUCA_S3_BUCKET || 'noticiaspachuca-assets',
+    region: process.env.PACHUCA_S3_REGION || 'mx-central-1',
+    cdnUrl: process.env.PACHUCA_CDN_URL || 'https://cdn.noticiaspachuca.com',
+    distributionId: process.env.PACHUCA_CLOUDFRONT_DISTRIBUTION_ID || 'E1EA8H3LZ4M4FN',
+  },
+
   // 📁 CONFIGURACIÓN DE ARCHIVOS
   files: {
     maxFileSize: parseInt(process.env.MAX_FILE_SIZE || '52428800', 10), // 50MB default

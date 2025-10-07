@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { ChevronLeft, ChevronRight, Copy, Wand2, FileText, MessageSquare, Search } from "lucide-react"
 import { CreateTemplateSheet } from "./CreateTemplateSheet"
+import { apiClient } from "../../shared/services/apiClient"
 
 interface WizardPromptResponse {
   success: boolean
@@ -162,20 +163,7 @@ export function PromptGeneratorWizard() {
         additionalInstructions: state.context.trim() || undefined
       }
 
-      const response = await fetch('/api/content-ai/generate-prompt-from-wizard', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(wizardData)
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
-      }
-
-      const result: WizardPromptResponse = await response.json()
+      const result = await apiClient.post<WizardPromptResponse>('/content-ai/generate-prompt-from-wizard', wizardData)
 
       if (!result.success) {
         throw new Error("El servidor no pudo generar el prompt")
@@ -246,20 +234,7 @@ export function PromptGeneratorWizard() {
         userApproval: true
       }
 
-      const response = await fetch('/api/content-ai/create-template-from-wizard', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(createRequest)
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
-      }
-
-      const result = await response.json()
+      const result = await apiClient.post('/content-ai/create-template-from-wizard', createRequest)
 
       toast.success(`¡Template "${result.name}" creado exitosamente!`)
 

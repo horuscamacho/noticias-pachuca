@@ -1,0 +1,14 @@
+{
+  "Comment": "Fix DKIM record for Resend",
+  "Changes": [{
+    "Action": "UPSERT",
+    "ResourceRecordSet": {
+      "Name": "resend._domainkey.noticiaspachuca.com",
+      "Type": "TXT",
+      "TTL": 300,
+      "ResourceRecords": [{
+        "Value": "\"p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDi/K4/wLE3GBjrP1MAEeCkbZ5ec8vxEQyo8xlc8lbkUTJBye49qvqpaMTkGYWDSXwF1yT+GdKkqLVVUwcfMv+IjtvY/TUbov+gYcW8IDMsnHGg/pe+alttxwsbxa0Yf/bAavJh36lX0DaHO2FSHXYMQLET+iCtBgDTA0R4wRYUNQIDAQAB\""
+      }]
+    }
+  }]
+}

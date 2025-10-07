@@ -46,6 +46,7 @@ import {
   Wand2
 } from "lucide-react"
 import { CreateTemplateSheet } from "./CreateTemplateSheet"
+import { PromptGeneratorWizard } from "./PromptGeneratorWizard"
 
 interface PromptTemplate {
   id: string
@@ -178,6 +179,7 @@ export function TemplatesTab() {
   const testTemplateMutation = useTestTemplate()
   const [searchQuery, setSearchQuery] = useState("")
   const [filterType, setFilterType] = useState<string>("all")
+  const [showWizard, setShowWizard] = useState(false)
 
   // Use real data from backend, fallback to empty array if loading
   const templatesData = templates || []
@@ -262,7 +264,11 @@ export function TemplatesTab() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="gap-2">
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => setShowWizard(true)}
+          >
             <Wand2 className="h-4 w-4" />
             Generar con Wizard
           </Button>
@@ -528,6 +534,26 @@ export function TemplatesTab() {
           </CardContent>
         </Card>
       </div>
+
+      {/* 🧙‍♂️ Wizard Modal/Overlay */}
+      {showWizard && (
+        <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4 overflow-y-auto">
+          <div className="w-full max-w-4xl">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-white">Generador de Prompts con IA</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowWizard(false)}
+                className="text-white hover:bg-white/20"
+              >
+                ✕ Cerrar
+              </Button>
+            </div>
+            <PromptGeneratorWizard />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

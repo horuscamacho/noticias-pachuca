@@ -121,6 +121,7 @@ export interface GeneratedContentResponse {
     content: string;
     sourceUrl?: string;
     publishedAt?: Date;
+    images?: string[];
   };
   agent: {
     id: string;
@@ -187,6 +188,7 @@ export interface GeneratedContentFilters {
   isPublished?: boolean;
   category?: string;
   tags?: string[];
+  search?: string;
 }
 
 export interface GeneratedContentStats {
