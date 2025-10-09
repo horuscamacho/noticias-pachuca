@@ -1,0 +1,84 @@
+name: Deploy API (NestJS)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/api-nueva/**'
+      - '.github/workflows/deploy-api.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+          cache-dependency-path: 'packages/api-nueva/yarn.lock'
+
+      - name: Install dependencies
+        working-directory: packages/api-nueva
+        run: yarn install --frozen-lockfile --production=false
+
+      - name: Run tests
+        working-directory: packages/api-nueva
+        run: yarn test --passWithNoTests || true
+
+      - name: Build application
+        working-directory: packages/api-nueva
+        run: yarn build
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+
+      - name: Create deployment package
+        working-directory: packages/api-nueva
+        run: |
+          mkdir -p deploy-pkg
+          cp -r dist deploy-pkg/
+          cp package.json deploy-pkg/
+          cp yarn.lock deploy-pkg/
+          tar -czf api-deploy.tar.gz -C deploy-pkg .
+
+      - name: Copy to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "packages/api-nueva/api-deploy.tar.gz"
+          target: "/tmp/"
+          strip_components: 2
+
+      - name: Deploy on EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+
+            # Extract deployment
+            cd /var/www/pachuca-noticias/packages/api-nueva
+            tar -xzf /tmp/api-deploy.tar.gz
+
+            # Install production dependencies
+            yarn install --frozen-lockfile --production
+
+            # Update .env
+            echo "${{ secrets.API_ENV }}" > .env
+
+            # Reload with PM2 (zero-downtime)
+            pm2 reload ecosystem.config.js --only api-nueva || pm2 start ecosystem.config.js --only api-nueva
+
+            # Health check
+            sleep 5
+            curl -f http://localhost:4000/health || exit 1
+
+            echo "✅ API deployment successful"

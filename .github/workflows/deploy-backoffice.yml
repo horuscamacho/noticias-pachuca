@@ -1,0 +1,63 @@
+name: Deploy Backoffice (React SPA)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/dash-coyote/**'
+      - '.github/workflows/deploy-backoffice.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+          cache-dependency-path: 'packages/dash-coyote/yarn.lock'
+
+      - name: Install dependencies
+        working-directory: packages/dash-coyote
+        run: yarn install --frozen-lockfile
+
+      - name: Build application
+        working-directory: packages/dash-coyote
+        run: yarn build
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+
+      - name: Create deployment package
+        working-directory: packages/dash-coyote
+        run: |
+          tar -czf backoffice-deploy.tar.gz dist
+
+      - name: Copy to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "packages/dash-coyote/backoffice-deploy.tar.gz"
+          target: "/tmp/"
+          strip_components: 2
+
+      - name: Deploy on EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+
+            # Extract deployment
+            cd /var/www/pachuca-noticias/packages/dash-coyote
+            tar -xzf /tmp/backoffice-deploy.tar.gz
+
+            echo "✅ Backoffice deployment successful (static files)"
