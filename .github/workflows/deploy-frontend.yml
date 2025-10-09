@@ -81,8 +81,8 @@ jobs:
             cd /var/www/noticias-pachuca/packages/public-noticias
             tar -xzf /tmp/frontend-deploy.tar.gz
 
-            # Install production dependencies
-            yarn install --frozen-lockfile --production
+            # Install dependencies
+            yarn install --frozen-lockfile
 
             # Update .env
             echo "${{ secrets.FRONTEND_ENV }}" > .env
