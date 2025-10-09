@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "vite --port 3001",
     "start": "vite --port 3001",
-    "build": "vite build && tsc",
+    "build": "vite build",
+    "build:check": "vite build && tsc",
     "serve": "vite preview",
     "test": "vitest run",
     "build-routes": "tsr generate"

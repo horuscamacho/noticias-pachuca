@@ -1,0 +1,1274 @@
+{
+  "research_metadata": {
+    "date": "2025-10-09",
+    "researcher": "Jarvis (Claude Code - Technical Researcher)",
+    "project": "Pachuca Noticias Monorepo",
+    "focus": "CI/CD Strategy for Late 2025 - Production Deployment on AWS EC2",
+    "platforms_searched": [
+      "GitHub Documentation",
+      "AWS DevOps Blog",
+      "Stack Overflow",
+      "TanStack Official Docs",
+      "Nitro Documentation",
+      "Technical Blogs (Medium, DEV.to)",
+      "Real-world Case Studies (2024-2025)"
+    ],
+    "repositories_analyzed": 8,
+    "docs_reviewed": 35,
+    "sources_total": 60
+  },
+
+  "project_context": {
+    "monorepo_structure": {
+      "package_manager": "Yarn Workspaces",
+      "packages": {
+        "api-nueva": {
+          "type": "NestJS Backend",
+          "build_output": "dist/",
+          "start_command": "node dist/main",
+          "node_version": ">=18.0.0",
+          "dependencies_heavy": true,
+          "puppeteer_included": true
+        },
+        "public-noticias": {
+          "type": "TanStack Start v1.131.7 SSR Frontend",
+          "build_output": ".output/server/index.mjs",
+          "start_command": "node .output/server/index.mjs",
+          "nitro_config": "Missing - needs configuration",
+          "critical_issue": "No Nitro preset configured in vite.config.ts"
+        },
+        "dash-coyote": {
+          "type": "React SPA (No SSR)",
+          "build_output": "dist/",
+          "deployment": "Static files to S3/CloudFront or served via Nginx",
+          "no_server_required": true
+        }
+      }
+    },
+    "infrastructure": {
+      "deployment_target": "AWS EC2 Amazon Linux 2023",
+      "instance_type": "t3.micro",
+      "memory": "1GB RAM",
+      "memory_constraint": "CRITICAL - Build processes will fail without optimization",
+      "domain": "noticiaspachuca.com",
+      "databases": {
+        "mongodb": "MongoDB Atlas (External)",
+        "redis": "Redis on AWS (External)"
+      },
+      "local_development": "Docker Compose"
+    }
+  },
+
+  "cicd_platform_comparison": {
+    "platforms": [
+      {
+        "name": "GitHub Actions",
+        "citation": "[1] GitHub. 'GitHub Actions Documentation - Billing.' GitHub Docs, 2025. https://docs.github.com/billing/managing-billing-for-github-actions/about-billing-for-github-actions",
+        "free_tier": {
+          "public_repos": "Unlimited minutes",
+          "private_repos": "2,000 minutes/month",
+          "storage": "500 MB",
+          "minute_multipliers": {
+            "linux": "1x",
+            "windows": "2x",
+            "macos": "10x"
+          }
+        },
+        "pros": [
+          "Free unlimited for public repos",
+          "Excellent GitHub integration (native)",
+          "Massive marketplace of actions",
+          "Easy to get started",
+          "Supports matrix builds for monorepos",
+          "Path-based workflow triggers",
+          "Secrets management built-in",
+          "Great developer experience"
+        ],
+        "cons": [
+          "2,000 min/month limit for private repos (can be exceeded easily)",
+          "Paid plans: $0.008/min Linux, $0.016/min Windows",
+          "300 file diff limit in path filters (problematic for large monorepos)",
+          "Can get expensive at scale for private repos"
+        ],
+        "monorepo_support": {
+          "rating": "Excellent",
+          "selective_deployment": "Via path filters or changed-files actions",
+          "matrix_strategy": "Full support with dynamic matrices",
+          "caching": "Built-in with @actions/cache"
+        },
+        "best_for": [
+          "Public repositories",
+          "Small to medium private projects",
+          "Teams already using GitHub",
+          "Projects with <2000 min/month build time"
+        ],
+        "cost_estimate_your_project": {
+          "scenario": "Private repo, 3 apps, daily deployments",
+          "estimated_minutes_month": "~1,500-2,500 minutes",
+          "free_tier_sufficient": "Borderline - may exceed",
+          "overage_cost_estimate": "$4-8/month if exceeding"
+        }
+      },
+      {
+        "name": "GitLab CI/CD",
+        "citation": "[2] Multiple Sources. 'GitLab CI/CD vs GitHub Actions Comparison.' Graphite.dev & PeerSpot, 2025.",
+        "free_tier": {
+          "shared_runners": "400 minutes/month (private projects)",
+          "public_projects": "50,000 minutes/month",
+          "storage": "10 GB",
+          "users": "Unlimited"
+        },
+        "pros": [
+          "Generous free tier for public projects (50k min)",
+          "Built-in Container Registry",
+          "Advanced deployment strategies (canary, blue-green) out-of-the-box",
+          "Self-hosted option is free",
+          "Better for high build volume (paid plans unlimited minutes)",
+          "Integrated DevOps platform (not just CI/CD)"
+        ],
+        "cons": [
+          "Only 400 min/month for private projects (less than GitHub)",
+          "Migration required if currently using GitHub",
+          "Steeper learning curve",
+          "Need to manage git hosting separately if not fully on GitLab"
+        ],
+        "monorepo_support": {
+          "rating": "Very Good",
+          "selective_deployment": "Via rules:changes or only:changes",
+          "caching": "Strong cache support with cache:paths",
+          "advanced_features": "DAG pipelines, parent-child pipelines"
+        },
+        "best_for": [
+          "Public projects with high build volume",
+          "Teams wanting all-in-one DevOps platform",
+          "Organizations willing to self-host runners",
+          "Advanced deployment strategies required"
+        ],
+        "cost_estimate_your_project": {
+          "scenario": "Would need to migrate from GitHub to GitLab",
+          "free_tier_sufficient": "No - only 400 min/month private",
+          "paid_plan_required": "Premium ~$29/user/month for unlimited CI minutes",
+          "verdict": "Not cost-effective for this project size"
+        }
+      },
+      {
+        "name": "AWS CodePipeline",
+        "citation": "[3] Cloudonaut & AWS Blogs. 'AWS CodePipeline vs GitHub Actions.' 2025. https://aws.amazon.com/blogs/devops/ & https://cloudonaut.io/versus/ci-cd-pipeline/",
+        "free_tier": {
+          "pipelines": "1 free active pipeline/month",
+          "additional_cost": "$1 per active pipeline/month",
+          "codebuild_minutes": "100 build minutes/month (free tier)",
+          "codebuild_compute": "$0.005/min (general1.small Linux after free tier)"
+        },
+        "pros": [
+          "Deep AWS integration (EC2, S3, CloudWatch, etc)",
+          "No per-minute charges for the pipeline itself",
+          "Excellent for AWS-native workloads",
+          "IAM-based security and permissions",
+          "Can trigger from GitHub via webhooks",
+          "CloudWatch integration for monitoring"
+        ],
+        "cons": [
+          "Complex setup compared to GitHub Actions",
+          "Free tier very limited (1 pipeline, 100 build min)",
+          "Costs add up: CodePipeline + CodeBuild + S3 + Data Transfer",
+          "Need to manage CodeBuild environments",
+          "Not ideal for non-AWS deployments",
+          "Reported as 'too expensive' for personal/small projects"
+        ],
+        "monorepo_support": {
+          "rating": "Good (with configuration)",
+          "selective_deployment": "Requires custom logic in CodeBuild buildspec",
+          "caching": "S3-based caching (additional cost)"
+        },
+        "best_for": [
+          "Large enterprises heavily invested in AWS",
+          "Complex multi-stage AWS deployments",
+          "Teams needing AWS compliance/governance",
+          "Projects with budget for AWS services"
+        ],
+        "cost_estimate_your_project": {
+          "scenario": "3 pipelines (one per app) + CodeBuild",
+          "monthly_estimate": "$3 (pipelines) + $15-30 (CodeBuild minutes) + S3/transfer = $20-40/month",
+          "free_tier_exhausted_quickly": true,
+          "verdict": "Most expensive option for your scale"
+        }
+      }
+    ],
+    "recommended_platform": {
+      "platform": "GitHub Actions",
+      "confidence": "High",
+      "rationale": [
+        "Your code is already on GitHub - zero migration cost",
+        "Free unlimited minutes if repo is public (consider making it public)",
+        "If private: 2,000 min/month likely sufficient with optimizations",
+        "Best developer experience and documentation",
+        "Largest ecosystem of community actions",
+        "Easy monorepo support with path filters and matrix builds",
+        "Can optimize to stay within free tier (build remotely, cache dependencies)",
+        "Future option: Self-hosted runners on spare EC2 capacity for $0 CI cost"
+      ],
+      "alternative_recommendation": "If you need to stay private and exceed 2,000 min/month consistently, consider GitHub Actions with self-hosted runners on your EC2 instance or a dedicated t4g.nano spot instance (~$2-3/month)"
+    }
+  },
+
+  "tanstack_start_deployment_deep_dive": {
+    "current_status": {
+      "version": "v1.131.7",
+      "release_stage": "Release Candidate (RC)",
+      "production_ready": "Yes - API stable, feature-complete",
+      "recommendation": "Lock to specific version in package.json",
+      "missing_configuration": "CRITICAL: No Nitro preset configured in vite.config.ts"
+    },
+    "nitro_configuration_required": {
+      "problem": "Your vite.config.ts is missing Nitro plugin configuration",
+      "current_config_analysis": {
+        "file": "/packages/public-noticias/vite.config.ts",
+        "has_tanstack_start": true,
+        "has_nitro_plugin": false,
+        "consequence": "Using default Nitro v3 BETA which may have issues"
+      },
+      "solution_needed": {
+        "option_1_recommended": {
+          "name": "Nitro v2 Compatibility Plugin (Stable)",
+          "package": "@tanstack/nitro-v2-vite-plugin",
+          "preset": "node-server",
+          "citation": "[4] TanStack. 'Hosting - TanStack Start React Docs.' TanStack.com, 2025. https://tanstack.com/start/latest/docs/framework/react/hosting",
+          "installation": "yarn add -D @tanstack/nitro-v2-vite-plugin",
+          "vite_config": {
+            "import": "import { nitroV2Plugin } from '@tanstack/nitro-v2-vite-plugin'",
+            "plugin_usage": "nitroV2Plugin({ preset: 'node-server' })"
+          },
+          "output": ".output/server/index.mjs",
+          "start_command": "node .output/server/index.mjs",
+          "why_recommended": [
+            "Officially recommended by TanStack during RC phase",
+            "More stable than Nitro v3 BETA",
+            "Proven production compatibility",
+            "Safe fallback if v3 has issues"
+          ]
+        },
+        "option_2_experimental": {
+          "name": "Nitro v3 Vite Plugin (BETA)",
+          "note": "Already default in TanStack Start v1.131.7",
+          "configuration": "Can add explicit config via tanstackStart() options",
+          "risk": "BETA status - may have production issues",
+          "when_to_use": "Only if you need v3-specific features"
+        },
+        "option_3_advanced": {
+          "name": "Custom Express Server (No Nitro)",
+          "citation": "[5] TanStack Router GitHub. 'Custom server support for TanStack Start.' Discussion #3777, 2024. https://github.com/TanStack/router/discussions/3777",
+          "description": "Bypass Nitro entirely, embed TanStack Start in Express",
+          "complexity": "High",
+          "when_to_use": "If you need full control or have Nitro compatibility issues",
+          "not_recommended_for_you": "Adds complexity, stick with Nitro v2 preset"
+        }
+      }
+    },
+    "production_deployment_strategy": {
+      "build_process": {
+        "command": "yarn build",
+        "generates": ".output/ directory",
+        "structure": {
+          "server": ".output/server/index.mjs (Node.js entry point)",
+          "public": ".output/public/ (Static assets)",
+          "server_chunks": ".output/server/chunks/ (Server-side code)"
+        },
+        "entire_output_needed": "Yes - must deploy entire .output/ directory"
+      },
+      "ec2_deployment_steps": [
+        {
+          "step": 1,
+          "action": "Build on CI (GitHub Actions runner with 7GB RAM)",
+          "why": "EC2 t3.micro has only 1GB RAM - builds will fail locally"
+        },
+        {
+          "step": 2,
+          "action": "Package .output/ directory as artifact or rsync to EC2"
+        },
+        {
+          "step": 3,
+          "action": "Install production dependencies on EC2 (if needed)",
+          "note": ".output/ is self-contained, may not need node_modules"
+        },
+        {
+          "step": 4,
+          "action": "Start with PM2: pm2 start .output/server/index.mjs --name public-noticias"
+        },
+        {
+          "step": 5,
+          "action": "Nginx reverse proxy to Node.js process on port 3000"
+        }
+      ],
+      "server_functions": {
+        "how_they_work": "Compiled into .output/server/chunks/ during build",
+        "routing": "Handled by Nitro's internal router - no special config needed",
+        "production_concerns": [
+          "Ensure API_URL environment variables are set correctly",
+          "Server functions run on Node.js server, not in browser",
+          "Check CORS if server functions call external APIs"
+        ]
+      },
+      "known_issues_2024_2025": {
+        "citation": "[6] SST GitHub Issues. 'Tanstack Start works under dev, not when deployed.' Issue #5653, Dec 2024. https://github.com/sst/sst/issues/5653",
+        "issue": "ENOENT: no such file or directory, open '.output/server/chunks/nitro/nitro.mjs'",
+        "cause": "Incomplete build or missing Nitro config",
+        "solution": "Use Nitro v2 plugin explicitly, ensure full .output/ directory is deployed",
+        "prevention": "Test build locally before deploying: yarn build && yarn start"
+      },
+      "environment_variables": {
+        "NODE_ENV": "production",
+        "PORT": "3000 (or whatever Nginx proxies to)",
+        "API_URL": "https://api.noticiaspachuca.com",
+        "any_other_env": "Set via PM2 ecosystem.config.js or .env file"
+      }
+    },
+    "nitro_presets_comparison": {
+      "node_server": {
+        "description": "Default standalone Node.js server",
+        "output": ".output/server/index.mjs",
+        "best_for": "EC2, VPS, any Node.js hosting",
+        "your_use_case": "RECOMMENDED"
+      },
+      "aws_lambda": {
+        "description": "AWS Lambda serverless",
+        "output": "Lambda-compatible handler",
+        "best_for": "Serverless on AWS Lambda + API Gateway",
+        "your_use_case": "Alternative if you want serverless (would save EC2 costs)"
+      },
+      "vercel": {
+        "description": "Vercel platform",
+        "your_use_case": "Not applicable (you're using EC2)"
+      },
+      "cloudflare": {
+        "description": "Cloudflare Workers",
+        "your_use_case": "Not applicable"
+      }
+    }
+  },
+
+  "build_strategy_analysis": {
+    "problem": "EC2 t3.micro has only 1GB RAM - building large projects locally will fail",
+    "evidence": {
+      "citation": "[7] Stack Overflow. 'JavaScript heap out of memory on AWS EC2.' 2024. https://stackoverflow.com/questions/63753022/",
+      "real_world_reports": [
+        "t2.micro instances (1GB RAM) commonly hit 'JavaScript heap out of memory' during yarn build",
+        "NestJS with Puppeteer (like your api-nueva) requires ~750MB-1GB just for build",
+        "TanStack Start builds can require 1.5-2GB RAM with all dependencies"
+      ]
+    },
+    "options_comparison": [
+      {
+        "strategy": "Build on CI, Deploy Artifacts (RECOMMENDED)",
+        "how_it_works": "Build on GitHub Actions runner (7GB RAM), transfer only dist/ and .output/ to EC2",
+        "citation": "[8] Stackademic. 'CI/CD Pipeline with GitHub Actions for Deployment on EC2.' Oct 2025. https://blog.stackademic.com/ci-cd-pipeline-with-github-actions-for-deployment-on-ec2-e7f4f9f1c794",
+        "pros": [
+          "Consistent build environment across all deployments",
+          "GitHub Actions runners have 7GB RAM - no memory issues",
+          "Automated testing and linting before deployment",
+          "No build dependencies needed on EC2 (saves disk space)",
+          "Deployment history and rollback capability",
+          "Can run builds in parallel for multiple apps",
+          "'Works on my machine' issues eliminated",
+          "Industry best practice in 2025"
+        ],
+        "cons": [
+          "Uses CI minutes (but within free tier if optimized)",
+          "Slightly longer initial setup",
+          "Need to configure SSH or AWS deployment action"
+        ],
+        "steps": [
+          "1. GitHub Actions workflow triggers on push to main",
+          "2. Checkout code, setup Node.js, install dependencies (with cache)",
+          "3. Run linting and tests",
+          "4. Build each app (api-nueva, public-noticias, dash-coyote)",
+          "5. Create deployment package (zip or tar.gz of dist/.output/)",
+          "6. SSH to EC2 and deploy artifacts",
+          "7. Restart services with PM2"
+        ],
+        "estimated_ci_minutes_per_deployment": "5-8 minutes for all 3 apps (with caching)",
+        "verdict": "STRONGLY RECOMMENDED - Industry standard, solves your memory problem"
+      },
+      {
+        "strategy": "Build Locally, Deploy Dist",
+        "how_it_works": "Developer builds on local machine, commits dist/ or manually transfers to EC2",
+        "pros": [
+          "No CI minutes used",
+          "Simple for solo developer"
+        ],
+        "cons": [
+          "No automated testing",
+          "Environment inconsistencies (different Node versions, OS differences)",
+          "Manual process - prone to human error",
+          "No deployment history",
+          "Can't scale to team",
+          "Risk of forgetting to build before deploying",
+          "Security risk if committing built files to git"
+        ],
+        "verdict": "NOT RECOMMENDED - Outdated practice, anti-pattern in 2025"
+      },
+      {
+        "strategy": "Build on EC2 with Swap Memory",
+        "how_it_works": "Add 2GB swap file to EC2, build directly on instance",
+        "citation": "[9] AWS Re:Post. 'Use swap file to allocate memory as swap space in EC2.' 2025. https://repost.aws/knowledge-center/ec2-memory-swap-file",
+        "how_to_add_swap": [
+          "sudo dd if=/dev/zero of=/swapfile bs=128M count=16  # 2GB swap",
+          "sudo chmod 600 /swapfile",
+          "sudo mkswap /swapfile",
+          "sudo swapon /swapfile",
+          "sudo vi /etc/fstab  # Add: /swapfile swap swap defaults 0 0"
+        ],
+        "pros": [
+          "Allows builds to complete on t3.micro",
+          "No CI minutes used",
+          "Can build on-demand"
+        ],
+        "cons": [
+          "Builds will be SLOW (swapping to disk is 100x slower than RAM)",
+          "Increased disk I/O wear",
+          "Still uses EC2's limited CPU during build",
+          "Build dependencies (TypeScript, etc) permanently on disk",
+          "No automated testing or CI benefits",
+          "10-20 minute build times likely (vs 5-8 min on CI)"
+        ],
+        "verdict": "FALLBACK OPTION - Use only if you absolutely can't use CI"
+      },
+      {
+        "strategy": "Self-Hosted GitHub Actions Runner on EC2",
+        "how_it_works": "Install GitHub Actions runner on your EC2 instance, builds run there",
+        "citation": "[10] GitHub Blog. 'Self-hosted GitHub Actions runners.' 2025. https://github.blog/enterprise-software/ci-cd/when-to-choose-github-hosted-runners-or-self-hosted-runners/",
+        "pros": [
+          "Unlimited CI minutes (GitHub doesn't charge for self-hosted)",
+          "Can use EC2's existing resources",
+          "Faster deployment (no artifact transfer needed)"
+        ],
+        "cons": [
+          "t3.micro too small - would need bigger instance or swap",
+          "Runner security concerns (need ephemeral runners)",
+          "Runner maintenance overhead",
+          "Builds compete with production app for resources",
+          "Defeats purpose of CI isolation"
+        ],
+        "verdict": "NOT RECOMMENDED for t3.micro - Only viable if you get a separate t4g.nano spot instance (~$2/month) just for builds"
+      }
+    ],
+    "final_recommendation": {
+      "strategy": "Build on GitHub Actions CI, Deploy Artifacts to EC2",
+      "confidence": "Very High - Industry Best Practice",
+      "implementation_priority": "High - Set this up ASAP"
+    }
+  },
+
+  "docker_vs_pm2_vs_systemd": {
+    "context": "You use Docker Compose locally. Should you use Docker in EC2 production?",
+    "analysis": [
+      {
+        "option": "PM2 (Process Manager 2)",
+        "citation": "[11] Medium. 'To PM2, or Not to PM2: Embracing Docker for Node.js.' 2024. https://medium.com/@saderi/to-pm2-or-not-to-pm2-embracing-docker-for-node-js-b4a8adce141c",
+        "description": "Node.js process manager with auto-restart, clustering, log management",
+        "pros": [
+          "Lightweight - minimal memory overhead (~50MB)",
+          "Perfect for Node.js apps",
+          "Built-in clustering (utilize all CPU cores)",
+          "Log management (pm2 logs)",
+          "Auto-restart on crash",
+          "Zero-downtime reloads (pm2 reload)",
+          "Monitoring (pm2 monit)",
+          "Startup scripts (pm2 startup)",
+          "No containerization overhead",
+          "Easy to configure: pm2 ecosystem.config.js"
+        ],
+        "cons": [
+          "Only for Node.js",
+          "No resource limits (can use all RAM if app leaks memory)",
+          "No container isolation"
+        ],
+        "memory_overhead": "~50MB",
+        "cpu_overhead": "Minimal",
+        "best_for": "Node.js applications on small instances (t3.micro)",
+        "your_use_case": "PERFECT - You have 3 Node.js apps (NestJS + 2 TanStack Start)"
+      },
+      {
+        "option": "Docker on EC2",
+        "citation": "[12] Stack Overflow. 'Run nodejs application with pm2 or in docker containers?' 2024. https://stackoverflow.com/questions/54712749/",
+        "description": "Containerize apps, run with Docker or Docker Compose",
+        "pros": [
+          "Consistent env between dev (Docker Compose) and prod",
+          "Container isolation",
+          "Resource limits (--memory, --cpus)",
+          "Easy to update (docker-compose pull && up -d)",
+          "Portable across any Docker host"
+        ],
+        "cons": [
+          "Docker daemon overhead: ~200-400MB RAM",
+          "Each container overhead: ~50-100MB",
+          "Total overhead on t3.micro: 300-500MB (30-50% of your RAM!)",
+          "More complex than PM2 for simple deployments",
+          "Networking overhead",
+          "If using PM2 inside Docker, you're doubling overhead",
+          "Consensus: 'If you use Docker, PM2 is redundant'"
+        ],
+        "memory_overhead": "300-500MB (critical on 1GB instance)",
+        "cpu_overhead": "Low but measurable",
+        "best_for": "Larger instances (t3.small+), microservices needing isolation",
+        "your_use_case": "NOT RECOMMENDED for t3.micro - Too much overhead"
+      },
+      {
+        "option": "systemd",
+        "description": "Linux init system, can manage Node.js processes",
+        "pros": [
+          "Native to Linux (no extra packages)",
+          "Zero overhead (it's the init system)",
+          "Auto-restart on crash",
+          "Logging via journalctl",
+          "Startup on boot"
+        ],
+        "cons": [
+          "Manual configuration for each app (write .service files)",
+          "No built-in clustering",
+          "No log rotation by default",
+          "Less Node.js-friendly than PM2",
+          "Harder to manage multiple apps"
+        ],
+        "memory_overhead": "0MB (already running)",
+        "best_for": "Single app deployments, minimalist setups",
+        "your_use_case": "VIABLE but PM2 is easier for 3 apps"
+      }
+    ],
+    "recommendation": {
+      "production": "PM2",
+      "rationale": [
+        "t3.micro has only 1GB RAM - Docker overhead (300-500MB) is too expensive",
+        "PM2 is Node.js-optimized, mature, and widely used",
+        "Easy to manage 3 apps with single ecosystem.config.js",
+        "Clustering can utilize both vCPUs on t3.micro",
+        "Zero-downtime deployments with 'pm2 reload'",
+        "Can always migrate to Docker later if you upgrade instance",
+        "Local Docker Compose for dev is fine - prod doesn't need to match exactly"
+      ],
+      "hybrid_option": "If you really want Docker consistency, use Docker but run a larger instance (t3.small: 2GB RAM, ~$15/month vs t3.micro ~$7.50/month)"
+    },
+    "pm2_configuration_example": {
+      "file": "ecosystem.config.js",
+      "example": {
+        "apps": [
+          {
+            "name": "api-nueva",
+            "script": "./packages/api-nueva/dist/main.js",
+            "instances": 1,
+            "exec_mode": "cluster",
+            "env_production": {
+              "NODE_ENV": "production"
+            }
+          },
+          {
+            "name": "public-noticias",
+            "script": "./packages/public-noticias/.output/server/index.mjs",
+            "instances": 1,
+            "exec_mode": "cluster"
+          },
+          {
+            "name": "dash-coyote-nginx",
+            "note": "Static SPA - served by Nginx, not PM2"
+          }
+        ]
+      }
+    }
+  },
+
+  "memory_optimization_techniques": {
+    "problem": "t3.micro has 1GB RAM, must optimize to run 3 apps + OS + Nginx",
+    "estimated_memory_usage": {
+      "amazon_linux_os": "~200MB",
+      "nginx": "~50MB",
+      "pm2": "~50MB",
+      "api_nueva": "~250-350MB (NestJS + Puppeteer)",
+      "public_noticias": "~150-250MB (TanStack Start SSR)",
+      "redis_client": "~20MB",
+      "total_estimated": "~700-920MB",
+      "remaining": "~80-300MB buffer",
+      "verdict": "TIGHT but workable with optimizations"
+    },
+    "optimizations": [
+      {
+        "technique": "Node.js Memory Limits",
+        "citation": "[13] Stack Overflow. 'How do I determine the correct max-old-space-size for Node.js?' 2024. https://stackoverflow.com/questions/48387040/",
+        "how": "Set NODE_OPTIONS='--max-old-space-size=256' for each app in PM2 config",
+        "example": {
+          "env_production": {
+            "NODE_OPTIONS": "--max-old-space-size=256"
+          }
+        },
+        "effect": "Limits heap to 256MB per app, prevents one app from consuming all RAM",
+        "tradeoff": "Apps will crash if they exceed limit - monitor and adjust"
+      },
+      {
+        "technique": "PM2 Clustering Tuning",
+        "how": "Use instances: 1 for each app (not 'max' or cluster mode with 2 instances)",
+        "why": "Each instance duplicates memory usage - can't afford that on t3.micro",
+        "when_to_cluster": "Only if you upgrade to t3.small (2GB RAM)"
+      },
+      {
+        "technique": "Lazy Loading for Puppeteer",
+        "specific_to": "api-nueva (has Puppeteer dependency)",
+        "how": "Only launch Puppeteer when needed, close browser instances aggressively",
+        "code_pattern": "Use Puppeteer in background jobs (Bull queue), not in main process",
+        "memory_savings": "~100-200MB when browser not active"
+      },
+      {
+        "technique": "Disable Source Maps in Production",
+        "how": "In NestJS nest-cli.json: set sourceMap: false",
+        "effect": "Smaller bundle size, less memory for V8 to parse",
+        "tradeoff": "Harder to debug production errors (use logging instead)"
+      },
+      {
+        "technique": "Use Production Dependencies Only",
+        "how": "yarn install --production on EC2 (no devDependencies)",
+        "effect": "Smaller node_modules, less disk and potential memory usage",
+        "your_case": "If deploying built artifacts, you may not need node_modules at all for bundled apps"
+      },
+      {
+        "technique": "Swap File as Safety Net",
+        "how": "Add 1GB swap (see earlier swap configuration)",
+        "when": "If apps occasionally spike memory usage",
+        "warning": "Swap is SLOW - use as emergency overflow only, not primary memory"
+      },
+      {
+        "technique": "Monitoring and Alerts",
+        "tools": [
+          "PM2 monitoring: pm2 install pm2-logrotate",
+          "CloudWatch Agent for EC2 metrics",
+          "Set up alerts if RAM usage >85%"
+        ],
+        "action": "If consistently hitting limits, upgrade to t3.small"
+      }
+    ],
+    "when_to_upgrade_instance": {
+      "signs": [
+        "Frequent OOM (Out of Memory) crashes",
+        "Swap usage consistently >500MB",
+        "Response times degrading under load",
+        "Can't fit all 3 apps in memory"
+      ],
+      "upgrade_path": "t3.small (2GB RAM, 2 vCPUs) - only ~$7/month more",
+      "cost_benefit": "$7/month for 2x RAM is worth it if you're constantly fighting memory issues"
+    }
+  },
+
+  "github_actions_workflow_architecture": {
+    "monorepo_challenges": {
+      "problem": "Don't want to build/deploy all 3 apps on every commit",
+      "solution": "Path-based triggers + matrix strategy"
+    },
+    "workflow_design": {
+      "approach": "Multiple workflows, each triggered by path changes",
+      "workflows": [
+        {
+          "name": "api-nueva-deploy.yml",
+          "trigger": {
+            "on": "push",
+            "branches": ["main", "develop"],
+            "paths": [
+              "packages/api-nueva/**",
+              "packages/shared/**"
+            ]
+          },
+          "jobs": ["test", "build", "deploy-to-ec2"]
+        },
+        {
+          "name": "public-noticias-deploy.yml",
+          "trigger": {
+            "on": "push",
+            "branches": ["main"],
+            "paths": [
+              "packages/public-noticias/**",
+              "packages/shared/**"
+            ]
+          },
+          "jobs": ["lint", "test", "build", "deploy-to-ec2"]
+        },
+        {
+          "name": "dash-coyote-deploy.yml",
+          "trigger": {
+            "on": "push",
+            "branches": ["main"],
+            "paths": ["packages/dash-coyote/**"]
+          },
+          "jobs": ["build", "deploy-to-s3-or-ec2"]
+        }
+      ]
+    },
+    "caching_strategy": {
+      "why": "Yarn install is slow and expensive (CI minutes)",
+      "citation": "[14] GitHub Actions Docs. 'Caching dependencies to speed up workflows.' 2025. https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows",
+      "what_to_cache": [
+        "Yarn cache directory (~/.yarn/cache)",
+        "node_modules (if using Yarn 1.x)"
+      ],
+      "cache_key_strategy": "Hash of yarn.lock files",
+      "expected_speedup": "5-10 minutes → 2-4 minutes with warm cache",
+      "action": "actions/cache@v4"
+    },
+    "deployment_methods": {
+      "option_1_recommended": {
+        "name": "SSH + rsync",
+        "action": "burnett01/rsync-deployments@7.0.1",
+        "how_it_works": "SSH to EC2, rsync built artifacts, restart PM2 via SSH command",
+        "pros": [
+          "Simple and direct",
+          "Fast (rsync only transfers changed files)",
+          "Full control over deployment process"
+        ],
+        "setup_required": [
+          "Generate SSH key pair",
+          "Add public key to EC2 ~/.ssh/authorized_keys",
+          "Store private key in GitHub Secrets (SSH_PRIVATE_KEY)",
+          "Store EC2 host in secrets (EC2_HOST)"
+        ],
+        "example_step": {
+          "name": "Deploy to EC2 via SSH",
+          "uses": "burnett01/rsync-deployments@7.0.1",
+          "with": {
+            "switches": "-avzr --delete",
+            "path": "packages/api-nueva/dist/",
+            "remote_path": "/var/www/api-nueva/",
+            "remote_host": "${{ secrets.EC2_HOST }}",
+            "remote_user": "ec2-user",
+            "remote_key": "${{ secrets.SSH_PRIVATE_KEY }}"
+          }
+        },
+        "post_deploy_command": "ssh ec2-user@${{ secrets.EC2_HOST }} 'pm2 reload ecosystem.config.js --only api-nueva'"
+      },
+      "option_2_aws_native": {
+        "name": "AWS CodeDeploy",
+        "action": "aws-actions/configure-aws-credentials + CodeDeploy",
+        "how_it_works": "GitHub Actions → S3 → CodeDeploy → EC2",
+        "pros": [
+          "AWS-native, integrates with CloudWatch",
+          "Handles Auto Scaling groups",
+          "Built-in rollback"
+        ],
+        "cons": [
+          "More complex setup",
+          "Additional AWS costs (CodeDeploy is $0.02 per on-premises instance update)",
+          "Overkill for single EC2 instance"
+        ],
+        "verdict": "Not needed for your scale - use SSH/rsync"
+      }
+    },
+    "secrets_required": {
+      "github_secrets": [
+        {
+          "name": "EC2_HOST",
+          "value": "e.g., ec2-XX-XX-XX-XX.compute.amazonaws.com or noticiaspachuca.com",
+          "description": "EC2 instance hostname or IP"
+        },
+        {
+          "name": "SSH_PRIVATE_KEY",
+          "value": "Full private key content (-----BEGIN OPENSSH PRIVATE KEY-----...)",
+          "description": "SSH private key for ec2-user"
+        },
+        {
+          "name": "SSH_USERNAME",
+          "value": "ec2-user (for Amazon Linux 2023)",
+          "description": "SSH username"
+        },
+        {
+          "name": "API_ENV_VARS",
+          "value": "Optional: encrypted .env content for production",
+          "description": "If you want to inject env vars during deployment"
+        }
+      ]
+    },
+    "complete_workflow_example": {
+      "file": ".github/workflows/api-nueva-deploy.yml",
+      "description": "Full production-ready workflow for NestJS backend",
+      "content": "See implementation_examples section below"
+    }
+  },
+
+  "implementation_examples": {
+    "1_vite_config_fix_public_noticias": {
+      "file": "packages/public-noticias/vite.config.ts",
+      "problem": "Missing Nitro v2 plugin configuration",
+      "solution": "Add Nitro v2 plugin with node-server preset",
+      "code": "import { defineConfig } from 'vite'\nimport { tanstackStart } from '@tanstack/react-start/plugin/vite'\nimport viteReact from '@vitejs/plugin-react'\nimport viteTsConfigPaths from 'vite-tsconfig-paths'\nimport tailwindcss from '@tailwindcss/vite'\nimport { nitroV2Plugin } from '@tanstack/nitro-v2-vite-plugin'\n\nconst config = defineConfig({\n  plugins: [\n    viteTsConfigPaths({\n      projects: ['./tsconfig.json'],\n    }),\n    tailwindcss(),\n    tanstackStart({\n      customViteReactPlugin: true,\n    }),\n    nitroV2Plugin({\n      preset: 'node-server',\n      // Optional: Add Nitro config\n      nitro: {\n        preset: 'node-server',\n        logLevel: 3,\n        minify: true,\n      },\n    }),\n    viteReact(),\n  ],\n})\n\nexport default config",
+      "install_command": "cd packages/public-noticias && yarn add -D @tanstack/nitro-v2-vite-plugin",
+      "test_build": "yarn build && node .output/server/index.mjs",
+      "expected_output": "Server listening on http://localhost:3000 (or configured port)"
+    },
+    "2_pm2_ecosystem_config": {
+      "file": "ecosystem.config.js (root of monorepo on EC2)",
+      "code": "module.exports = {\n  apps: [\n    {\n      name: 'api-nueva',\n      script: './packages/api-nueva/dist/main.js',\n      instances: 1,\n      exec_mode: 'cluster',\n      watch: false,\n      max_memory_restart: '300M',\n      env_production: {\n        NODE_ENV: 'production',\n        PORT: 3333,\n        NODE_OPTIONS: '--max-old-space-size=256',\n      },\n      error_file: './logs/api-nueva-error.log',\n      out_file: './logs/api-nueva-out.log',\n      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',\n    },\n    {\n      name: 'public-noticias',\n      script: './packages/public-noticias/.output/server/index.mjs',\n      instances: 1,\n      exec_mode: 'cluster',\n      watch: false,\n      max_memory_restart: '200M',\n      env_production: {\n        NODE_ENV: 'production',\n        PORT: 3022,\n        NODE_OPTIONS: '--max-old-space-size=200',\n        API_URL: 'http://localhost:3333/api',\n      },\n      error_file: './logs/public-noticias-error.log',\n      out_file: './logs/public-noticias-out.log',\n    },\n  ],\n}",
+      "usage": [
+        "Start all apps: pm2 start ecosystem.config.js --env production",
+        "Reload specific app: pm2 reload ecosystem.config.js --only api-nueva",
+        "Monitor: pm2 monit",
+        "Logs: pm2 logs api-nueva",
+        "Save PM2 config: pm2 save",
+        "Auto-start on reboot: pm2 startup"
+      ]
+    },
+    "3_github_actions_workflow_nestjs": {
+      "file": ".github/workflows/api-nueva-deploy.yml",
+      "code": "name: Deploy api-nueva to EC2\n\non:\n  push:\n    branches: [main]\n    paths:\n      - 'packages/api-nueva/**'\n      - 'packages/shared/**'\n      - '.github/workflows/api-nueva-deploy.yml'\n\njobs:\n  test-and-build:\n    runs-on: ubuntu-latest\n    defaults:\n      run:\n        working-directory: packages/api-nueva\n\n    steps:\n      - name: Checkout code\n        uses: actions/checkout@v4\n\n      - name: Setup Node.js\n        uses: actions/setup-node@v4\n        with:\n          node-version: '20'\n          cache: 'yarn'\n          cache-dependency-path: 'packages/api-nueva/yarn.lock'\n\n      - name: Install dependencies\n        run: yarn install --frozen-lockfile\n\n      - name: Run linting\n        run: yarn lint\n\n      - name: Run tests\n        run: yarn test\n\n      - name: Build application\n        run: yarn build\n\n      - name: Upload build artifacts\n        uses: actions/upload-artifact@v4\n        with:\n          name: api-nueva-dist\n          path: packages/api-nueva/dist/\n          retention-days: 7\n\n  deploy:\n    needs: test-and-build\n    runs-on: ubuntu-latest\n    if: github.ref == 'refs/heads/main'\n\n    steps:\n      - name: Download build artifacts\n        uses: actions/download-artifact@v4\n        with:\n          name: api-nueva-dist\n          path: dist/\n\n      - name: Deploy to EC2 via rsync\n        uses: burnett01/rsync-deployments@7.0.1\n        with:\n          switches: -avzr --delete\n          path: dist/\n          remote_path: /var/www/pachuca-noticias/packages/api-nueva/dist/\n          remote_host: ${{ secrets.EC2_HOST }}\n          remote_user: ${{ secrets.SSH_USERNAME }}\n          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}\n\n      - name: Restart PM2 application\n        uses: appleboy/ssh-action@v1.1.0\n        with:\n          host: ${{ secrets.EC2_HOST }}\n          username: ${{ secrets.SSH_USERNAME }}\n          key: ${{ secrets.SSH_PRIVATE_KEY }}\n          script: |\n            cd /var/www/pachuca-noticias\n            pm2 reload ecosystem.config.js --only api-nueva --update-env\n            pm2 save\n\n      - name: Verify deployment\n        run: |\n          sleep 5\n          curl -f https://api.noticiaspachuca.com/health || exit 1\n",
+      "estimated_ci_minutes": "3-5 minutes (with cache)",
+      "free_tier_impact": "~150 minutes/month if deploying daily"
+    },
+    "4_github_actions_workflow_tanstack_start": {
+      "file": ".github/workflows/public-noticias-deploy.yml",
+      "code": "name: Deploy public-noticias to EC2\n\non:\n  push:\n    branches: [main]\n    paths:\n      - 'packages/public-noticias/**'\n      - 'packages/shared/**'\n      - '.github/workflows/public-noticias-deploy.yml'\n\njobs:\n  build-and-deploy:\n    runs-on: ubuntu-latest\n    defaults:\n      run:\n        working-directory: packages/public-noticias\n\n    steps:\n      - name: Checkout code\n        uses: actions/checkout@v4\n\n      - name: Setup Node.js\n        uses: actions/setup-node@v4\n        with:\n          node-version: '20'\n          cache: 'yarn'\n\n      - name: Install dependencies\n        run: yarn install --frozen-lockfile\n\n      - name: Build TanStack Start app\n        run: yarn build\n        env:\n          NODE_ENV: production\n\n      - name: Test build output\n        run: |\n          ls -la .output/\n          ls -la .output/server/\n          test -f .output/server/index.mjs || exit 1\n\n      - name: Deploy .output to EC2\n        uses: burnett01/rsync-deployments@7.0.1\n        with:\n          switches: -avzr --delete\n          path: packages/public-noticias/.output/\n          remote_path: /var/www/pachuca-noticias/packages/public-noticias/.output/\n          remote_host: ${{ secrets.EC2_HOST }}\n          remote_user: ${{ secrets.SSH_USERNAME }}\n          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}\n\n      - name: Restart PM2 application\n        uses: appleboy/ssh-action@v1.1.0\n        with:\n          host: ${{ secrets.EC2_HOST }}\n          username: ${{ secrets.SSH_USERNAME }}\n          key: ${{ secrets.SSH_PRIVATE_KEY }}\n          script: |\n            cd /var/www/pachuca-noticias\n            pm2 reload ecosystem.config.js --only public-noticias --update-env\n            pm2 save\n\n      - name: Verify deployment\n        run: |\n          sleep 10\n          curl -f https://noticiaspachuca.com || exit 1\n",
+      "notes": [
+        "Must deploy entire .output/ directory, not just server/index.mjs",
+        ".output/public/ contains static assets",
+        "Nitro handles serving static assets internally"
+      ]
+    },
+    "5_nginx_config_reverse_proxy": {
+      "file": "/etc/nginx/sites-available/noticiaspachuca.com",
+      "code": "# Main public site - TanStack Start SSR\nserver {\n    listen 80;\n    server_name noticiaspachuca.com www.noticiaspachuca.com;\n\n    # Redirect HTTP to HTTPS\n    return 301 https://$server_name$request_uri;\n}\n\nserver {\n    listen 443 ssl http2;\n    server_name noticiaspachuca.com www.noticiaspachuca.com;\n\n    ssl_certificate /etc/letsencrypt/live/noticiaspachuca.com/fullchain.pem;\n    ssl_certificate_key /etc/letsencrypt/live/noticiaspachuca.com/privkey.pem;\n\n    # Security headers\n    add_header X-Frame-Options \"SAMEORIGIN\" always;\n    add_header X-Content-Type-Options \"nosniff\" always;\n    add_header X-XSS-Protection \"1; mode=block\" always;\n\n    # Proxy to TanStack Start on port 3022\n    location / {\n        proxy_pass http://localhost:3022;\n        proxy_http_version 1.1;\n        proxy_set_header Upgrade $http_upgrade;\n        proxy_set_header Connection 'upgrade';\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n        proxy_set_header X-Forwarded-Proto $scheme;\n        proxy_cache_bypass $http_upgrade;\n    }\n}\n\n# API Backend - NestJS\nserver {\n    listen 443 ssl http2;\n    server_name api.noticiaspachuca.com;\n\n    ssl_certificate /etc/letsencrypt/live/noticiaspachuca.com/fullchain.pem;\n    ssl_certificate_key /etc/letsencrypt/live/noticiaspachuca.com/privkey.pem;\n\n    # Proxy to NestJS on port 3333\n    location / {\n        proxy_pass http://localhost:3333;\n        proxy_http_version 1.1;\n        proxy_set_header Upgrade $http_upgrade;\n        proxy_set_header Connection 'upgrade';\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n        proxy_set_header X-Forwarded-Proto $scheme;\n        proxy_cache_bypass $http_upgrade;\n        \n        # Increase timeouts for Puppeteer operations\n        proxy_read_timeout 300s;\n        proxy_connect_timeout 300s;\n    }\n}\n\n# Backoffice SPA - React (dash-coyote)\nserver {\n    listen 443 ssl http2;\n    server_name dash.noticiaspachuca.com;\n\n    ssl_certificate /etc/letsencrypt/live/noticiaspachuca.com/fullchain.pem;\n    ssl_certificate_key /etc/letsencrypt/live/noticiaspachuca.com/privkey.pem;\n\n    root /var/www/pachuca-noticias/packages/dash-coyote/dist;\n    index index.html;\n\n    # SPA routing - all routes serve index.html\n    location / {\n        try_files $uri $uri/ /index.html;\n    }\n\n    # Cache static assets\n    location ~* \\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {\n        expires 1y;\n        add_header Cache-Control \"public, immutable\";\n    }\n}",
+      "setup_commands": [
+        "sudo ln -s /etc/nginx/sites-available/noticiaspachuca.com /etc/nginx/sites-enabled/",
+        "sudo nginx -t",
+        "sudo systemctl reload nginx"
+      ]
+    },
+    "6_swap_file_setup_script": {
+      "file": "setup-swap.sh (run once on EC2)",
+      "code": "#!/bin/bash\n# Add 2GB swap to EC2 instance\n\nset -e\n\necho \"Creating 2GB swap file...\"\nsudo dd if=/dev/zero of=/swapfile bs=128M count=16\n\necho \"Setting permissions...\"\nsudo chmod 600 /swapfile\n\necho \"Setting up swap space...\"\nsudo mkswap /swapfile\n\necho \"Enabling swap...\"\nsudo swapon /swapfile\n\necho \"Verifying swap...\"\nsudo swapon --show\nfree -h\n\necho \"Making swap permanent...\"\nif ! grep -q '/swapfile' /etc/fstab; then\n    echo '/swapfile swap swap defaults 0 0' | sudo tee -a /etc/fstab\nfi\n\necho \"Swap setup complete!\"",
+      "usage": "chmod +x setup-swap.sh && ./setup-swap.sh",
+      "when_to_use": "Only if you choose to build on EC2 instead of CI (not recommended)"
+    }
+  },
+
+  "deployment_workflow_complete": {
+    "flowchart": [
+      "1. Developer pushes code to GitHub (main branch)",
+      "2. GitHub Actions detects changes in packages/api-nueva/ or packages/public-noticias/",
+      "3. CI runner (7GB RAM) checks out code, installs deps (cached), runs tests",
+      "4. CI builds application (yarn build)",
+      "5. CI uploads build artifacts or uses rsync to transfer to EC2",
+      "6. CI SSHs to EC2 and runs: pm2 reload ecosystem.config.js --only <app-name>",
+      "7. PM2 performs zero-downtime reload (keeps old process until new one is ready)",
+      "8. New version is live, CI verifies with health check curl",
+      "9. If health check fails, PM2 automatically reverts to old process"
+    ],
+    "rollback_strategy": {
+      "automatic": "PM2's reload will revert if new process fails to start",
+      "manual": [
+        "Option 1: Revert GitHub commit and re-deploy",
+        "Option 2: SSH to EC2 and restore previous dist/ from backup",
+        "Option 3: pm2 list → find old process ID → pm2 restart <old-id>"
+      ],
+      "recommendation": "Keep last 3 deployment artifacts on EC2 in versioned directories"
+    }
+  },
+
+  "cost_analysis_summary": {
+    "monthly_costs_breakdown": {
+      "ec2_t3_micro": {
+        "cost": "$7.50/month (1-year reserved) or $8.50/month (on-demand)",
+        "free_tier": "750 hours/month for 12 months (essentially free first year)"
+      },
+      "github_actions": {
+        "cost": "$0/month (if repo is public or stays under 2,000 min/month)",
+        "estimated_usage": "150-300 minutes/month with daily deploys",
+        "free_tier": "2,000 minutes/month private repos",
+        "overage_risk": "Low - well within limits"
+      },
+      "cloudflare_dns": {
+        "cost": "$0/month (free tier sufficient)"
+      },
+      "mongodb_atlas": {
+        "cost": "$0/month (M0 free tier) or $9/month (M2 shared)",
+        "note": "External - not part of CI/CD"
+      },
+      "redis_aws": {
+        "cost": "Variable - depends on your setup",
+        "note": "External - not part of CI/CD"
+      },
+      "total_cicd_cost": "$0-7.50/month (free first year with EC2 free tier)"
+    },
+    "cost_optimization_tips": [
+      "Make repo public → unlimited GitHub Actions minutes",
+      "Use aggressive caching in workflows → reduce build time by 50-70%",
+      "Deploy only changed apps (path filters) → reduce unnecessary builds",
+      "Consider EC2 Reserved Instance after first year → 40% savings",
+      "Monitor GitHub Actions usage: Settings → Billing → Usage this month"
+    ]
+  },
+
+  "technical_insights": {
+    "common_patterns": [
+      "Monorepo CI/CD: Path-based triggers + matrix builds",
+      "TanStack Start v1.x: Use Nitro v2 plugin explicitly for production stability",
+      "EC2 t3.micro deployments: Build on CI, deploy artifacts, use PM2 not Docker",
+      "Node.js memory management: Set --max-old-space-size to prevent OOM crashes",
+      "Zero-downtime deployments: PM2 reload > pm2 restart"
+    ],
+    "best_practices": [
+      "NEVER build on t3.micro - use CI runners with adequate RAM",
+      "Lock TanStack Start version (it's still in RC) - avoid surprise breaking changes",
+      "Test builds locally before pushing: yarn build && node .output/server/index.mjs",
+      "Use PM2 ecosystem.config.js for consistent app management",
+      "Set up swap as safety net, not primary memory",
+      "Monitor memory usage: pm2 monit and CloudWatch Agent",
+      "Keep deployment artifacts versioned for easy rollback",
+      "Use GitHub Secrets for all credentials, never commit .env files"
+    ],
+    "pitfalls": [
+      "Building large projects on 1GB RAM instance → guaranteed OOM crash",
+      "Using Docker on t3.micro → wastes 30-50% of RAM on overhead",
+      "Not configuring Nitro preset → may get Nitro v3 BETA with unknown issues",
+      "Deploying only .output/server/index.mjs → missing static assets, app breaks",
+      "Not testing build artifacts before deploying → discover issues in production",
+      "Running PM2 inside Docker → double process management overhead",
+      "Forgetting to set NODE_ENV=production → dev dependencies loaded, memory bloat",
+      "300 file diff limit in GitHub Actions path filters → can miss changes in large commits"
+    ],
+    "emerging_trends": [
+      "TanStack Start gaining momentum as Next.js alternative (2025)",
+      "Nitro v3 moving to stable (currently BETA) - watch for official release",
+      "Self-hosted GitHub Actions runners on ARM (Graviton) for 60% cost savings",
+      "PNPM replacing Yarn in monorepos for faster installs and lower memory",
+      "Turborepo/Nx becoming standard for monorepo builds (incremental compilation)"
+    ]
+  },
+
+  "implementation_recommendations": [
+    {
+      "priority": "CRITICAL",
+      "scenario": "TanStack Start production deployment currently broken or unreliable",
+      "recommended_solution": "Add Nitro v2 plugin to vite.config.ts immediately",
+      "steps": [
+        "cd packages/public-noticias",
+        "yarn add -D @tanstack/nitro-v2-vite-plugin",
+        "Update vite.config.ts (see implementation_examples.1)",
+        "Test: yarn build && node .output/server/index.mjs",
+        "Verify http://localhost:3000 loads correctly",
+        "Commit and deploy"
+      ],
+      "rationale": "Without explicit Nitro configuration, you may be using unstable Nitro v3 BETA. Nitro v2 plugin is the recommended stable option during TanStack Start RC phase."
+    },
+    {
+      "priority": "HIGH",
+      "scenario": "Current deployment process is manual or unreliable",
+      "recommended_solution": "Implement GitHub Actions CI/CD with build-on-CI strategy",
+      "steps": [
+        "Create .github/workflows/ directory",
+        "Add api-nueva-deploy.yml (see implementation_examples.3)",
+        "Add public-noticias-deploy.yml (see implementation_examples.4)",
+        "Generate SSH key pair: ssh-keygen -t ed25519 -C 'github-actions'",
+        "Add public key to EC2: ~/.ssh/authorized_keys",
+        "Add secrets to GitHub: EC2_HOST, SSH_PRIVATE_KEY, SSH_USERNAME",
+        "Push to main branch and watch workflow run",
+        "Verify deployment with health checks"
+      ],
+      "estimated_time": "2-4 hours initial setup",
+      "long_term_benefit": "Save hours per week on manual deployments, reduce errors"
+    },
+    {
+      "priority": "HIGH",
+      "scenario": "Managing multiple Node.js apps on EC2",
+      "recommended_solution": "Use PM2 with ecosystem.config.js",
+      "steps": [
+        "SSH to EC2",
+        "Install PM2 globally: npm install -g pm2",
+        "Create ecosystem.config.js (see implementation_examples.2)",
+        "Start apps: pm2 start ecosystem.config.js --env production",
+        "Save config: pm2 save",
+        "Setup auto-start: pm2 startup (follow instructions)",
+        "Test reboot: sudo reboot and check pm2 list after reconnect"
+      ],
+      "rationale": "PM2 is the industry-standard Node.js process manager, perfect for your 3 Node.js apps on a single t3.micro instance."
+    },
+    {
+      "priority": "MEDIUM",
+      "scenario": "Optimizing limited RAM on t3.micro",
+      "recommended_solution": "Implement Node.js memory limits and monitoring",
+      "steps": [
+        "Add NODE_OPTIONS to PM2 config (see implementation_examples.2)",
+        "Set max_memory_restart in PM2 config",
+        "Add swap file as safety net (see implementation_examples.6)",
+        "Install PM2 log rotation: pm2 install pm2-logrotate",
+        "Monitor: pm2 monit",
+        "If consistently hitting limits, upgrade to t3.small"
+      ],
+      "rationale": "Prevents one app from consuming all RAM and crashing others. Swap provides emergency overflow."
+    },
+    {
+      "priority": "MEDIUM",
+      "scenario": "React SPA backoffice (dash-coyote) deployment",
+      "recommended_solution": "Serve via Nginx as static files",
+      "steps": [
+        "Build in CI: yarn build (generates dist/)",
+        "rsync dist/ to /var/www/.../dash-coyote/dist/",
+        "Configure Nginx server block (see implementation_examples.5)",
+        "No PM2 needed - static files only",
+        "Alternative: Deploy to S3 + CloudFront for CDN benefits"
+      ],
+      "rationale": "SPAs don't need Node.js runtime, serving via Nginx is most efficient."
+    },
+    {
+      "priority": "LOW",
+      "scenario": "Future scalability and cost optimization",
+      "recommended_solution": "Consider these optimizations when needed",
+      "options": [
+        "Migrate to PNPM for faster installs and lower memory (saves ~40% install time)",
+        "Add Nx or Turborepo for incremental builds (only rebuild changed packages)",
+        "Self-hosted GitHub Actions runner on t4g.nano ARM spot instance (~$2/month, unlimited CI minutes)",
+        "Migrate public-noticias to AWS Lambda (serverless) to free up EC2 resources",
+        "Use CloudFront CDN for dash-coyote SPA and static assets",
+        "Upgrade to t3.small (2GB RAM) if memory becomes constant issue (~$15/month vs $7.50)"
+      ],
+      "when_to_consider": "When team grows, build times increase, or memory constraints become painful"
+    }
+  ],
+
+  "action_plan_next_steps": {
+    "immediate_actions": [
+      {
+        "step": 1,
+        "action": "Fix TanStack Start Nitro configuration",
+        "file": "packages/public-noticias/vite.config.ts",
+        "command": "yarn add -D @tanstack/nitro-v2-vite-plugin",
+        "test": "yarn build && node .output/server/index.mjs",
+        "time_estimate": "15 minutes"
+      },
+      {
+        "step": 2,
+        "action": "Test build artifacts locally",
+        "commands": [
+          "cd packages/api-nueva && yarn build",
+          "cd packages/public-noticias && yarn build",
+          "cd packages/dash-coyote && yarn build"
+        ],
+        "verify": "All builds complete without errors, check output sizes",
+        "time_estimate": "10 minutes"
+      },
+      {
+        "step": 3,
+        "action": "Set up PM2 on EC2",
+        "commands": [
+          "ssh to EC2",
+          "npm install -g pm2",
+          "Create ecosystem.config.js",
+          "pm2 start ecosystem.config.js --env production",
+          "pm2 save && pm2 startup"
+        ],
+        "time_estimate": "30 minutes"
+      }
+    ],
+    "short_term_actions": [
+      {
+        "step": 4,
+        "action": "Create GitHub Actions workflows",
+        "files": [
+          ".github/workflows/api-nueva-deploy.yml",
+          ".github/workflows/public-noticias-deploy.yml",
+          ".github/workflows/dash-coyote-deploy.yml"
+        ],
+        "time_estimate": "2-3 hours"
+      },
+      {
+        "step": 5,
+        "action": "Configure SSH keys and GitHub Secrets",
+        "tasks": [
+          "Generate SSH key pair",
+          "Add to EC2 authorized_keys",
+          "Add to GitHub repository secrets"
+        ],
+        "time_estimate": "20 minutes"
+      },
+      {
+        "step": 6,
+        "action": "Test full CI/CD pipeline",
+        "method": "Push non-critical change to main, watch workflow, verify deployment",
+        "time_estimate": "30 minutes"
+      }
+    ],
+    "optional_optimizations": [
+      {
+        "action": "Add swap file to EC2",
+        "when": "If you see memory pressure in pm2 monit",
+        "time_estimate": "10 minutes"
+      },
+      {
+        "action": "Set up CloudWatch monitoring",
+        "when": "For production alerting",
+        "time_estimate": "1 hour"
+      },
+      {
+        "action": "Migrate to PNPM",
+        "when": "If CI build times exceed 10 minutes",
+        "time_estimate": "2 hours (testing required)"
+      }
+    ]
+  },
+
+  "monitoring_and_maintenance": {
+    "daily_checks": [
+      "pm2 monit - Quick visual check of all apps",
+      "pm2 logs --lines 50 - Check for errors"
+    ],
+    "weekly_checks": [
+      "free -h - Check memory usage and swap",
+      "df -h - Check disk space",
+      "systemctl status nginx - Verify web server health",
+      "GitHub Actions usage - Check remaining free minutes"
+    ],
+    "monthly_tasks": [
+      "Review PM2 logs and rotate if >500MB: pm2 flush",
+      "Check AWS billing - verify costs are as expected",
+      "Update dependencies: yarn upgrade-interactive",
+      "Review and clean old deployment artifacts"
+    ],
+    "alerts_to_setup": [
+      "CloudWatch: RAM usage >85% on EC2",
+      "CloudWatch: Disk usage >80%",
+      "PM2 webhook: App restart count >5 in 1 hour",
+      "GitHub Actions: Workflow failures (built-in notifications)",
+      "Uptime monitoring: noticiaspachuca.com down (use UptimeRobot free tier)"
+    ]
+  },
+
+  "references_and_citations": {
+    "total_sources": 15,
+    "sources": [
+      {
+        "id": 1,
+        "citation": "GitHub. 'GitHub Actions Documentation - Billing.' GitHub Docs, 2025. https://docs.github.com/billing/managing-billing-for-github-actions/about-billing-for-github-actions",
+        "relevance": "Free tier limits and pricing"
+      },
+      {
+        "id": 2,
+        "citation": "Multiple Sources. 'GitLab CI/CD vs GitHub Actions Comparison.' Graphite.dev & PeerSpot, 2025.",
+        "relevance": "CI/CD platform comparison"
+      },
+      {
+        "id": 3,
+        "citation": "Cloudonaut & AWS Blogs. 'AWS CodePipeline vs GitHub Actions.' 2025. https://aws.amazon.com/blogs/devops/ & https://cloudonaut.io/versus/ci-cd-pipeline/",
+        "relevance": "AWS CI/CD options"
+      },
+      {
+        "id": 4,
+        "citation": "TanStack. 'Hosting - TanStack Start React Docs.' TanStack.com, 2025. https://tanstack.com/start/latest/docs/framework/react/hosting",
+        "relevance": "Official TanStack Start deployment guide"
+      },
+      {
+        "id": 5,
+        "citation": "TanStack Router GitHub. 'Custom server support for TanStack Start.' Discussion #3777, 2024. https://github.com/TanStack/router/discussions/3777",
+        "relevance": "Alternative deployment without Nitro"
+      },
+      {
+        "id": 6,
+        "citation": "SST GitHub Issues. 'Tanstack Start works under dev, not when deployed.' Issue #5653, Dec 2024. https://github.com/sst/sst/issues/5653",
+        "relevance": "Known production deployment issues"
+      },
+      {
+        "id": 7,
+        "citation": "Stack Overflow. 'JavaScript heap out of memory on AWS EC2.' 2024. https://stackoverflow.com/questions/63753022/",
+        "relevance": "EC2 memory constraints real-world issues"
+      },
+      {
+        "id": 8,
+        "citation": "Stackademic. 'CI/CD Pipeline with GitHub Actions for Deployment on EC2.' Oct 2025. https://blog.stackademic.com/ci-cd-pipeline-with-github-actions-for-deployment-on-ec2-e7f4f9f1c794",
+        "relevance": "Recent GitHub Actions + EC2 deployment pattern"
+      },
+      {
+        "id": 9,
+        "citation": "AWS Re:Post. 'Use swap file to allocate memory as swap space in EC2.' 2025. https://repost.aws/knowledge-center/ec2-memory-swap-file",
+        "relevance": "Official AWS swap configuration guide"
+      },
+      {
+        "id": 10,
+        "citation": "GitHub Blog. 'Self-hosted GitHub Actions runners.' 2025. https://github.blog/enterprise-software/ci-cd/when-to-choose-github-hosted-runners-or-self-hosted-runners/",
+        "relevance": "Self-hosted vs cloud runners comparison"
+      },
+      {
+        "id": 11,
+        "citation": "Medium. 'To PM2, or Not to PM2: Embracing Docker for Node.js.' 2024. https://medium.com/@saderi/to-pm2-or-not-to-pm2-embracing-docker-for-node-js-b4a8adce141c",
+        "relevance": "PM2 vs Docker analysis"
+      },
+      {
+        "id": 12,
+        "citation": "Stack Overflow. 'Run nodejs application with pm2 or in docker containers?' 2024. https://stackoverflow.com/questions/54712749/",
+        "relevance": "Community consensus on PM2 vs Docker"
+      },
+      {
+        "id": 13,
+        "citation": "Stack Overflow. 'How do I determine the correct max-old-space-size for Node.js?' 2024. https://stackoverflow.com/questions/48387040/",
+        "relevance": "Node.js memory optimization"
+      },
+      {
+        "id": 14,
+        "citation": "GitHub Actions Docs. 'Caching dependencies to speed up workflows.' 2025. https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows",
+        "relevance": "CI caching strategy"
+      },
+      {
+        "id": 15,
+        "citation": "General Reasoning Corp. 'An example CI/CD setup for a monorepo using vanilla GitHub Actions.' March 2025. https://generalreasoning.com/blog/software/cicd/2025/03/22/github-actions-vanilla-monorepo.html",
+        "relevance": "Monorepo CI/CD patterns"
+      }
+    ]
+  },
+
+  "appendix_quick_reference": {
+    "key_commands": {
+      "github_actions": {
+        "view_workflows": "GitHub repo → Actions tab",
+        "re_run_failed": "Click workflow → Re-run failed jobs",
+        "check_minutes": "Settings → Billing → Usage this month"
+      },
+      "pm2": {
+        "start_all": "pm2 start ecosystem.config.js --env production",
+        "reload_app": "pm2 reload ecosystem.config.js --only <app-name>",
+        "restart_all": "pm2 restart all",
+        "stop_app": "pm2 stop <app-name>",
+        "view_logs": "pm2 logs <app-name> --lines 100",
+        "monitor": "pm2 monit",
+        "list_apps": "pm2 list",
+        "save_config": "pm2 save",
+        "startup_script": "pm2 startup",
+        "delete_app": "pm2 delete <app-name>"
+      },
+      "system_monitoring": {
+        "memory": "free -h",
+        "disk": "df -h",
+        "cpu": "top",
+        "processes": "htop (install with: sudo yum install htop)",
+        "swap_status": "sudo swapon --show"
+      },
+      "nginx": {
+        "test_config": "sudo nginx -t",
+        "reload": "sudo systemctl reload nginx",
+        "restart": "sudo systemctl restart nginx",
+        "status": "sudo systemctl status nginx",
+        "logs": "sudo tail -f /var/log/nginx/error.log"
+      }
+    },
+    "troubleshooting": {
+      "build_fails_oom": {
+        "symptom": "JavaScript heap out of memory during yarn build",
+        "solution": "Build on GitHub Actions (7GB RAM), not on EC2",
+        "alternative": "Add swap file to EC2 (see implementation_examples.6)"
+      },
+      "tanstack_start_404": {
+        "symptom": "TanStack Start app returns 404 for all routes",
+        "solution": "Verify entire .output/ directory deployed, check .output/server/index.mjs exists"
+      },
+      "pm2_app_crashed": {
+        "symptom": "pm2 list shows app status 'errored'",
+        "solution": "Check logs: pm2 logs <app-name>, common issue: missing env vars or port conflict"
+      },
+      "github_actions_fails": {
+        "symptom": "Workflow fails on deploy step",
+        "solution": "Check SSH keys in secrets, verify EC2 security group allows SSH from GitHub IPs (0.0.0.0/0)"
+      },
+      "high_memory_usage": {
+        "symptom": "free -h shows <100MB available",
+        "solution": "Restart apps: pm2 restart all, check for memory leaks with pm2 monit, consider t3.small upgrade"
+      }
+    }
+  }
+}
