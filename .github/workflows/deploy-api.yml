@@ -92,7 +92,7 @@ jobs:
             echo "${{ secrets.API_ENV }}" > .env
 
             # Reload with PM2 (zero-downtime)
-            pm2 reload ecosystem.config.js --only api-nueva || pm2 start ecosystem.config.js --only api-nueva
+            pm2 reload /var/www/noticias-pachuca/ecosystem.config.js --only api-nueva || pm2 start /var/www/noticias-pachuca/ecosystem.config.js --only api-nueva
 
             # Health check
             sleep 5

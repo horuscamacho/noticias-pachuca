@@ -81,7 +81,7 @@ jobs:
             echo "${{ secrets.FRONTEND_ENV }}" > .env
 
             # Reload with PM2
-            pm2 reload ecosystem.config.js --only public-noticias || pm2 start ecosystem.config.js --only public-noticias
+            pm2 reload /var/www/noticias-pachuca/ecosystem.config.js --only public-noticias || pm2 start /var/www/noticias-pachuca/ecosystem.config.js --only public-noticias
 
             # Health check
             sleep 5
