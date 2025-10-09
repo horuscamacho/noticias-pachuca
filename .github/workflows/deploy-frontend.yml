@@ -57,7 +57,7 @@ jobs:
             set -e
 
             # Extract deployment
-            cd /var/www/pachuca-noticias/packages/public-noticias
+            cd /var/www/noticias-pachuca/packages/public-noticias
             tar -xzf /tmp/frontend-deploy.tar.gz
 
             # Update .env

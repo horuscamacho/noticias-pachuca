@@ -57,7 +57,7 @@ jobs:
             set -e
 
             # Extract deployment
-            cd /var/www/pachuca-noticias/packages/dash-coyote
+            cd /var/www/noticias-pachuca/packages/dash-coyote
             tar -xzf /tmp/backoffice-deploy.tar.gz
 
             echo "✅ Backoffice deployment successful (static files)"

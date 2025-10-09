@@ -65,7 +65,7 @@ jobs:
             set -e
 
             # Extract deployment
-            cd /var/www/pachuca-noticias/packages/api-nueva
+            cd /var/www/noticias-pachuca/packages/api-nueva
             tar -xzf /tmp/api-deploy.tar.gz
 
             # Install production dependencies

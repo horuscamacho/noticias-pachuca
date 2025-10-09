@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'api-nueva',
-      cwd: '/var/www/pachuca-noticias/packages/api-nueva',
+      cwd: '/var/www/noticias-pachuca/packages/api-nueva',
       script: 'dist/src/main.js',
       instances: 1,
       exec_mode: 'cluster',
@@ -23,7 +23,7 @@ module.exports = {
     },
     {
       name: 'public-noticias',
-      cwd: '/var/www/pachuca-noticias/packages/public-noticias',
+      cwd: '/var/www/noticias-pachuca/packages/public-noticias',
       script: 'dist/server/server.js',
       instances: 1,
       exec_mode: 'fork',
