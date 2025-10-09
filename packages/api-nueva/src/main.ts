@@ -12,9 +12,17 @@ async function bootstrap() {
   // 🌐 CONFIGURAR CORS
   app.enableCors({
     origin: [
+      // 🏠 Desarrollo Local
       'http://localhost:3001',
       'http://127.0.0.1:3001',
-      'http://[::1]:3001'
+      'http://[::1]:3001',
+      'http://localhost:5173',
+      'http://localhost:5174',
+
+      // 🌐 Producción
+      'https://backoffice.noticiaspachuca.com',
+      'https://noticiaspachuca.com',
+      'https://www.noticiaspachuca.com'
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     credentials: true,
