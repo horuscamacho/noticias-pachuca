@@ -79,6 +79,29 @@ export namespace SocketAPI {
     contentExtracted: number
     timestamp: string
   }
+
+  // Content generation events
+  export interface ContentGenerationStartedEvent {
+    extractedContentId: string
+    agentId: string
+    agentName: string
+    timestamp: string
+  }
+
+  export interface ContentGenerationCompletedEvent {
+    extractedContentId: string
+    generatedContentId: string
+    agentId: string
+    agentName: string
+    timestamp: string
+  }
+
+  export interface ContentGenerationFailedEvent {
+    extractedContentId: string
+    agentId: string
+    error: string
+    timestamp: string
+  }
 }
 
 export namespace SocketApp {
@@ -169,4 +192,9 @@ export interface SocketEventMap {
   'outlet:extraction-progress': SocketAPI.ExtractionProgressEvent
   'outlet:extraction-completed': SocketAPI.ExtractionCompletedEvent
   'outlet:extraction-failed': SocketAPI.ExtractionFailedEvent
+
+  // Content generation events (Server to client)
+  'content:generation-started': SocketAPI.ContentGenerationStartedEvent
+  'content:generation-completed': SocketAPI.ContentGenerationCompletedEvent
+  'content:generation-failed': SocketAPI.ContentGenerationFailedEvent
 }

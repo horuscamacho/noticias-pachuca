@@ -6,7 +6,7 @@ import { SubscribeForm } from '../components/newsletter/SubscribeForm'
 import { useState } from 'react'
 
 export const Route = createFileRoute('/')({
-  component: NoticiasPage,
+  component: HomePage,
   loader: async () => {
     // Fetch noticias publicadas con paginación
     const noticiasResponse = await getNoticias({
@@ -30,7 +30,9 @@ export const Route = createFileRoute('/')({
   },
 })
 
-function NoticiasPage() {
+'use client'
+
+function HomePage() {
   const { noticias, categories } = Route.useLoaderData()
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')

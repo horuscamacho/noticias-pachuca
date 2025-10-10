@@ -302,3 +302,88 @@ export class OutletMapper {
     return dto
   }
 }
+
+// Extracted Content Mappers
+import type {
+  ExtractedContent,
+  ExtractedContentApiResponse
+} from '@/src/types/extracted-content.types'
+
+export class ExtractedContentMapper {
+  /**
+   * Transforma response de API → App
+   */
+  static toApp(apiContent: ExtractedContentApiResponse): ExtractedContent {
+    return {
+      id: apiContent.id,
+      title: apiContent.title,
+      content: apiContent.content,
+      url: apiContent.url,
+      websiteId: apiContent.websiteConfigId,
+      websiteName: apiContent.websiteName,
+      author: apiContent.author,
+      category: apiContent.category,
+      imageUrl: apiContent.imageUrl,
+      publishedAt: apiContent.publishedDate,
+      extractedAt: apiContent.extractedAt,
+      status: apiContent.extractionStatus as 'pending' | 'processing' | 'extracted' | 'failed'
+    }
+  }
+}
+
+// Generated Content Mappers
+import type {
+  GeneratedContent,
+  SocialMediaCopies,
+  GenerationMetadata
+} from '@/src/types/generated-content.types'
+
+export class GeneratedContentMapper {
+  /**
+   * Transforma response de API → App
+   */
+  static toApp(apiGenerated: Record<string, unknown>): GeneratedContent {
+    return {
+      id: apiGenerated.id as string,
+      extractedNoticiaId: apiGenerated.extractedNoticiaId as string,
+      agentId: apiGenerated.agentId as string,
+      agentName: apiGenerated.agentName as string | undefined,
+      generatedTitle: apiGenerated.generatedTitle as string,
+      generatedContent: apiGenerated.generatedContent as string,
+      generatedSummary: apiGenerated.generatedSummary as string | undefined,
+      generatedKeywords: apiGenerated.generatedKeywords as string[] | undefined,
+      generatedTags: apiGenerated.generatedTags as string[] | undefined,
+      generatedCategory: apiGenerated.generatedCategory as string | undefined,
+      socialMediaCopies: apiGenerated.socialMediaCopies as SocialMediaCopies | undefined,
+      generationMetadata: apiGenerated.generationMetadata as GenerationMetadata | undefined,
+      createdAt: apiGenerated.createdAt as string,
+      status: apiGenerated.status as string
+    }
+  }
+}
+
+// Content Agent Mappers
+import type { ContentAgent } from '@/src/types/content-agent.types'
+
+export class ContentAgentMapper {
+  /**
+   * Transforma response de API → App
+   */
+  static toApp(apiAgent: Record<string, unknown>): ContentAgent {
+    return {
+      id: apiAgent.id as string,
+      name: apiAgent.name as string,
+      agentType: apiAgent.agentType as 'reportero' | 'columnista' | 'trascendido' | 'seo-specialist',
+      description: apiAgent.description as string,
+      personality: apiAgent.personality as string,
+      specializations: apiAgent.specializations as string[],
+      editorialLean: apiAgent.editorialLean as 'conservative' | 'progressive' | 'neutral' | 'humor' | 'critical' | 'analytical',
+      writingStyle: apiAgent.writingStyle as ContentAgent['writingStyle'],
+      defaultTemplates: apiAgent.defaultTemplates as string[] | undefined,
+      isActive: apiAgent.isActive as boolean,
+      performanceMetrics: apiAgent.performanceMetrics as ContentAgent['performanceMetrics'] | undefined,
+      createdAt: apiAgent.createdAt as string,
+      updatedAt: apiAgent.updatedAt as string
+    }
+  }
+}
