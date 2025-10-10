@@ -36,6 +36,12 @@ export enum NotificationType {
   FACEBOOK_EXTRACTION_PROGRESS = 'facebook-extraction-progress',
   FACEBOOK_EXTRACTION_COMPLETED = 'facebook-extraction-completed',
   FACEBOOK_EXTRACTION_FAILED = 'facebook-extraction-failed',
+
+  // 🌐 OUTLET/WEBSITE EXTRACTION NOTIFICATIONS
+  OUTLET_EXTRACTION_STARTED = 'outlet-extraction-started',
+  OUTLET_EXTRACTION_PROGRESS = 'outlet-extraction-progress',
+  OUTLET_EXTRACTION_COMPLETED = 'outlet-extraction-completed',
+  OUTLET_EXTRACTION_FAILED = 'outlet-extraction-failed',
 }
 
 export enum DeliveryMethod {

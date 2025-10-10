@@ -52,7 +52,7 @@ jobs:
       - name: Create deployment package
         working-directory: packages/public-noticias
         run: |
-          tar -czf frontend-deploy.tar.gz dist server.mjs package.json yarn.lock
+          tar -czf frontend-deploy.tar.gz .output package.json
 
       - name: Copy to EC2
         uses: appleboy/scp-action@v0.1.7
@@ -73,16 +73,9 @@ jobs:
           script: |
             set -e
 
-            # Load NVM
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-
             # Extract deployment
             cd /var/www/noticias-pachuca/packages/public-noticias
             tar -xzf /tmp/frontend-deploy.tar.gz
-
-            # Install dependencies
-            yarn install --frozen-lockfile
 
             # Update .env
             echo "${{ secrets.FRONTEND_ENV }}" > .env

@@ -47,7 +47,8 @@
         {
           "faceIDPermission": "Esta aplicación usa Face ID para proteger tu información de autenticación."
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true,

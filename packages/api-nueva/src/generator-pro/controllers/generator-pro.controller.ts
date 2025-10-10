@@ -807,13 +807,12 @@ export class GeneratorProController {
           .populate('facebookConfigId', 'name facebookPageName')
           .sort({ [sortField]: sortOrder })
           .skip(skip)
-          .limit(limit)
-          .lean(),
+          .limit(limit),
         this.jobModel.countDocuments(mongoFilter),
       ]);
 
       return {
-        jobs: jobs as GeneratorProJobDocument[],
+        jobs,
         total,
       };
 
@@ -1352,6 +1351,245 @@ export class GeneratorProController {
       console.error(`❌ Error extracting and saving URLs for website ${websiteId}:`, error);
       throw new HttpException(
         error.message || 'Failed to extract and save URLs',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  /**
+   * 🚀 Extract ALL: URLs + Content (Full Extraction)
+   * Endpoint completo que extrae URLs y luego todo el contenido
+   * Con notificaciones en tiempo real vía WebSocket
+   */
+  @Post('websites/:id/extract-all')
+  @HttpCode(HttpStatus.OK)
+  async extractAll(
+    @Param('id') websiteId: string,
+    @CurrentUser() user: { userId: string }
+  ): Promise<{
+    totalUrls: number;
+    totalContentExtracted: number;
+    duration: number;
+    message: string
+  }> {
+    const startTime = Date.now();
+    let urlsFound = 0;
+    let contentExtracted = 0;
+    const userId = user.userId;
+
+    try {
+      this.logger.log(`🚀 Starting full extraction for website: ${websiteId}`);
+
+      // Validate website exists
+      const websiteConfig = await this.websiteService.findById(websiteId);
+      if (!websiteConfig) {
+        throw new HttpException('Website configuration not found', HttpStatus.NOT_FOUND);
+      }
+
+      // ============================================
+      // NOTIFICACIÓN: Extracción iniciada
+      // ============================================
+      await this.socketGateway.sendToUser(userId, 'outlet:extraction-started', {
+        outletId: websiteId,
+        outletName: websiteConfig.name,
+        timestamp: new Date().toISOString(),
+      });
+
+      // ============================================
+      // PASO 1: Extraer URLs
+      // ============================================
+      this.logger.log(`📝 Step 1: Extracting URLs from ${websiteConfig.name}...`);
+
+      const extractedUrls = await this.websiteService.extractUrlsManually(websiteId);
+      urlsFound = extractedUrls.length;
+
+      this.logger.log(`✅ Found ${urlsFound} URLs`);
+
+      // Emitir progreso: URLs encontradas
+      await this.socketGateway.sendToUser(userId, 'outlet:extraction-progress', {
+        outletId: websiteId,
+        step: 'urls_found',
+        urlsFound,
+        totalUrls: urlsFound,
+        percentage: 10,
+        timestamp: new Date().toISOString(),
+      });
+
+      // Guardar URLs en BD
+      const savedUrls: string[] = [];
+      for (const url of extractedUrls) {
+        try {
+          const existingNoticia = await this.websiteService.findByUrl(url);
+          if (existingNoticia) {
+            savedUrls.push(url);
+            continue;
+          }
+
+          await this.websiteService.saveExtractedUrl({
+            sourceUrl: url,
+            websiteConfigId: new Types.ObjectId(websiteId),
+            status: 'pending',
+            title: undefined,
+            content: undefined,
+            author: undefined,
+            publishedAt: undefined,
+            category: undefined,
+            extractedAt: new Date(),
+          });
+
+          savedUrls.push(url);
+        } catch (error) {
+          this.logger.error(`❌ Error saving URL ${url}: ${error.message}`);
+        }
+      }
+
+      // ============================================
+      // PASO 2: Extraer contenido de cada URL
+      // ============================================
+      this.logger.log(`📄 Step 2: Extracting content from ${savedUrls.length} URLs...`);
+
+      for (let i = 0; i < savedUrls.length; i++) {
+        const url = savedUrls[i];
+        const currentIndex = i + 1;
+
+        try {
+          // Emitir progreso: extrayendo URL actual
+          await this.socketGateway.sendToUser(userId, 'outlet:extraction-progress', {
+            outletId: websiteId,
+            step: 'extracting_content',
+            currentUrl: url,
+            currentIndex,
+            totalUrls: savedUrls.length,
+            contentExtracted,
+            percentage: Math.round(10 + (currentIndex / savedUrls.length) * 85),
+            timestamp: new Date().toISOString(),
+          });
+
+          // Buscar noticia en BD
+          const noticia = await this.websiteService.findByUrl(url);
+          if (!noticia) {
+            this.logger.warn(`⚠️ URL not found in DB: ${url}`);
+            continue;
+          }
+
+          // Skip si ya tiene contenido
+          if (noticia.status === 'extracted' && noticia.content && noticia.content.length > 0) {
+            this.logger.log(`✅ Content already exists for: ${url}`);
+            contentExtracted++;
+
+            // Emitir progreso: contenido ya extraído
+            await this.socketGateway.sendToUser(userId, 'outlet:extraction-progress', {
+              outletId: websiteId,
+              step: 'content_extracted',
+              currentTitle: noticia.title || 'Sin título',
+              currentUrl: url,
+              currentIndex,
+              totalUrls: savedUrls.length,
+              contentExtracted,
+              percentage: Math.round(10 + (currentIndex / savedUrls.length) * 85),
+              timestamp: new Date().toISOString(),
+            });
+
+            continue;
+          }
+
+          // Extraer contenido
+          const content = await this.websiteService.extractNewsContent(
+            url,
+            websiteConfig._id as Types.ObjectId
+          );
+
+          if (content && content.title) {
+            contentExtracted++;
+
+            // Emitir progreso: contenido extraído exitosamente
+            await this.socketGateway.sendToUser(userId, 'outlet:extraction-progress', {
+              outletId: websiteId,
+              step: 'content_extracted',
+              currentTitle: content.title,
+              currentUrl: url,
+              currentIndex,
+              totalUrls: savedUrls.length,
+              contentExtracted,
+              percentage: Math.round(10 + (currentIndex / savedUrls.length) * 85),
+              timestamp: new Date().toISOString(),
+            });
+
+            this.logger.log(`✅ Extracted content from: ${content.title}`);
+          }
+        } catch (error) {
+          this.logger.error(`❌ Error extracting content from ${url}: ${error.message}`);
+
+          // Emitir progreso con error (pero continuar)
+          await this.socketGateway.sendToUser(userId, 'outlet:extraction-progress', {
+            outletId: websiteId,
+            step: 'content_error',
+            currentUrl: url,
+            error: error.message,
+            currentIndex,
+            totalUrls: savedUrls.length,
+            contentExtracted,
+            percentage: Math.round(10 + (currentIndex / savedUrls.length) * 85),
+            timestamp: new Date().toISOString(),
+          });
+        }
+      }
+
+      // ============================================
+      // PASO 3: Actualizar estadísticas
+      // ============================================
+      await this.websiteService.updateLastExtractionRun(websiteId);
+
+      const duration = Math.round((Date.now() - startTime) / 1000);
+
+      // Emit event
+      this.eventEmitter.emit('generator-pro.extraction.completed', {
+        websiteId,
+        totalUrls: urlsFound,
+        totalContentExtracted: contentExtracted,
+        duration,
+        timestamp: new Date(),
+      });
+
+      // ============================================
+      // NOTIFICACIÓN: Extracción completada
+      // ============================================
+      await this.socketGateway.sendToUser(userId, 'outlet:extraction-completed', {
+        outletId: websiteId,
+        outletName: websiteConfig.name,
+        totalUrls: urlsFound,
+        totalContent: contentExtracted,
+        duration,
+        percentage: 100,
+        timestamp: new Date().toISOString(),
+      });
+
+      this.logger.log(
+        `✅ Full extraction completed - URLs: ${urlsFound}, Content: ${contentExtracted}, Duration: ${duration}s`
+      );
+
+      return {
+        totalUrls: urlsFound,
+        totalContentExtracted: contentExtracted,
+        duration,
+        message: `Extraction completed successfully: ${contentExtracted}/${urlsFound} contents extracted in ${duration}s`,
+      };
+    } catch (error) {
+      this.logger.error(`❌ Full extraction failed for ${websiteId}: ${error.message}`);
+
+      // ============================================
+      // NOTIFICACIÓN: Extracción fallida
+      // ============================================
+      await this.socketGateway.sendToUser(userId, 'outlet:extraction-failed', {
+        outletId: websiteId,
+        error: error.message,
+        urlsFound,
+        contentExtracted,
+        timestamp: new Date().toISOString(),
+      });
+
+      throw new HttpException(
+        error.message || 'Failed to complete full extraction',
         error.status || HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
@@ -2032,7 +2270,7 @@ export class GeneratorProController {
       // 2. Obtener agente "El Informante Pachuqueño"
       const agent = await this.contentAgentModel.findOne({
         name: 'El Informante Pachuqueño'
-      }).lean();
+      });
 
       if (!agent) {
         throw new NotFoundException('Agente "El Informante Pachuqueño" no encontrado. Créalo primero.');

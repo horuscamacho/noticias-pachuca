@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { View, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator, Alert, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ThemedText } from '@/src/components/ThemedText';
 import { useResponsive } from '@/src/features/responsive';
@@ -95,9 +95,16 @@ export default function ExtractScreen() {
         {websites && websites.length > 0 ? (
           <View style={styles.cardsContainer}>
             {websites.map((website) => (
-              <Card key={website.id} className="mb-4">
-                <CardHeader>
-                  <CardTitle>
+              <Pressable
+                key={website.id}
+                onPress={() => {
+                  console.log('🔍 Navigating to outlet:', website.id);
+                  router.push(`/outlet/${website.id}`);
+                }}
+              >
+                <Card className="mb-4">
+                  <CardHeader>
+                    <CardTitle>
                     <ThemedText variant="title-medium" style={styles.cardTitle}>
                       {website.name}
                     </ThemedText>
@@ -138,7 +145,10 @@ export default function ExtractScreen() {
 
                 <CardFooter>
                   <Button
-                    onPress={() => handleExtractUrls(website.id, website.name)}
+                    onPress={(e) => {
+                      e?.stopPropagation?.();
+                      handleExtractUrls(website.id, website.name);
+                    }}
                     disabled={extractingWebsiteId === website.id || !website.isActive}
                     style={styles.extractButton}
                   >
@@ -148,6 +158,7 @@ export default function ExtractScreen() {
                   </Button>
                 </CardFooter>
               </Card>
+              </Pressable>
             ))}
           </View>
         ) : (

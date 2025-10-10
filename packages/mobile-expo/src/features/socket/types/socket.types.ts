@@ -1,4 +1,4 @@
-// Socket types siguiendo patrón API/App namespace exacto de auth.types.ts
+// Socket types siguiendo patrï¿½n API/App namespace exacto de auth.types.ts
 
 export namespace SocketAPI {
   // Tipos que vienen del backend SocketGateway
@@ -40,10 +40,49 @@ export namespace SocketAPI {
     description: string
     timestamp: string
   }
+
+  // Outlet extraction events
+  export interface ExtractionStartedEvent {
+    outletId: string
+    outletName: string
+    timestamp: string
+  }
+
+  export interface ExtractionProgressEvent {
+    outletId: string
+    step: 'urls_found' | 'extracting_content' | 'content_extracted' | 'content_error'
+    urlsFound?: number
+    currentUrl?: string
+    currentTitle?: string
+    currentIndex?: number
+    totalUrls: number
+    contentExtracted: number
+    percentage: number
+    error?: string
+    timestamp: string
+  }
+
+  export interface ExtractionCompletedEvent {
+    outletId: string
+    outletName: string
+    totalUrls: number
+    totalContent: number
+    duration: number
+    percentage: number
+    timestamp: string
+  }
+
+  export interface ExtractionFailedEvent {
+    outletId: string
+    error: string
+    urlsFound: number
+    contentExtracted: number
+    timestamp: string
+  }
 }
 
 export namespace SocketApp {
-  // Tipos para la aplicación
+  // Tipos para la aplicaciï¿½n
   export interface SocketMessage {
     id: string
     event: string
@@ -124,4 +163,10 @@ export interface SocketEventMap {
   'reconnect_attempt': number
   'reconnect_error': Error
   'reconnect_failed': void
+
+  // Outlet extraction events (Server to client)
+  'outlet:extraction-started': SocketAPI.ExtractionStartedEvent
+  'outlet:extraction-progress': SocketAPI.ExtractionProgressEvent
+  'outlet:extraction-completed': SocketAPI.ExtractionCompletedEvent
+  'outlet:extraction-failed': SocketAPI.ExtractionFailedEvent
 }

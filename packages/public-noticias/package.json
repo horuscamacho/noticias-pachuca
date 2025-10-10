@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev --port 3022",
-    "start": "node server.mjs",
+    "start": "node .output/server/index.mjs",
     "build": "vite build",
     "serve": "vite preview",
     "test": "vitest run"
@@ -37,6 +37,7 @@
     "vite-tsconfig-paths": "^5.1.4"
   },
   "devDependencies": {
+    "@tanstack/nitro-v2-vite-plugin": "^0.1.0",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.2.0",
     "@types/react": "^19.0.8",

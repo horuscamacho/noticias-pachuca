@@ -183,8 +183,7 @@ export class UrlDetectionService {
 
       // Obtener posts de Facebook
       const posts = await this.facebookPostModel.find(postFilter)
-        .select('_id pageId facebookPostId postUrl content publishedAt extractedAt')
-        .lean();
+        .select('_id pageId facebookPostId postUrl content publishedAt extractedAt');
 
       this.logger.log(`Processing ${posts.length} Facebook posts for URL detection`);
 
