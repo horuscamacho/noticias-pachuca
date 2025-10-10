@@ -24,12 +24,13 @@ module.exports = {
     {
       name: 'public-noticias',
       cwd: '/var/www/noticias-pachuca/packages/public-noticias',
-      script: 'dist/server/server.js',
+      script: 'server.mjs',
       instances: 1,
       exec_mode: 'fork',
       env: {
         NODE_ENV: 'production',
         PORT: 3000,
+        HOST: '0.0.0.0',
         NODE_OPTIONS: '--max-old-space-size=300'
       },
       error_file: '/var/log/pm2/frontend-error.log',
