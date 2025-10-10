@@ -41,7 +41,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: packages/public-noticias
-        run: yarn install --frozen-lockfile
+        run: yarn install
 
       - name: Build application
         working-directory: packages/public-noticias
