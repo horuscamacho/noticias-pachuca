@@ -48,6 +48,10 @@ jobs:
         run: yarn build
         env:
           NODE_OPTIONS: --max-old-space-size=4096
+          VITE_API_URL: https://api.noticiaspachuca.com
+          VITE_SITE_NAME: Noticias Pachuca
+          VITE_SITE_URL: https://noticiaspachuca.com
+          VITE_SITE_DESCRIPTION: Las noticias más relevantes de Pachuca y Hidalgo
 
       - name: Create deployment package
         working-directory: packages/public-noticias
