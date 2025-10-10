@@ -3,6 +3,7 @@ import { getNoticias } from '../features/noticias'
 import { getCategories } from '../features/public-content/server'
 import { OptimizedImage } from '../components/OptimizedImage'
 import { SubscribeForm } from '../components/newsletter/SubscribeForm'
+import { MobileMenuToggle } from '../components/MobileMenuToggle'
 import { useState } from 'react'
 
 export const Route = createFileRoute('/')({
@@ -29,8 +30,6 @@ export const Route = createFileRoute('/')({
     }
   },
 })
-
-'use client'
 
 function HomePage() {
   const { noticias, categories } = Route.useLoaderData()
@@ -99,7 +98,10 @@ function HomePage() {
         <div className="border-b-2 border-black px-4 py-2">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:justify-between md:items-center space-y-2 md:space-y-0 text-sm">
             <div className="flex items-center justify-center md:justify-start space-x-2 md:space-x-4">
-              <span className="font-bold uppercase tracking-wider text-black text-xs md:text-sm">
+              <span
+                suppressHydrationWarning
+                className="font-bold uppercase tracking-wider text-black text-xs md:text-sm"
+              >
                 {formatHeaderDate()}
               </span>
               <span className="text-[#854836] font-bold text-xs md:text-sm">EDICIÓN DE HOY</span>
@@ -192,19 +194,7 @@ function HomePage() {
             <div className="md:hidden py-3">
               <div className="flex items-center justify-between">
                 <span className="font-bold uppercase text-sm tracking-wider text-[#FFB22C]">SECCIONES</span>
-                <button
-                  className="text-white hover:text-[#FFB22C] transition-colors"
-                  onClick={() => {
-                    const menu = document.getElementById('mobile-menu');
-                    menu?.classList.toggle('hidden');
-                  }}
-                >
-                  <div className="w-6 h-6 flex flex-col justify-center space-y-1">
-                    <div className="w-6 h-0.5 bg-white"></div>
-                    <div className="w-6 h-0.5 bg-white"></div>
-                    <div className="w-6 h-0.5 bg-white"></div>
-                  </div>
-                </button>
+                <MobileMenuToggle />
               </div>
 
               {/* Mobile Menu */}

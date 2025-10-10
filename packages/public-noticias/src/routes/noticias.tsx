@@ -112,7 +112,10 @@ function NoticiasListPage() {
         <div className="border-b-2 border-black px-4 py-2">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:justify-between md:items-center space-y-2 md:space-y-0 text-sm">
             <div className="flex items-center justify-center md:justify-start space-x-2 md:space-x-4">
-              <span className="font-bold uppercase tracking-wider text-black text-xs md:text-sm">
+              <span
+                suppressHydrationWarning
+                className="font-bold uppercase tracking-wider text-black text-xs md:text-sm"
+              >
                 {new Intl.DateTimeFormat('es-MX', {
                   weekday: 'short',
                   day: '2-digit',
