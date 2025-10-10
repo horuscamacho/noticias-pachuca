@@ -1,3 +1,5 @@
+'use client'
+
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 

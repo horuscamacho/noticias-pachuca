@@ -1,3 +1,5 @@
+'use client'
+
 import { useState } from 'react';
 import { subscribeNewsletter } from '../../features/public-content/server';
 
