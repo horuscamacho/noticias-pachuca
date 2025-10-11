@@ -65,12 +65,6 @@ export function RelatedNoticias({ noticias }: RelatedNoticiasProps) {
                 <div className="flex items-center justify-between pt-3 border-t-2 border-gray-200 mt-auto">
                   <div className="flex items-center gap-2 text-xs text-gray-600">
                     <span className="font-mono font-bold">{formatDate(noticia.publishedAt).toUpperCase()}</span>
-                    {noticia.stats.readTime > 0 && (
-                      <>
-                        <span>•</span>
-                        <span>{noticia.stats.readTime} min</span>
-                      </>
-                    )}
                   </div>
 
                   {/* Arrow indicator */}

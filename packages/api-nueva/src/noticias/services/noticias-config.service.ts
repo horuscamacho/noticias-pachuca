@@ -115,7 +115,7 @@ export class NoticiasConfigService {
 
     const result = await this.paginationService.paginate(
       this.configModel,
-      { page, limit, skip: (page - 1) * limit },
+      { page, limit },
       filter,
       {
         sort: { updatedAt: -1 },

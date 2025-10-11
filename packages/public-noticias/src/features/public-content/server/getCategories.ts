@@ -31,7 +31,7 @@ export const getCategories = createServerFn({ method: 'GET' }).handler(
 
       // Mapear respuesta del backend al tipo esperado
       const data: Category[] = Array.isArray(rawData) ? rawData.map((cat: any) => ({
-        id: cat._id,
+        id: cat.id, // Backend ya retorna id (no _id)
         slug: cat.slug,
         name: cat.name,
         description: cat.description || '',

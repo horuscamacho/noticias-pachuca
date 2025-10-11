@@ -362,6 +362,224 @@ export class GeneratorProController {
     }
   }
 
+  /**
+   * 📊 GET /websites/:id/statistics
+   * Obtener estadísticas reales del outlet desde extractednoticias
+   */
+  @Get('websites/:id/statistics')
+  @ApiOperation({ summary: 'Get real outlet statistics from database' })
+  @ApiResponse({ status: 200, description: 'Outlet statistics retrieved successfully' })
+  async getOutletStatistics(
+    @Param('id') websiteId: string
+  ): Promise<{
+    totalUrlsExtracted: number;
+    totalContentExtracted: number;
+    totalFailed: number;
+    successRate: number;
+  }> {
+    this.logger.log(`📊 Fetching statistics for outlet: ${websiteId}`);
+
+    try {
+      // Validar que el website existe
+      const websiteConfig = await this.websiteConfigModel.findById(websiteId);
+      if (!websiteConfig) {
+        throw new NotFoundException('Website configuration not found');
+      }
+
+      // Contar noticias por website
+      const totalUrlsExtracted = await this.extractedNoticiaModel.countDocuments({
+        websiteConfigId: new Types.ObjectId(websiteId),
+      });
+
+      const totalContentExtracted = await this.extractedNoticiaModel.countDocuments({
+        websiteConfigId: new Types.ObjectId(websiteId),
+        status: 'extracted',
+      });
+
+      const totalFailed = await this.extractedNoticiaModel.countDocuments({
+        websiteConfigId: new Types.ObjectId(websiteId),
+        status: 'failed',
+      });
+
+      const successRate = totalUrlsExtracted > 0
+        ? (totalContentExtracted / totalUrlsExtracted) * 100
+        : 0;
+
+      return {
+        totalUrlsExtracted,
+        totalContentExtracted,
+        totalFailed,
+        successRate: Math.round(successRate * 10) / 10, // Round to 1 decimal
+      };
+
+    } catch (error) {
+      this.logger.error(`❌ Failed to fetch statistics for outlet ${websiteId}: ${error.message}`);
+
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new HttpException(
+        'Failed to fetch outlet statistics',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  /**
+   * 📜 GET /websites/:id/extraction-history
+   * Obtener historial de extracciones del outlet desde jobs
+   */
+  @Get('websites/:id/extraction-history')
+  @ApiOperation({ summary: 'Get extraction history from jobs' })
+  @ApiResponse({ status: 200, description: 'Extraction history retrieved successfully' })
+  async getExtractionHistory(
+    @Param('id') websiteId: string,
+    @Query('limit') limit?: number
+  ): Promise<{
+    history: Array<{
+      id: string;
+      websiteConfigId: string;
+      startedAt: Date;
+      completedAt: Date | null;
+      duration: number;
+      totalUrlsFound: number;
+      totalContentExtracted: number;
+      totalFailed: number;
+      status: 'in_progress' | 'completed' | 'failed' | 'partial';
+      errorMessage?: string;
+    }>;
+    total: number;
+  }> {
+    this.logger.log(`📜 Fetching extraction history for outlet: ${websiteId}`);
+
+    try {
+      // Validar que el website existe
+      const websiteConfig = await this.websiteConfigModel.findById(websiteId);
+      if (!websiteConfig) {
+        throw new NotFoundException('Website configuration not found');
+      }
+
+      const limitValue = Math.min(limit || 5, 20); // Max 20 items
+
+      // Obtener jobs de tipo 'extract_urls' completados
+      const jobs = await this.jobModel
+        .find({
+          websiteConfigId: new Types.ObjectId(websiteId),
+          type: { $in: ['extract_urls', 'extract_content'] },
+          status: { $in: ['completed', 'failed'] },
+        })
+        .sort({ createdAt: -1 })
+        .limit(limitValue)
+        .lean();
+
+      const total = await this.jobModel.countDocuments({
+        websiteConfigId: new Types.ObjectId(websiteId),
+        type: { $in: ['extract_urls', 'extract_content'] },
+        status: { $in: ['completed', 'failed'] },
+      });
+
+      // Agrupar jobs por batchId para obtener estadísticas completas
+      const historyMap = new Map<string, {
+        id: string;
+        startedAt: Date;
+        completedAt: Date | null;
+        duration: number;
+        totalUrlsFound: number;
+        totalContentExtracted: number;
+        totalFailed: number;
+        status: 'in_progress' | 'completed' | 'failed' | 'partial';
+        errorMessage?: string;
+      }>();
+
+      for (const job of jobs) {
+        const batchKey = job.batchId || job._id.toString();
+
+        if (!historyMap.has(batchKey)) {
+          // Calcular estadísticas desde extractednoticias para este batch
+          const batchStartTime = job.startedAt || job.createdAt;
+          const batchEndTime = job.completedAt || null;
+
+          // Buscar noticias extraídas en el periodo del job
+          const urlsFromBatch = await this.extractedNoticiaModel.countDocuments({
+            websiteConfigId: new Types.ObjectId(websiteId),
+            extractedAt: {
+              $gte: new Date(batchStartTime.getTime() - 60000), // 1 min antes
+              $lte: batchEndTime || new Date(batchStartTime.getTime() + 3600000), // 1h después o completedAt
+            },
+          });
+
+          const extractedFromBatch = await this.extractedNoticiaModel.countDocuments({
+            websiteConfigId: new Types.ObjectId(websiteId),
+            extractedAt: {
+              $gte: new Date(batchStartTime.getTime() - 60000),
+              $lte: batchEndTime || new Date(batchStartTime.getTime() + 3600000),
+            },
+            status: 'extracted',
+          });
+
+          const failedFromBatch = await this.extractedNoticiaModel.countDocuments({
+            websiteConfigId: new Types.ObjectId(websiteId),
+            extractedAt: {
+              $gte: new Date(batchStartTime.getTime() - 60000),
+              $lte: batchEndTime || new Date(batchStartTime.getTime() + 3600000),
+            },
+            status: 'failed',
+          });
+
+          const durationSeconds = batchEndTime && batchStartTime
+            ? Math.floor((batchEndTime.getTime() - batchStartTime.getTime()) / 1000)
+            : 0;
+
+          let status: 'in_progress' | 'completed' | 'failed' | 'partial' = 'completed';
+          if (job.status === 'failed') {
+            status = 'failed';
+          } else if (failedFromBatch > 0 && extractedFromBatch > 0) {
+            status = 'partial';
+          } else if (!batchEndTime) {
+            status = 'in_progress';
+          }
+
+          historyMap.set(batchKey, {
+            id: job._id.toString(),
+            startedAt: batchStartTime,
+            completedAt: batchEndTime,
+            duration: durationSeconds,
+            totalUrlsFound: urlsFromBatch,
+            totalContentExtracted: extractedFromBatch,
+            totalFailed: failedFromBatch,
+            status,
+            errorMessage: job.error || undefined,
+          });
+        }
+      }
+
+      const history = Array.from(historyMap.values())
+        .sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime())
+        .slice(0, limitValue);
+
+      return {
+        history: history.map(h => ({
+          ...h,
+          websiteConfigId: websiteId,
+        })),
+        total,
+      };
+
+    } catch (error) {
+      this.logger.error(`❌ Failed to fetch extraction history for outlet ${websiteId}: ${error.message}`);
+
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new HttpException(
+        'Failed to fetch extraction history',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
   @Post('websites/test-listing-selectors')
   @ApiOperation({ summary: 'Probar selectores de listado - extrae URLs de noticias' })
   @ApiResponse({ status: 200, description: 'Test de selectores de listado completado', type: TestListingResponseDto })
@@ -1376,6 +1594,7 @@ export class GeneratorProController {
     let urlsFound = 0;
     let contentExtracted = 0;
     const userId = user.userId;
+    let job: any = null; // Job para registrar en historial
 
     try {
       this.logger.log(`🚀 Starting full extraction for website: ${websiteId}`);
@@ -1385,6 +1604,24 @@ export class GeneratorProController {
       if (!websiteConfig) {
         throw new HttpException('Website configuration not found', HttpStatus.NOT_FOUND);
       }
+
+      // 🔥 CREAR JOB PARA REGISTRAR EN HISTORIAL
+      job = await this.jobModel.create({
+        type: 'extract_content',
+        websiteConfigId: new Types.ObjectId(websiteId),
+        status: 'processing',
+        priority: 5,
+        data: {
+          metadata: {
+            userId,
+            triggeredBy: 'manual',
+          },
+        },
+        startedAt: new Date(),
+      });
+      this.logger.log(`📝 Job created: ${job._id}`);
+
+      await job.markAsStarted();
 
       // ============================================
       // NOTIFICACIÓN: Extracción iniciada
@@ -1500,6 +1737,24 @@ export class GeneratorProController {
           );
 
           if (content && content.title) {
+            // 🔥 GUARDAR CONTENIDO EN BD - Actualizar noticia de 'pending' a 'extracted'
+            await this.extractedNoticiaModel.findByIdAndUpdate(
+              noticia._id,
+              {
+                title: content.title,
+                content: content.content,
+                author: content.author,
+                publishedAt: content.publishedAt,
+                category: content.category,
+                images: content.images,
+                tags: content.tags,
+                status: 'extracted', // 🎯 Cambiar de 'pending' a 'extracted'
+                isProcessed: false,
+                extractedAt: new Date()
+              },
+              { new: true }
+            );
+
             contentExtracted++;
 
             // Emitir progreso: contenido extraído exitosamente
@@ -1519,6 +1774,18 @@ export class GeneratorProController {
           }
         } catch (error) {
           this.logger.error(`❌ Error extracting content from ${url}: ${error.message}`);
+
+          // 🔥 MARCAR COMO FAILED EN BD
+          const noticia = await this.websiteService.findByUrl(url);
+          if (noticia) {
+            await this.extractedNoticiaModel.findByIdAndUpdate(
+              noticia._id,
+              {
+                status: 'failed',
+                extractedAt: new Date()
+              }
+            );
+          }
 
           // Emitir progreso con error (pero continuar)
           await this.socketGateway.sendToUser(userId, 'outlet:extraction-progress', {
@@ -1541,6 +1808,20 @@ export class GeneratorProController {
       await this.websiteService.updateLastExtractionRun(websiteId);
 
       const duration = Math.round((Date.now() - startTime) / 1000);
+
+      // 🔥 MARCAR JOB COMO COMPLETADO
+      if (job) {
+        await job.markAsCompleted({
+          urlsCount: urlsFound,
+          contentExtractedCount: contentExtracted,
+          processingStats: {
+            duration: duration * 1000, // en ms
+            startTime: new Date(startTime),
+            endTime: new Date(),
+          },
+        });
+        this.logger.log(`✅ Job marked as completed: ${job._id}`);
+      }
 
       // Emit event
       this.eventEmitter.emit('generator-pro.extraction.completed', {
@@ -1576,6 +1857,16 @@ export class GeneratorProController {
       };
     } catch (error) {
       this.logger.error(`❌ Full extraction failed for ${websiteId}: ${error.message}`);
+
+      // 🔥 MARCAR JOB COMO FALLIDO
+      if (job) {
+        await job.markAsFailed(error.message, {
+          urlsFound,
+          contentExtracted,
+          errorStack: error.stack,
+        });
+        this.logger.log(`❌ Job marked as failed: ${job._id}`);
+      }
 
       // ============================================
       // NOTIFICACIÓN: Extracción fallida
@@ -2423,6 +2714,7 @@ export class GeneratorProController {
   async listGeneratedContent(
     @Query('status') status?: string,
     @Query('agentId') agentId?: string,
+    @Query('extractedNoticiaId') extractedNoticiaId?: string,
     @Query('limit') limit?: number,
     @Query('page') page?: number
   ): Promise<{
@@ -2432,11 +2724,12 @@ export class GeneratorProController {
     totalPages: number;
   }> {
     try {
-      console.log(`📋 Listing generated content with filters: status=${status}, agentId=${agentId}`);
+      console.log(`📋 Listing generated content with filters: status=${status}, agentId=${agentId}, extractedNoticiaId=${extractedNoticiaId}`);
 
       const filters: any = {};
       if (status) filters.status = status;
       if (agentId) filters.agentId = new Types.ObjectId(agentId);
+      if (extractedNoticiaId) filters.originalContentId = new Types.ObjectId(extractedNoticiaId);
 
       const pageSize = Math.min(limit || 50, 100);
       const currentPage = Math.max(page || 1, 1);
@@ -2496,6 +2789,72 @@ export class GeneratorProController {
       console.error(`❌ Error listing generated content:`, error);
       throw new HttpException(
         'Failed to list generated content',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  /**
+   * 📋 Get single generated content by ID
+   * Endpoint para obtener un contenido generado específico
+   */
+  @Get('generated/:id')
+  @HttpCode(HttpStatus.OK)
+  async getGeneratedContentById(
+    @Param('id') id: string
+  ): Promise<{ generated: GeneratedContentResponseDto }> {
+    try {
+      console.log(`🔍 Getting generated content by ID: ${id}`);
+
+      if (!Types.ObjectId.isValid(id)) {
+        throw new HttpException('Invalid ID format', HttpStatus.BAD_REQUEST);
+      }
+
+      const content = await this.aiContentGenerationModel
+        .findById(id)
+        .populate('agentId', 'name')
+        .exec();
+
+      if (!content) {
+        throw new NotFoundException(`Generated content with ID ${id} not found`);
+      }
+
+      const agent = content.agentId as unknown as { _id: Types.ObjectId; name: string } | null;
+
+      const response: GeneratedContentResponseDto = {
+        id: (content._id as Types.ObjectId).toString(),
+        extractedNoticiaId: (content.originalContentId as Types.ObjectId)?.toString() || '',
+        templateId: (content.templateId as Types.ObjectId)?.toString() || '',
+        agentId: agent?._id ? (agent._id as Types.ObjectId).toString() : '',
+        agentName: agent?.name || 'Unknown Agent',
+        generatedContent: content.generatedContent,
+        generatedTitle: content.generatedTitle,
+        generatedSummary: content.generatedSummary,
+        generatedKeywords: content.generatedKeywords || [],
+        generatedTags: content.generatedTags || [],
+        generatedCategory: content.generatedCategory,
+        status: content.status || 'generated',
+        socialMediaCopies: content.socialMediaCopies,
+        metadata: {
+          wordCount: content.generatedContent?.split(' ').length || 0,
+          keywords: content.generatedKeywords || [],
+        },
+        generationMetadata: content.generationMetadata,
+        generatedAt: content.createdAt,
+        createdAt: content.createdAt
+      };
+
+      console.log(`✅ Found generated content: ${response.generatedTitle}`);
+
+      return { generated: response };
+
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      console.error(`❌ Error getting generated content by ID:`, error);
+      throw new HttpException(
+        'Failed to get generated content',
         HttpStatus.INTERNAL_SERVER_ERROR
       );
     }

@@ -163,6 +163,12 @@ export interface IAIProviderAdapter {
 
   // 🔒 Cleanup y liberación de recursos
   cleanup(): Promise<void>;
+
+  // 🎨 Generación de imágenes (opcional)
+  generateImage?(options: ImageGenerationOptions): Promise<ImageGenerationResult>;
+
+  // 🖼️ Edición de imágenes (opcional)
+  editImage?(options: ImageEditOptions): Promise<ImageGenerationResult>;
 }
 
 /**
@@ -205,4 +211,29 @@ export interface IMCPAdapter {
     sharedMemorySize: number;
     lastSync: Date;
   }>;
+}
+
+/**
+ * 🎨 Interfaces para generación de imágenes con IA
+ */
+export interface ImageGenerationOptions {
+  prompt: string;
+  quality?: 'low' | 'medium' | 'high';
+  size?: string;
+  outputFormat?: 'png' | 'jpeg' | 'webp';
+}
+
+export interface ImageEditOptions {
+  imageBuffer: Buffer;
+  prompt: string;
+  maskBuffer?: Buffer;
+  size?: string;
+}
+
+export interface ImageGenerationResult {
+  imageBuffer: Buffer;
+  format: string;
+  cost: number;
+  size: string;
+  quality: string;
 }

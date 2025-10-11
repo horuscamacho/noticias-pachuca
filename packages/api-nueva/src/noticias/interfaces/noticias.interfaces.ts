@@ -189,6 +189,10 @@ export interface NoticiasFilter {
   facebookPostId?: string;
   pageId?: string;
   searchText?: string; // Búsqueda en título y contenido
+  category?: string; // Filtro por categoría
+  author?: string; // Filtro por autor
+  tags?: string[]; // Filtro por tags
+  keywords?: string[]; // Filtro por keywords
 }
 
 // Opciones de paginación para noticias

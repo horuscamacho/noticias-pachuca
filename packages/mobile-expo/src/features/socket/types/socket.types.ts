@@ -102,6 +102,39 @@ export namespace SocketAPI {
     error: string
     timestamp: string
   }
+
+  // Image generation events
+  export interface ImageGenerationStartedEvent {
+    jobId: string | number
+    generationId: string
+    prompt: string
+    timestamp: string
+  }
+
+  export interface ImageGenerationProgressEvent {
+    jobId: string | number
+    generationId: string
+    step: 'validating' | 'generating' | 'watermarking' | 'uploading' | 'saving'
+    progress: number
+    message?: string
+    timestamp: string
+  }
+
+  export interface ImageGenerationCompletedEvent {
+    jobId: string | number
+    generationId: string
+    imageUrl: string
+    generationTime: number
+    cost: number
+    timestamp: string
+  }
+
+  export interface ImageGenerationFailedEvent {
+    jobId: string | number
+    generationId: string
+    error: string
+    timestamp: string
+  }
 }
 
 export namespace SocketApp {
@@ -197,4 +230,10 @@ export interface SocketEventMap {
   'content:generation-started': SocketAPI.ContentGenerationStartedEvent
   'content:generation-completed': SocketAPI.ContentGenerationCompletedEvent
   'content:generation-failed': SocketAPI.ContentGenerationFailedEvent
+
+  // Image generation events (Server to client)
+  'image-generation:started': SocketAPI.ImageGenerationStartedEvent
+  'image-generation:progress': SocketAPI.ImageGenerationProgressEvent
+  'image-generation:completed': SocketAPI.ImageGenerationCompletedEvent
+  'image-generation:failed': SocketAPI.ImageGenerationFailedEvent
 }

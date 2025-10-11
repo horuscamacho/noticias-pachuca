@@ -273,6 +273,10 @@ export class NoticiasController {
   @ApiQuery({ name: 'dateFrom', required: false, type: String })
   @ApiQuery({ name: 'dateTo', required: false, type: String })
   @ApiQuery({ name: 'searchText', required: false, type: String })
+  @ApiQuery({ name: 'category', required: false, type: String })
+  @ApiQuery({ name: 'author', required: false, type: String })
+  @ApiQuery({ name: 'tags', required: false, type: String, description: 'Comma-separated tags' })
+  @ApiQuery({ name: 'keywords', required: false, type: String, description: 'Comma-separated keywords' })
   @ApiQuery({ name: 'sortBy', required: false, type: String })
   @ApiQuery({ name: 'sortOrder', required: false, enum: ['asc', 'desc'] })
   @ApiResponse({ status: 200, description: 'Noticias extraídas con paginación' })
@@ -287,6 +291,10 @@ export class NoticiasController {
     @Query('dateFrom') dateFrom?: string,
     @Query('dateTo') dateTo?: string,
     @Query('searchText') searchText?: string,
+    @Query('category') category?: string,
+    @Query('author') author?: string,
+    @Query('tags') tags?: string,
+    @Query('keywords') keywords?: string,
     @Query('sortBy') sortBy?: string,
     @Query('sortOrder') sortOrder?: 'asc' | 'desc',
   ): Promise<PaginatedResponse<ExtractedNoticiaDocument>> {
@@ -299,6 +307,10 @@ export class NoticiasController {
       ...(dateFrom && { dateFrom }),
       ...(dateTo && { dateTo }),
       ...(searchText && { searchText }),
+      ...(category && { category }),
+      ...(author && { author }),
+      ...(tags && { tags: tags.split(',').map(t => t.trim()) }),
+      ...(keywords && { keywords: keywords.split(',').map(k => k.trim()) }),
     };
 
     const pagination: NoticiasPaginationOptions = {
@@ -309,6 +321,19 @@ export class NoticiasController {
     };
 
     return await this.extractionService.getExtractedNoticias(filters, pagination);
+  }
+
+  @Get('extracted/keywords')
+  @ApiOperation({
+    summary: 'Listar keywords disponibles',
+    description: 'Obtiene todas las keywords únicas con conteo de noticias'
+  })
+  @ApiQuery({ name: 'search', required: false, type: String, description: 'Filtrar keywords por búsqueda' })
+  @ApiResponse({ status: 200, description: 'Keywords con conteo' })
+  async getExtractedKeywords(
+    @Query('search') search?: string,
+  ): Promise<{ keyword: string; count: number }[]> {
+    return await this.extractionService.getKeywords(search);
   }
 
   @Patch('extracted/:id/processed')

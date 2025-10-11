@@ -25,6 +25,8 @@ import { NoticiasModule } from './noticias/noticias.module';
 // import { ContentAIModule } from './content-ai/content-ai.module';
 import { GeneratorProModule } from './generator-pro/generator-pro.module';
 import { PachucaNoticiasModule } from './pachuca-noticias/pachuca-noticias.module';
+import { AiExtractionModule } from './ai-extraction/ai-extraction.module';
+import { ImageBankModule } from './image-bank/image-bank.module';
 
 // Función para seleccionar .env por ambiente
 function getEnvFilePath() {
@@ -177,6 +179,12 @@ function getEnvFilePath() {
 
     // 📰 PACHUCA NOTICIAS MODULE - PUBLICACIÓN DE CONTENIDO GENERADO
     PachucaNoticiasModule,
+
+    // 🤖 AI EXTRACTION MODULE - INTELLIGENT SELECTOR DETECTION WITH OPENAI
+    AiExtractionModule,
+
+    // 🖼️ IMAGE BANK MODULE - PROCESSED IMAGES BANK WITH METADATA REMOVAL
+    ImageBankModule,
   ],
   controllers: [AppController],
   providers: [AppService, CacheService],

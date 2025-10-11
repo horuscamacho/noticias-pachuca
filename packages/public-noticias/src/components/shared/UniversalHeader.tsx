@@ -2,17 +2,22 @@
 
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
+import { DynamicCategoriesNav } from './DynamicCategoriesNav';
 
 /**
  * 🏗️ UNIVERSAL HEADER - Noticias Pachuca
  * Header reutilizable para todas las páginas
  * Diseño brutalist con navegación dinámica
+ *
+ * Las categorías se cargan en el loader del servidor y se pasan por props
  */
 
 interface Category {
   id: string;
   name: string;
   slug: string;
+  color?: string;
+  count?: number;
 }
 
 interface UniversalHeaderProps {
@@ -121,74 +126,8 @@ export function UniversalHeader({
           </div>
         </div>
 
-        {/* Navigation */}
-        {categories.length > 0 && (
-          <nav className="bg-black text-white">
-            <div className="max-w-7xl mx-auto px-4">
-              {/* Desktop Navigation */}
-              <div className="hidden md:flex items-center justify-center space-x-4 lg:space-x-8 py-3">
-                <Link
-                  to="/"
-                  className="font-bold uppercase text-sm tracking-wider hover:text-[#FFB22C] transition-colors relative group"
-                >
-                  INICIO
-                  <div className="absolute -bottom-1 left-0 w-0 h-1 bg-[#FFB22C] group-hover:w-full transition-all duration-300"></div>
-                </Link>
-                {categories.slice(0, 8).map((category) => (
-                  <Link
-                    key={category.id}
-                    to="/categoria/$slug"
-                    params={{ slug: category.slug }}
-                    className="font-bold uppercase text-sm tracking-wider hover:text-[#FFB22C] transition-colors relative group"
-                  >
-                    {category.name}
-                    <div className="absolute -bottom-1 left-0 w-0 h-1 bg-[#FFB22C] group-hover:w-full transition-all duration-300"></div>
-                  </Link>
-                ))}
-              </div>
-
-              {/* Mobile Navigation */}
-              <div className="md:hidden py-3">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold uppercase text-sm tracking-wider text-[#FFB22C]">SECCIONES</span>
-                  <button
-                    className="text-white hover:text-[#FFB22C] transition-colors"
-                    onClick={() => {
-                      const menu = document.getElementById('mobile-menu');
-                      menu?.classList.toggle('hidden');
-                    }}
-                  >
-                    <div className="w-6 h-6 flex flex-col justify-center space-y-1">
-                      <div className="w-6 h-0.5 bg-white"></div>
-                      <div className="w-6 h-0.5 bg-white"></div>
-                      <div className="w-6 h-0.5 bg-white"></div>
-                    </div>
-                  </button>
-                </div>
-
-                {/* Mobile Menu */}
-                <div id="mobile-menu" className="hidden mt-4 grid grid-cols-2 gap-2">
-                  <Link
-                    to="/"
-                    className="bg-black text-white px-3 py-2 font-bold uppercase text-xs tracking-wider border border-[#FFB22C] hover:bg-[#FF0000] transition-colors text-center"
-                  >
-                    INICIO
-                  </Link>
-                  {categories.map((category) => (
-                    <Link
-                      key={category.id}
-                      to="/categoria/$slug"
-                      params={{ slug: category.slug }}
-                      className="bg-[#854836] text-white px-3 py-2 font-bold uppercase text-xs tracking-wider border border-[#FFB22C] hover:bg-[#FF0000] transition-colors text-center"
-                    >
-                      {category.name}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </nav>
-        )}
+        {/* Dynamic Categories Navigation - Isla */}
+        <DynamicCategoriesNav categories={categories} />
       </header>
 
       {/* Breaking News Banner */}

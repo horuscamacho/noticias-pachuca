@@ -246,12 +246,26 @@ export class NoticiasExtractionService {
       }
     }
 
+    // Nuevos filtros
+    if (filters.category) {
+      mongoFilter.category = filters.category;
+    }
+
+    if (filters.author) {
+      mongoFilter.author = filters.author;
+    }
+
+    if (filters.tags && filters.tags.length > 0) {
+      mongoFilter.tags = { $in: filters.tags };
+    }
+
+    if (filters.keywords && filters.keywords.length > 0) {
+      mongoFilter.keywords = { $in: filters.keywords };
+    }
+
+    // Text search usando Text Index (mejor performance que regex)
     if (filters.searchText) {
-      mongoFilter.$or = [
-        { title: { $regex: filters.searchText, $options: 'i' } },
-        { content: { $regex: filters.searchText, $options: 'i' } },
-        { excerpt: { $regex: filters.searchText, $options: 'i' } },
-      ];
+      mongoFilter.$text = { $search: filters.searchText };
     }
 
     // Configurar ordenamiento
@@ -263,7 +277,7 @@ export class NoticiasExtractionService {
       {
         page: pagination.page || 1,
         limit: pagination.limit || 10,
-        skip: ((pagination.page || 1) - 1) * (pagination.limit || 10),
+        // No pasar skip - se calcula automáticamente en PaginationService
       },
       mongoFilter,
       {
@@ -273,6 +287,61 @@ export class NoticiasExtractionService {
     );
 
     return result;
+  }
+
+  /**
+   * 🔑 Obtener keywords únicas con conteo
+   */
+  async getKeywords(search?: string): Promise<{ keyword: string; count: number }[]> {
+    type AggregateStage =
+      | { $unwind: string }
+      | { $match: { keywords: { $regex: string; $options: string } } }
+      | { $group: { _id: string; count: { $sum: number } } }
+      | { $sort: { count: number } }
+      | { $limit: number }
+      | { $project: { _id: number; keyword: string; count: number } };
+
+    const pipeline: AggregateStage[] = [
+      // Descomponer array de keywords
+      { $unwind: '$keywords' },
+    ];
+
+    // Si hay búsqueda, filtrar keywords
+    if (search) {
+      pipeline.push({
+        $match: {
+          keywords: { $regex: search, $options: 'i' }
+        }
+      });
+    }
+
+    // Agrupar y contar
+    pipeline.push(
+      {
+        $group: {
+          _id: '$keywords',
+          count: { $sum: 1 }
+        }
+      },
+      // Ordenar por count descendente
+      {
+        $sort: { count: -1 }
+      },
+      // Limitar a 100 keywords
+      {
+        $limit: 100
+      },
+      // Proyectar formato final
+      {
+        $project: {
+          _id: 0,
+          keyword: '$_id',
+          count: 1
+        }
+      }
+    );
+
+    return await this.extractedNoticiaModel.aggregate(pipeline as never).exec();
   }
 
   /**
@@ -399,7 +468,6 @@ export class NoticiasExtractionService {
       {
         page: pagination.page || 1,
         limit: pagination.limit || 10,
-        skip: ((pagination.page || 1) - 1) * (pagination.limit || 10),
       },
       mongoFilter,
       {

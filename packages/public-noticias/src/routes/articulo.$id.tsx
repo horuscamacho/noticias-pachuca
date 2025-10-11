@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { UniversalFooter } from '../components/shared/UniversalFooter'
 
 export const Route = createFileRoute('/articulo/$id')({
   component: ArticuloPage,
@@ -136,9 +137,6 @@ function ArticuloPage() {
                   <span className="bg-[#854836] text-white px-4 py-2 font-bold uppercase text-sm tracking-wider border-2 border-black">
                     {mockArticle.category}
                   </span>
-                  <span className="text-sm text-[#854836] font-bold uppercase">
-                    {mockArticle.readTime} MIN LECTURA
-                  </span>
                 </div>
                 <div className="text-sm font-bold uppercase tracking-wider text-black">
                   19 DE ENERO 2025
@@ -268,9 +266,6 @@ function ArticuloPage() {
                     <h4 className="text-sm font-bold text-black leading-tight mt-2 mb-1 group-hover:text-[#854836] transition-colors">
                       {article.title}
                     </h4>
-                    <div className="text-xs text-[#854836] font-bold uppercase">
-                      {article.readTime} MIN LECTURA
-                    </div>
                   </Link>
                 ))}
               </div>
@@ -313,22 +308,8 @@ function ArticuloPage() {
         </div>
       </main>
 
-      {/* Footer simplificado */}
-      <footer className="bg-black text-white border-t-4 border-[#FFB22C] mt-12">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="text-center">
-            <div className="border-2 border-[#FFB22C] p-4 inline-block relative">
-              <div className="absolute -top-2 -left-2 w-4 h-4 bg-[#FF0000] transform rotate-45"></div>
-              <h2 className="text-xl font-black uppercase tracking-wider text-[#FFB22C] mb-1">NOTICIAS</h2>
-              <h3 className="text-xl font-black uppercase tracking-wider text-white">PACHUCA</h3>
-              <div className="w-8 h-1 bg-[#FFB22C] mx-auto mt-2"></div>
-            </div>
-            <p className="text-sm font-bold uppercase tracking-wider mt-4">
-              © 2025 NOTICIAS PACHUCA. TODOS LOS DERECHOS RESERVADOS.
-            </p>
-          </div>
-        </div>
-      </footer>
+      {/* Footer */}
+      <UniversalFooter />
     </div>
   )
 }

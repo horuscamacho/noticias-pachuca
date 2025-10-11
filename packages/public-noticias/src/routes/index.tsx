@@ -1,10 +1,12 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { getNoticias } from '../features/noticias'
 import { getCategories } from '../features/public-content/server'
 import { OptimizedImage } from '../components/OptimizedImage'
 import { SubscribeForm } from '../components/newsletter/SubscribeForm'
-import { MobileMenuToggle } from '../components/MobileMenuToggle'
-import { useState } from 'react'
+import { OpinionColumnsWidget, EditorialWidget, MOCK_COLUMNS, MOCK_EDITORIAL } from '../components/shared/OpinionWidgets'
+import { BreakingNewsBanner } from '../components/shared/BreakingNewsBanner'
+import { UniversalHeader } from '../components/shared/UniversalHeader'
+import { UniversalFooter } from '../components/shared/UniversalFooter'
 
 export const Route = createFileRoute('/')({
   component: HomePage,
@@ -20,7 +22,7 @@ export const Route = createFileRoute('/')({
       }
     })
 
-    // Fetch categorías dinámicas
+    // Fetch categorías para el header dinámico
     const categoriesResponse = await getCategories()
 
     return {
@@ -29,30 +31,109 @@ export const Route = createFileRoute('/')({
       categories: categoriesResponse.success ? categoriesResponse.data : [],
     }
   },
+  head: () => {
+    const canonicalUrl = 'https://noticiaspachuca.com'
+    const ogImage = 'https://noticiaspachuca.com/og-image-home.jpg' // TODO: Crear imagen 1200x630
+
+    return {
+      meta: [
+        // Basic meta tags
+        {
+          title: 'Noticias Pachuca - Noticias de Última Hora en Pachuca, Hidalgo y México'
+        },
+        {
+          name: 'description',
+          content: 'Mantente informado con las últimas noticias de Pachuca, Hidalgo y México. Política, deportes, cultura, economía y más. Actualizado 24/7.'
+        },
+        {
+          name: 'keywords',
+          content: 'noticias pachuca, pachuca hidalgo, noticias hidalgo, noticias méxico, diario pachuca, periódico pachuca'
+        },
+
+        // Open Graph
+        { property: 'og:title', content: 'Noticias Pachuca - Tu Fuente de Información Local' },
+        { property: 'og:description', content: 'Las noticias más importantes de Pachuca, Hidalgo y México. Cobertura 24/7 de política, deportes, cultura y más.' },
+        { property: 'og:image', content: ogImage },
+        { property: 'og:type', content: 'website' },
+        { property: 'og:url', content: canonicalUrl },
+        { property: 'og:site_name', content: 'Noticias Pachuca' },
+        { property: 'og:locale', content: 'es_MX' },
+
+        // Twitter Card
+        { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'twitter:title', content: 'Noticias Pachuca - Tu Fuente de Información Local' },
+        { name: 'twitter:description', content: 'Las noticias más importantes de Pachuca, Hidalgo y México.' },
+        { name: 'twitter:image', content: ogImage },
+
+        // Additional meta
+        { name: 'robots', content: 'index, follow, max-image-preview:large, max-snippet:-1' },
+        { name: 'googlebot', content: 'index, follow' },
+        { name: 'language', content: 'es-MX' },
+        { name: 'geo.region', content: 'MX-HGO' },
+        { name: 'geo.placename', content: 'Pachuca de Soto' },
+      ],
+      links: [
+        { rel: 'canonical', href: canonicalUrl },
+      ],
+      scripts: [
+        // Organization + WebSite Schema
+        {
+          type: 'application/ld+json',
+          children: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@graph': [
+              {
+                '@type': 'Organization',
+                '@id': 'https://noticiaspachuca.com/#organization',
+                name: 'Noticias Pachuca',
+                url: 'https://noticiaspachuca.com',
+                logo: {
+                  '@type': 'ImageObject',
+                  '@id': 'https://noticiaspachuca.com/#logo',
+                  url: 'https://noticiaspachuca.com/logo-600x60.png',
+                  width: 600,
+                  height: 60,
+                  caption: 'Noticias Pachuca'
+                },
+                sameAs: [
+                  'https://facebook.com/noticiaspachuca',
+                  'https://twitter.com/noticiaspachuca',
+                  'https://instagram.com/noticiaspachuca'
+                ],
+                contactPoint: {
+                  '@type': 'ContactPoint',
+                  contactType: 'editorial',
+                  email: 'contacto@noticiaspachuca.com'
+                }
+              },
+              {
+                '@type': 'WebSite',
+                '@id': 'https://noticiaspachuca.com/#website',
+                url: 'https://noticiaspachuca.com',
+                name: 'Noticias Pachuca',
+                description: 'Noticias de Pachuca, Hidalgo y México',
+                publisher: {
+                  '@id': 'https://noticiaspachuca.com/#organization'
+                },
+                potentialAction: {
+                  '@type': 'SearchAction',
+                  target: {
+                    '@type': 'EntryPoint',
+                    urlTemplate: 'https://noticiaspachuca.com/busqueda/{search_term_string}'
+                  },
+                  'query-input': 'required name=search_term_string'
+                }
+              }
+            ]
+          })
+        }
+      ]
+    }
+  }
 })
 
 function HomePage() {
   const { noticias, categories } = Route.useLoaderData()
-  const navigate = useNavigate()
-  const [searchQuery, setSearchQuery] = useState('')
-
-  // Formatear fecha de hoy para el header
-  const formatHeaderDate = () => {
-    return new Intl.DateTimeFormat('es-MX', {
-      weekday: 'short',
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    }).format(new Date()).toUpperCase()
-  }
-
-  // Manejar búsqueda
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (searchQuery.trim()) {
-      navigate({ to: '/busqueda/$query', params: { query: searchQuery.trim() } })
-    }
-  }
 
   // Mapear noticias de la API al formato que espera la UI
   const articles = noticias.map((noticia) => ({
@@ -92,152 +173,11 @@ function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#F7F7F7]">
-      {/* 🏗️ BRUTALIST HEADER */}
-      <header className="bg-white border-b-4 border-black relative">
-        {/* Top Bar */}
-        <div className="border-b-2 border-black px-4 py-2">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:justify-between md:items-center space-y-2 md:space-y-0 text-sm">
-            <div className="flex items-center justify-center md:justify-start space-x-2 md:space-x-4">
-              <span
-                suppressHydrationWarning
-                className="font-bold uppercase tracking-wider text-black text-xs md:text-sm"
-              >
-                {formatHeaderDate()}
-              </span>
-              <span className="text-[#854836] font-bold text-xs md:text-sm">EDICIÓN DE HOY</span>
-            </div>
-            <div className="flex items-center justify-center md:justify-end space-x-2 md:space-x-4">
-              <Link
-                to="/login"
-                className="bg-black text-white px-3 md:px-4 py-1 font-bold uppercase text-xs border-2 border-black hover:bg-[#FF0000] transition-colors"
-              >
-                INICIAR SESIÓN
-              </Link>
-            </div>
-          </div>
-        </div>
+      {/* Header Universal con categorías dinámicas */}
+      <UniversalHeader categories={categories} />
 
-        {/* Main Header */}
-        <div className="px-4 py-6">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 space-y-4 md:space-y-0">
-              {/* Search - Full width on mobile */}
-              <div className="md:flex-1 order-2 md:order-1">
-                <form onSubmit={handleSearch} className="relative max-w-md mx-auto md:mx-0">
-                  <input
-                    type="search"
-                    placeholder="BUSCAR..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full px-4 py-2 border-2 border-black bg-[#F7F7F7] font-bold uppercase text-sm placeholder-black focus:outline-none focus:bg-white"
-                  />
-                  <button
-                    type="submit"
-                    className="absolute right-2 top-2 w-6 h-6 bg-black flex items-center justify-center hover:bg-[#FF0000] transition-colors"
-                  >
-                    <div className="w-3 h-3 border-2 border-white rounded-full"></div>
-                  </button>
-                </form>
-              </div>
-
-              {/* Logo - Centered and larger on mobile */}
-              <div className="md:flex-1 text-center relative order-1 md:order-2">
-                <div className="absolute -top-2 -left-2 w-4 h-4 md:w-6 md:h-6 bg-[#FF0000] transform rotate-45"></div>
-                <h1 className="text-3xl md:text-4xl lg:text-5xl font-black uppercase tracking-[0.1em] text-black mb-1">
-                  NOTICIAS
-                </h1>
-                <h2 className="text-3xl md:text-4xl lg:text-5xl font-black uppercase tracking-[0.1em] text-[#854836]">
-                  PACHUCA
-                </h2>
-                <div className="w-12 md:w-14 lg:w-16 h-1 bg-[#FFB22C] mx-auto mt-2"></div>
-                <div className="absolute -bottom-2 -right-2 w-0 h-0 border-l-[8px] border-r-[8px] border-b-[8px] lg:border-l-[12px] lg:border-r-[12px] lg:border-b-[12px] border-l-transparent border-r-transparent border-b-black"></div>
-              </div>
-
-              {/* Right side info - Hidden on mobile */}
-              <div className="hidden md:flex md:flex-1 text-right order-3">
-                <div className="ml-auto">
-                  <div className="text-sm font-bold uppercase tracking-wider text-black">
-                    HIDALGO, MÉXICO
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Navigation */}
-        <nav className="bg-black text-white">
-          <div className="max-w-7xl mx-auto px-4">
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center justify-center space-x-4 lg:space-x-8 py-3">
-              <Link
-                to="/"
-                className="font-bold uppercase text-sm tracking-wider hover:text-[#FFB22C] transition-colors relative group"
-              >
-                INICIO
-                <div className="absolute -bottom-1 left-0 w-0 h-1 bg-[#FFB22C] group-hover:w-full transition-all duration-300"></div>
-              </Link>
-              {categories.slice(0, 8).map((category) => (
-                <Link
-                  key={category.id}
-                  to="/categoria/$slug"
-                  params={{ slug: category.slug }}
-                  className="font-bold uppercase text-sm tracking-wider hover:text-[#FFB22C] transition-colors relative group"
-                >
-                  {category.name}
-                  <div className="absolute -bottom-1 left-0 w-0 h-1 bg-[#FFB22C] group-hover:w-full transition-all duration-300"></div>
-                </Link>
-              ))}
-            </div>
-
-            {/* Mobile Navigation */}
-            <div className="md:hidden py-3">
-              <div className="flex items-center justify-between">
-                <span className="font-bold uppercase text-sm tracking-wider text-[#FFB22C]">SECCIONES</span>
-                <MobileMenuToggle />
-              </div>
-
-              {/* Mobile Menu */}
-              <div id="mobile-menu" className="hidden mt-4 grid grid-cols-2 gap-2">
-                <Link
-                  to="/"
-                  className="bg-black text-white px-3 py-2 font-bold uppercase text-xs tracking-wider border border-[#FFB22C] hover:bg-[#FF0000] transition-colors text-center"
-                >
-                  INICIO
-                </Link>
-                {categories.map((category) => (
-                  <Link
-                    key={category.id}
-                    to="/categoria/$slug"
-                    params={{ slug: category.slug }}
-                    className="bg-[#854836] text-white px-3 py-2 font-bold uppercase text-xs tracking-wider border border-[#FFB22C] hover:bg-[#FF0000] transition-colors text-center"
-                  >
-                    {category.name}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
-        </nav>
-      </header>
-
-      {/* Breaking News Banner */}
-      {breakingForBanner.length > 0 && (
-        <div className="bg-[#FF0000] text-white py-3 border-b-4 border-black relative overflow-hidden">
-          <div className="absolute left-0 top-0 w-8 h-8 bg-black transform rotate-45 -translate-x-4 -translate-y-4"></div>
-          <div className="max-w-7xl mx-auto px-4">
-            <div className="flex items-center">
-              <div className="bg-white text-[#FF0000] px-4 py-1 font-black uppercase text-sm mr-4 border-2 border-black">
-                ÚLTIMO MOMENTO
-              </div>
-              <div className="font-bold uppercase text-lg tracking-wide">
-                {breakingForBanner[0].title}
-              </div>
-            </div>
-          </div>
-          <div className="absolute right-0 bottom-0 w-6 h-6 bg-[#FFB22C] transform rotate-45 translate-x-3 translate-y-3"></div>
-        </div>
-      )}
+      {/* Breaking News Banner - Client-side interactive ticker */}
+      <BreakingNewsBanner />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
@@ -256,9 +196,6 @@ function HomePage() {
                     <div className="flex items-center space-x-3">
                       <span className="bg-[#854836] text-white px-3 py-1 font-bold uppercase text-xs tracking-wider border-2 border-black">
                         {featuredArticle.category}
-                      </span>
-                      <span className="text-sm text-[#854836] font-bold uppercase">
-                        {featuredArticle.readTime} MIN LECTURA
                       </span>
                     </div>
 
@@ -412,13 +349,13 @@ function HomePage() {
                     <h4 className="text-sm font-bold text-black leading-tight mb-2 hover:text-[#854836] transition-colors cursor-pointer">
                       {article.title}
                     </h4>
-                    <div className="text-xs text-[#854836] font-bold uppercase">
-                      {article.readTime} MIN LECTURA
-                    </div>
                   </Link>
                 ))}
               </div>
             </div>
+
+            {/* Editorial */}
+            <EditorialWidget editorial={MOCK_EDITORIAL} />
 
             {/* Newsletter */}
             <div className="bg-[#FFB22C] border-4 border-black p-4 relative">
@@ -444,36 +381,9 @@ function HomePage() {
               </div>
             </div>
 
-            {/* Podcasts */}
-            <div className="bg-white border-2 border-black p-4 relative">
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#854836] transform rotate-45"></div>
+            {/* Columnas de Opinión */}
+            <OpinionColumnsWidget columns={MOCK_COLUMNS} />
 
-              <h3 className="text-lg font-black uppercase tracking-tight text-black mb-3 border-b-2 border-black pb-2">
-                PODCASTS
-              </h3>
-
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-[#FFB22C] border-2 border-black flex items-center justify-center">
-                    <div className="w-0 h-0 border-l-[8px] border-l-black border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent ml-1"></div>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-black">LA MAÑANA</h4>
-                    <p className="text-xs text-[#854836] font-bold">LAS NOTICIAS DEL DÍA EN 20 MINUTOS</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-[#854836] border-2 border-black flex items-center justify-center">
-                    <div className="w-0 h-0 border-l-[8px] border-l-white border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent ml-1"></div>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-black">LA TARDE</h4>
-                    <p className="text-xs text-[#854836] font-bold">ANÁLISIS PROFUNDO DE LA ACTUALIDAD</p>
-                  </div>
-                </div>
-              </div>
-            </div>
           </aside>
         </div>
       </main>
@@ -500,84 +410,7 @@ function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-black text-white border-t-4 border-[#FFB22C]">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-
-            {/* Secciones */}
-            <div>
-              <h4 className="font-black uppercase text-[#FFB22C] mb-3 tracking-wider">SECCIONES</h4>
-              <ul className="space-y-2 text-sm">
-                {['Página Principal', 'LOCAL', 'POLÍTICA', 'DEPORTES', 'ECONOMÍA', 'CULTURA', 'TECNOLOGÍA'].map((item) => (
-                  <li key={item}>
-                    <button className="hover:text-[#FFB22C] transition-colors uppercase font-bold">{item}</button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Newsletters */}
-            <div>
-              <h4 className="font-black uppercase text-[#FFB22C] mb-3 tracking-wider">BOLETINES</h4>
-              <ul className="space-y-2 text-sm">
-                {['LA MAÑANA', 'LA TARDE', 'RESUMEN SEMANAL', 'DEPORTES HOY'].map((item) => (
-                  <li key={item}>
-                    <button className="hover:text-[#FFB22C] transition-colors uppercase font-bold">{item}</button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Más */}
-            <div>
-              <h4 className="font-black uppercase text-[#FFB22C] mb-3 tracking-wider">MÁS</h4>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <Link to="/contacto" className="hover:text-[#FFB22C] transition-colors uppercase font-bold">
-                    CONTACTO
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/publicidad" className="hover:text-[#FFB22C] transition-colors uppercase font-bold">
-                    PUBLICIDAD
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/suscripciones" className="hover:text-[#FFB22C] transition-colors uppercase font-bold">
-                    SUSCRIPCIONES
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/aviso-privacidad" className="hover:text-[#FFB22C] transition-colors uppercase font-bold">
-                    AVISO DE PRIVACIDAD
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            {/* Logo Footer */}
-            <div className="text-center">
-              <div className="border-2 border-[#FFB22C] p-4 relative">
-                <div className="absolute -top-2 -left-2 w-4 h-4 bg-[#FF0000] transform rotate-45"></div>
-                <h2 className="text-2xl font-black uppercase tracking-wider text-[#FFB22C] mb-1">NOTICIAS</h2>
-                <h3 className="text-2xl font-black uppercase tracking-wider text-white">PACHUCA</h3>
-                <div className="w-12 h-1 bg-[#FFB22C] mx-auto mt-2"></div>
-                <div className="absolute -bottom-2 -right-2 w-0 h-0 border-l-[8px] border-r-[8px] border-b-[8px] border-l-transparent border-r-transparent border-b-[#FFB22C]"></div>
-              </div>
-            </div>
-          </div>
-
-          {/* Copyright */}
-          <div className="border-t-2 border-[#FFB22C] pt-6 mt-6 text-center">
-            <p className="text-sm font-bold uppercase tracking-wider">
-              © 2025 NOTICIAS PACHUCA. TODOS LOS DERECHOS RESERVADOS.
-            </p>
-            <p className="text-xs text-[#FFB22C] mt-1 font-bold uppercase">
-              HIDALGO, MÉXICO
-            </p>
-          </div>
-        </div>
-      </footer>
+      <UniversalFooter />
     </div>
   )
 }

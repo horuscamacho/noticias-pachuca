@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Model, Document, PopulateOptions } from 'mongoose';
-import { PaginationDto } from '../dto/pagination.dto';
+import { IPaginationParams, calculateSkip } from '../dto/pagination.dto';
 import { PaginatedResponse } from '../interfaces/paginated-response.interface';
 
 interface PaginationOptions {
@@ -13,13 +13,13 @@ interface PaginationOptions {
 export class PaginationService {
   async paginate<T extends Document>(
     model: Model<T>,
-    paginationDto: PaginationDto,
+    paginationDto: IPaginationParams,
     filter: Record<string, unknown> = {},
     options: PaginationOptions = {},
   ): Promise<PaginatedResponse<T>> {
     const page = paginationDto.page || 1;
     const limit = paginationDto.limit || 10;
-    const skip = paginationDto.skip;
+    const skip = calculateSkip(page, limit);
 
     // Count total documents that match the filter
     const total = await model.countDocuments(filter);

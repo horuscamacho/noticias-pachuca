@@ -4,6 +4,11 @@ import type {
   OutletConfig,
   UpdateFrequenciesDto,
   ExtractAllResponse,
+  CreateOutletDto,
+  TestListingDto,
+  TestListingResponse,
+  TestContentDto,
+  TestContentResponse,
 } from '@/src/types/outlet.types';
 
 /**
@@ -83,7 +88,11 @@ export const outletApi = {
       const rawClient = ApiClient.getRawClient();
 
       const response = await rawClient.post<ExtractAllResponse>(
-        `/generator-pro/websites/${id}/extract-all`
+        `/generator-pro/websites/${id}/extract-all`,
+        {},
+        {
+          timeout: 120000 // 2 minutos - las extracciones pueden tardar
+        }
       );
 
       return response.data;
@@ -123,6 +132,86 @@ export const outletApi = {
       });
     } catch (error) {
       console.error(`Error resuming outlet ${id}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Crear nuevo outlet
+   * POST /generator-pro/websites
+   */
+  createOutlet: async (data: CreateOutletDto): Promise<OutletConfig> => {
+    try {
+      const rawClient = ApiClient.getRawClient();
+
+      // El backend acepta camelCase directamente (CreateWebsiteConfigDto)
+      const response = await rawClient.post<{ website: Record<string, unknown> }>(
+        '/generator-pro/websites',
+        data
+      );
+
+      return OutletMapper.toApp(response.data.website);
+    } catch (error) {
+      console.error('Error creating outlet:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Probar selectores de listado
+   * POST /generator-pro/websites/test-listing-selectors
+   */
+  testListingSelectors: async (data: TestListingDto): Promise<TestListingResponse> => {
+    try {
+      const rawClient = ApiClient.getRawClient();
+
+      const response = await rawClient.post<TestListingResponse>(
+        '/generator-pro/websites/test-listing-selectors',
+        {
+          listingUrl: data.listingUrl,
+          articleLinksSelector: data.articleLinksSelector,
+        },
+        {
+          timeout: 30000, // 30 segundos para scraping
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error('Error testing listing selectors:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Probar selectores de contenido individual
+   * POST /generator-pro/websites/test-individual-content
+   */
+  testContentSelectors: async (data: TestContentDto): Promise<TestContentResponse> => {
+    try {
+      const rawClient = ApiClient.getRawClient();
+
+      const response = await rawClient.post<TestContentResponse>(
+        '/generator-pro/websites/test-individual-content',
+        {
+          testUrl: data.testUrl,
+          contentSelectors: {
+            titleSelector: data.contentSelectors.titleSelector,
+            contentSelector: data.contentSelectors.contentSelector,
+            imageSelector: data.contentSelectors.imageSelector,
+            dateSelector: data.contentSelectors.dateSelector,
+            authorSelector: data.contentSelectors.authorSelector,
+            categorySelector: data.contentSelectors.categorySelector,
+          },
+        },
+        {
+          timeout: 30000, // 30 segundos para scraping
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error('Error testing content selectors:', error);
       throw error;
     }
   },

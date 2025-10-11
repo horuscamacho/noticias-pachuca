@@ -27,6 +27,7 @@ export interface GeneratedContent {
   publishingInfo?: PublishingInfo;
   versioning?: VersioningInfo;
   generatedAt: Date;
+  originalPublishedAt?: Date; // Fecha de publicación del contenido original (denormalizado)
   createdAt: Date;
   updatedAt: Date;
 }
@@ -96,6 +97,7 @@ export interface CreateGeneratedContentRequest {
   generatedTags?: string[];
   generatedCategory?: string;
   generatedSummary?: string;
+  originalPublishedAt?: Date; // Fecha de publicación del contenido original (denormalizado)
   generationMetadata: GenerationMetadata;
 }
 
@@ -154,6 +156,7 @@ export interface GeneratedContentResponse {
   publishingInfo?: PublishingInfo;
   versioning?: VersioningInfo;
   generatedAt: Date;
+  originalPublishedAt?: Date; // Fecha de publicación del contenido original (denormalizado)
   createdAt: Date;
   updatedAt: Date;
 }

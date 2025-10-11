@@ -12,6 +12,21 @@ import { NoticiasExtractionJob, NoticiasExtractionJobDocument } from '../schemas
 import { NoticiasExtractionLog, NoticiasExtractionLogDocument } from '../schemas/noticias-extraction-log.schema';
 import { ExtractionJobData, ExtractionJobResult } from '../interfaces/noticias.interfaces';
 
+// Palabras comunes en español a ignorar (stop words)
+const STOP_WORDS = new Set([
+  'el', 'la', 'los', 'las', 'un', 'una', 'unos', 'unas',
+  'de', 'del', 'al', 'en', 'por', 'para', 'con', 'sin',
+  'sobre', 'entre', 'hasta', 'desde', 'hacia', 'contra',
+  'y', 'o', 'pero', 'si', 'no', 'que', 'como', 'cuando',
+  'donde', 'quien', 'cual', 'este', 'ese', 'aquel',
+  'esta', 'esa', 'aquella', 'estos', 'esos', 'aquellos',
+  'ser', 'estar', 'haber', 'tener', 'hacer', 'ir', 'poder',
+  'a', 'ante', 'bajo', 'cabe', 'con', 'contra', 'de', 'desde',
+  'durante', 'en', 'entre', 'hacia', 'hasta', 'mediante',
+  'para', 'por', 'según', 'sin', 'so', 'sobre', 'tras',
+  'versus', 'vía', 'más', 'menos', 'muy', 'tan', 'tanto',
+]);
+
 /**
  * 🔄 Processor para jobs de extracción de noticias
  * Maneja el procesamiento asíncrono de extracciones con Bull Queue
@@ -32,6 +47,45 @@ export class NoticiasExtractionProcessor {
     private readonly configService: NoticiasConfigService,
     private readonly urlDetectionService: UrlDetectionService,
   ) {}
+
+  /**
+   * 🔑 Extraer keywords del título y contenido usando análisis de frecuencia
+   */
+  private extractKeywords(text: string, maxKeywords = 10): string[] {
+    if (!text) return [];
+
+    // Limpiar y normalizar texto
+    const normalized = text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remover acentos
+      .replace(/[^\w\s]/g, ' ') // Remover puntuación
+      .replace(/\s+/g, ' ') // Normalizar espacios
+      .trim();
+
+    // Dividir en palabras
+    const words = normalized.split(' ');
+
+    // Contar frecuencia de palabras (ignorando stop words y palabras cortas)
+    const wordFreq = new Map<string, number>();
+
+    for (const word of words) {
+      // Ignorar palabras cortas, números y stop words
+      if (word.length < 4 || STOP_WORDS.has(word) || /^\d+$/.test(word)) {
+        continue;
+      }
+
+      wordFreq.set(word, (wordFreq.get(word) || 0) + 1);
+    }
+
+    // Ordenar por frecuencia y tomar las top N
+    const sortedWords = Array.from(wordFreq.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, maxKeywords)
+      .map(([word]) => word);
+
+    return sortedWords;
+  }
 
   /**
    * 🎯 Procesar job de extracción individual
@@ -97,6 +151,10 @@ export class NoticiasExtractionProcessor {
         throw new Error(`Extraction failed: ${scrapingResult.error?.message}`);
       }
 
+      // Extraer keywords del título y contenido
+      const text = `${scrapingResult.data!.title || ''} ${scrapingResult.data!.content || ''}`;
+      const keywords = this.extractKeywords(text, 10);
+
       // Guardar noticia extraída
       const extractedNoticia = new this.extractedNoticiaModel({
         sourceUrl,
@@ -111,6 +169,7 @@ export class NoticiasExtractionProcessor {
         categories: scrapingResult.data!.categories || [],
         excerpt: scrapingResult.data!.excerpt,
         tags: scrapingResult.data!.tags || [],
+        keywords, // ✨ Agregar keywords extraídas automáticamente
         extractedAt: new Date(),
         extractionConfigId: configId,
         extractionMetadata: {

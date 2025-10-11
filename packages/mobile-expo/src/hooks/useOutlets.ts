@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'expo-router';
 import { outletApi } from '@/src/services/outlets/outletApi';
-import type { UpdateFrequenciesDto } from '@/src/types/outlet.types';
+import type { UpdateFrequenciesDto, CreateOutletDto, TestListingDto, TestContentDto } from '@/src/types/outlet.types';
 
 /**
  * Query keys para React Query
@@ -123,6 +124,66 @@ export function useResumeOutlet() {
       // Invalidar listas y detalle
       queryClient.invalidateQueries({ queryKey: outletKeys.lists() });
       queryClient.invalidateQueries({ queryKey: outletKeys.detail(id) });
+    },
+  });
+}
+
+/**
+ * Hook para crear un nuevo outlet
+ */
+export function useCreateOutlet() {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  return useMutation({
+    mutationFn: (data: CreateOutletDto) => outletApi.createOutlet(data),
+    onSuccess: (newOutlet) => {
+      // Invalidar todas las listas para que se recarguen
+      queryClient.invalidateQueries({ queryKey: outletKeys.lists() });
+
+      // Agregar al cache del detalle
+      queryClient.setQueryData(outletKeys.detail(newOutlet.id), newOutlet);
+
+      // Volver a la lista de outlets
+      router.back();
+    },
+  });
+}
+
+/**
+ * Hook para probar selectores de listado
+ * Navega a la pantalla de resultados al completar
+ */
+export function useTestListingSelectors() {
+  const router = useRouter();
+
+  return useMutation({
+    mutationFn: (data: TestListingDto) => outletApi.testListingSelectors(data),
+    onSuccess: (result) => {
+      // Navegar a pantalla de resultados con el resultado
+      router.push({
+        pathname: '/outlet/test-listing-result',
+        params: { result: JSON.stringify(result) },
+      });
+    },
+  });
+}
+
+/**
+ * Hook para probar selectores de contenido individual
+ * Navega a la pantalla de resultados al completar
+ */
+export function useTestContentSelectors() {
+  const router = useRouter();
+
+  return useMutation({
+    mutationFn: (data: TestContentDto) => outletApi.testContentSelectors(data),
+    onSuccess: (result) => {
+      // Navegar a pantalla de resultados con el resultado
+      router.push({
+        pathname: '/outlet/test-content-result',
+        params: { result: JSON.stringify(result) },
+      });
     },
   });
 }

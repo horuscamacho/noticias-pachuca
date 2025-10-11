@@ -1,6 +1,5 @@
 import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-import { TanstackDevtools } from '@tanstack/react-devtools'
+import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
 import appCss from '../styles.css?url'
 
@@ -72,14 +71,14 @@ export const Route = createRootRoute({
         href: 'https://cdn.noticiaspachuca.com/logos/android-chrome-512x512.png',
       },
     ],
-    scripts: [
-      // Plausible Analytics - Privacy-first, GDPR compliant, Custom Events enabled
+    scripts: import.meta.env.PROD ? [
+      // Plausible Analytics - Solo en producción
       {
         defer: true,
         'data-domain': 'noticiaspachuca.com',
         src: 'https://plausible.io/js/script.tagged-events.js',
       },
-    ],
+    ] : [],
   }),
 
   notFoundComponent: () => {
@@ -113,17 +112,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <body>
         {children}
         {import.meta.env.DEV && (
-          <TanstackDevtools
-            config={{
-              position: 'bottom-left',
-            }}
-            plugins={[
-              {
-                name: 'Tanstack Router',
-                render: <TanStackRouterDevtoolsPanel />,
-              },
-            ]}
-          />
+          <TanStackRouterDevtools position="bottom-right" />
         )}
         <Scripts />
       </body>

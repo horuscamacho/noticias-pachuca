@@ -9,6 +9,7 @@ import { ContentAgent, ContentAgentSchema } from './schemas/content-agent.schema
 import { AIContentGeneration, AIContentGenerationSchema } from './schemas/ai-content-generation.schema';
 import { GenerationJob, GenerationJobSchema } from './schemas/generation-job.schema';
 import { GenerationLog, GenerationLogSchema } from './schemas/generation-log.schema';
+import { ImageGeneration, ImageGenerationSchema } from './schemas/image-generation.schema';
 
 // Services
 import { AIProviderService } from './services/ai-provider.service';
@@ -20,12 +21,21 @@ import { MCPClientService } from './services/mcp-client.service';
 import { ContentGenerationQueueService } from './services/content-generation-queue.service';
 import { CostMonitoringService } from './services/cost-monitoring.service';
 import { DeadLetterQueueService } from './services/dead-letter-queue.service';
+import { BrandingService } from './services/branding.service';
+import { ImageGenerationService } from './services/image-generation.service';
+import { ImageGenerationQueueService } from './services/image-generation-queue.service';
+import { ImageGenerationNotifierService } from './services/image-generation-notifier.service';
+import { ContentAnalyzerService } from './services/content-analyzer.service';
+import { EditorialPromptService } from './services/editorial-prompt.service';
+import { MetadataBuilderService } from './services/metadata-builder.service';
 
 // Controllers
 import { ContentAIController } from './controllers/content-ai.controller';
+import { ImageGenerationController } from './controllers/image-generation.controller';
 
 // Processors
 import { ContentGenerationProcessor } from './processors/content-generation.processor';
+import { ImageGenerationProcessor } from './processors/image-generation.processor';
 
 // Adapters
 import { OpenAIAdapter } from './adapters/openai.adapter';
@@ -35,6 +45,10 @@ import { AnthropicAdapter } from './adapters/anthropic.adapter';
 import { CacheService } from '../services/cache.service';
 import { PaginationService } from '../common/services/pagination.service';
 import { AppConfigService } from '../config/config.service';
+
+// External modules
+import { ImageBankModule } from '../image-bank/image-bank.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 // External schemas needed for content generation
 import { ExtractedNoticia, ExtractedNoticiaSchema } from '../noticias/schemas/extracted-noticia.schema';
@@ -61,9 +75,16 @@ import { ExtractedNoticia, ExtractedNoticiaSchema } from '../noticias/schemas/ex
       { name: AIContentGeneration.name, schema: AIContentGenerationSchema },
       { name: GenerationJob.name, schema: GenerationJobSchema },
       { name: GenerationLog.name, schema: GenerationLogSchema },
+      { name: ImageGeneration.name, schema: ImageGenerationSchema },
       // External schemas needed for content reference
       { name: ExtractedNoticia.name, schema: ExtractedNoticiaSchema },
     ]),
+
+    // 🖼️ Image Bank Module (for AI image processing)
+    ImageBankModule,
+
+    // 📡 Notifications Module (for socket communication)
+    NotificationsModule,
 
     // 🔄 Bull Queue para AI content generation
     BullModule.registerQueue({
@@ -114,10 +135,25 @@ import { ExtractedNoticia, ExtractedNoticiaSchema } from '../noticias/schemas/ex
     //     },
     //   },
     // }),
+
+    // 🔄 Bull Queue para image generation
+    BullModule.registerQueue({
+      name: 'image-generation',
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 2000,
+        },
+        removeOnComplete: false,
+        removeOnFail: false,
+      },
+    }),
   ],
 
   controllers: [
     ContentAIController,
+    ImageGenerationController,
   ],
 
   providers: [
@@ -126,11 +162,20 @@ import { ExtractedNoticia, ExtractedNoticiaSchema } from '../noticias/schemas/ex
     PromptTemplateService,
     ContentGenerationService,
     ContentAgentService,
+    BrandingService,
+    ImageGenerationService,
+    ContentAnalyzerService,
+    EditorialPromptService,
+    MetadataBuilderService,
 
     // 🔄 Queue Services
     ContentGenerationQueueService,
+    ImageGenerationQueueService,
     CostMonitoringService,
     DeadLetterQueueService,
+
+    // 📡 Socket Notifiers
+    ImageGenerationNotifierService,
 
     // 🏭 Factory Pattern
     ProviderFactoryService,
@@ -162,6 +207,7 @@ import { ExtractedNoticia, ExtractedNoticiaSchema } from '../noticias/schemas/ex
 
     // 🔄 Queue Processors
     ContentGenerationProcessor,
+    ImageGenerationProcessor,
 
     // 📊 External Services (ya existentes)
     CacheService,
@@ -177,6 +223,12 @@ import { ExtractedNoticia, ExtractedNoticiaSchema } from '../noticias/schemas/ex
     ContentAgentService,
     ProviderFactoryService,
     MCPClientService,
+    BrandingService,
+    ImageGenerationService,
+    ImageGenerationQueueService,
+    ContentAnalyzerService,
+    EditorialPromptService,
+    MetadataBuilderService,
   ],
 })
 export class ContentAIModule {}

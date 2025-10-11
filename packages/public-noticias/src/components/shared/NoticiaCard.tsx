@@ -72,13 +72,6 @@ export function NoticiaCard({
             <div className="flex items-center gap-3 text-sm text-gray-600">
               <span className="font-mono font-bold">{formatDate(publishedAt)}</span>
 
-              {readTime && (
-                <>
-                  <span>•</span>
-                  <span>{readTime} min</span>
-                </>
-              )}
-
               {author && (
                 <>
                   <span>•</span>

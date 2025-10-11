@@ -2,7 +2,7 @@ import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import "../global.css";
 import { StatusBar } from "expo-status-bar";
-import { PortalHost } from '@rn-primitives/portal';
+import { PortalHost } from "@rn-primitives/portal";
 
 import { AnalyticsProvider } from "@/src/features/analytics/components/AnalyticsProvider";
 import { ResponsiveProvider } from "@/src/features/responsive";
@@ -40,7 +40,11 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <ResponsiveProvider>
         <AnalyticsProvider>
-          <Stack>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+            }}
+          >
             <Stack.Screen name="index" options={{ headerShown: false }} />
             <Stack.Screen
               name="(auth)/login"
@@ -48,6 +52,10 @@ export default function RootLayout() {
             />
             <Stack.Screen
               name="(protected)/protected-screen"
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="(protected)/(tabs)/home.tsx"
               options={{ headerShown: false }}
             />
           </Stack>

@@ -144,4 +144,24 @@ export class GeneratedContentFiltersDto extends PaginationDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  @ApiPropertyOptional({
+    description: 'Campo por el cual ordenar los resultados',
+    enum: ['generatedAt', 'publishedAt', 'title', 'qualityScore', 'category'],
+    default: 'generatedAt',
+    example: 'publishedAt',
+  })
+  @IsOptional()
+  @IsEnum(['generatedAt', 'publishedAt', 'title', 'qualityScore', 'category'])
+  sortBy?: 'generatedAt' | 'publishedAt' | 'title' | 'qualityScore' | 'category' = 'generatedAt';
+
+  @ApiPropertyOptional({
+    description: 'Orden de clasificación (ascendente o descendente)',
+    enum: ['asc', 'desc'],
+    default: 'desc',
+    example: 'desc',
+  })
+  @IsOptional()
+  @IsEnum(['asc', 'desc'])
+  sortOrder?: 'asc' | 'desc' = 'desc';
 }

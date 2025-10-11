@@ -375,3 +375,178 @@ sudo tail -f /var/log/nginx/error.log | grep limiting
 **Última actualización:** 10 Oct 2025 05:05 UTC
 **Estado:** FASE 6 COMPLETADA ✅
 **Próxima fase:** FASE 7 - Protección Backoffice (Cloudflare Tunnel)
+
+---
+
+## ✅ FASE 7: PROTECCIÓN DEL BACKOFFICE
+
+### 8. HTTP Basic Authentication: Implementado ✅
+
+**Decisión:** Implementar HTTP Basic Auth en backoffice (temporal)
+
+**Razón:**
+- ✅ **Solución rápida y efectiva:**
+  - No requiere cuenta Cloudflare ni migración DNS
+  - Se implementa en 5 minutos
+  - Funciona inmediatamente
+  - Navegador pide usuario/contraseña antes de acceder
+
+- ✅ **Protección real:**
+  - ❌ NO cualquiera puede conectarse
+  - ✅ Solo usuarios con credenciales válidas
+  - 🔒 Credenciales viajan encriptadas por HTTPS
+  - 🔐 Password hasheado con bcrypt en servidor
+
+- ⚠️ **Limitaciones (vs Cloudflare Access):**
+  - No tiene 2FA
+  - No integra con Google/GitHub SSO
+  - Password compartido (no individual por usuario)
+  - Menos logs de auditoría
+
+**Alternativas evaluadas:**
+
+| Opción | Tiempo Setup | Costo | Seguridad | Decisión |
+|--------|--------------|-------|-----------|----------|
+| **Cloudflare Tunnel + Access** | 24-48h (DNS migration) | Gratis | ⭐⭐⭐⭐⭐ | Futuro |
+| **VPN (OpenVPN/Wireguard)** | 2-3 horas | Gratis | ⭐⭐⭐⭐ | Overkill |
+| **HTTP Basic Auth** | 5 minutos | Gratis | ⭐⭐⭐ | ✅ Implementado |
+| **Ninguna (público)** | 0 | Gratis | ⭐ | ❌ Riesgoso |
+
+**Implementación:**
+
+```bash
+# 1. Instalar httpd-tools
+sudo dnf install -y httpd-tools
+
+# 2. Crear archivo de passwords (bcrypt)
+sudo htpasswd -c -B /etc/nginx/.htpasswd admin
+# Password: [generado seguro]
+
+# 3. Configurar Nginx
+sudo vim /etc/nginx/conf.d/noticiaspachuca.conf
+# Agregar en server block de backoffice:
+#   auth_basic "Backoffice - Area Restringida";
+#   auth_basic_user_file /etc/nginx/.htpasswd;
+
+# 4. Recargar Nginx
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+**Configuración actual:**
+
+```nginx
+# /etc/nginx/conf.d/noticiaspachuca.conf
+server {
+    server_name backoffice.noticiaspachuca.com;
+
+    # HTTP Basic Authentication
+    auth_basic "Backoffice - Area Restringida";
+    auth_basic_user_file /etc/nginx/.htpasswd;
+
+    root /var/www/noticias-pachuca/packages/dash-coyote/dist;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # SSL managed by Certbot
+    listen [::]:443 ssl;
+    listen 443 ssl;
+    ssl_certificate /etc/letsencrypt/live/noticiaspachuca.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/noticiaspachuca.com/privkey.pem;
+}
+```
+
+**Verificación:**
+
+```bash
+$ curl -I https://backoffice.noticiaspachuca.com
+HTTP/1.1 401 Unauthorized
+Server: nginx/1.28.0
+WWW-Authenticate: Basic realm="Backoffice - Area Restringida"
+```
+
+✅ **Respuesta 401 Unauthorized** - Requiere autenticación
+
+**Beneficios:**
+- Backoffice NO es público
+- Ataque de fuerza bruta se limita por:
+  - HTTPS (conexión lenta para atacante)
+  - Fail2Ban nginx-http-auth jail (banea después de 5 intentos)
+  - Nginx rate limiting (100 req/min máximo)
+- Password seguro con bcrypt (costo computacional alto)
+
+**Cuándo migrar a Cloudflare Access:**
+- Cuando necesites múltiples usuarios con cuentas individuales
+- Cuando requieras 2FA obligatorio
+- Cuando necesites integración SSO (Google/GitHub)
+- Cuando quieras logs de auditoría detallados
+
+**Costo de migración futura:**
+- Gratis (Cloudflare Access Free Tier: hasta 50 usuarios)
+- Requiere cambiar DNS a Cloudflare (24-48h)
+- 30 minutos de configuración
+
+---
+
+## 🔒 RESUMEN ACTUALIZADO DE CAPAS DE SEGURIDAD
+
+### Capa 1: AWS (Perimetral)
+- ✅ Security Groups (firewall de red)
+- ✅ VPC aislado
+- ✅ Elastic IP estático
+
+### Capa 2: Sistema Operativo
+- ✅ Amazon Linux 2023 (SELinux habilitado)
+- ✅ Updates automáticos (dnf-automatic)
+- ✅ SSH keys only (no passwords)
+- ✅ Root login deshabilitado
+- ✅ Kernel hardening (sysctl)
+- ✅ Auditd (compliance)
+
+### Capa 3: Servicios
+- ✅ Fail2Ban (3 jails: sshd, nginx-http-auth, nginx-botsearch)
+- ✅ Nginx con SSL/TLS 1.3
+- ✅ Nginx rate limiting (API: 100r/m, General: 300r/m)
+- ✅ HTTP Basic Auth en backoffice
+- ✅ PM2 con límites de memoria
+
+### Capa 4: Aplicación
+- ✅ NestJS con validación de inputs
+- ✅ CORS configurado
+- ✅ Helmet.js (security headers)
+
+---
+
+## 📊 EVALUACIÓN DE RIESGO ACTUALIZADA
+
+### Amenazas Mitigadas ✅
+
+| Amenaza | Mitigación | Estado |
+|---------|------------|--------|
+| Fuerza bruta SSH | SSH keys + Fail2Ban | ✅ Protegido |
+| DDoS básico | AWS SG + Fail2Ban + Rate Limiting | ✅ Protegido |
+| Port scanning | AWS SG + Fail2Ban | ✅ Detectado y bloqueado |
+| Root access | PermitRootLogin no | ✅ Bloqueado |
+| Password guessing | PasswordAuth no | ✅ Imposible |
+| Web scraping | nginx-botsearch jail | ✅ Limitado |
+| **Backoffice público** | **HTTP Basic Auth** | **✅ Protegido** |
+| Fuerza bruta backoffice | Fail2Ban nginx-http-auth + bcrypt | ✅ Protegido |
+
+### Riesgos Aceptados (Temporalmente)
+
+| Riesgo | Razón | Mitigación Futura | Prioridad |
+|--------|-------|-------------------|-----------|
+| Sin WAF | Costo ($) | Cloudflare WAF (gratis) | Media |
+| Basic Auth sin 2FA | Simplicidad | Cloudflare Access + 2FA | Baja |
+| Single user account | MVP fase | Multi-user cuando escale | Baja |
+
+---
+
+**Última actualización:** 10 Oct 2025 05:17 UTC
+**Estado:** FASE 7 COMPLETADA ✅
+**Próximas fases:**
+- FASE 8: Monitoring y Alertas
+- FASE 9: Testing y Validación Final

@@ -171,6 +171,9 @@ export class AIContentGeneration {
   @Prop({ default: Date.now })
   generatedAt: Date; // Timestamp de generación
 
+  @Prop({ type: Date })
+  originalPublishedAt?: Date; // Fecha de publicación del contenido original (denormalizado de ExtractedNoticia)
+
   // Propiedades adicionales para Generator-Pro
   @Prop({ trim: true })
   category?: string; // Categoría del contenido
@@ -207,3 +210,10 @@ AIContentGenerationSchema.index({ status: 1, generatedAt: -1 });
 AIContentGenerationSchema.index({ agentId: 1, status: 1, generatedAt: -1 });
 AIContentGenerationSchema.index({ originalContentId: 1, 'versioning.isLatest': 1 });
 AIContentGenerationSchema.index({ providerId: 1, generatedAt: -1, 'generationMetadata.cost': 1 });
+
+// Índices para ordenamiento híbrido y filtrado frecuente (Fase 2 y 3)
+AIContentGenerationSchema.index({ originalPublishedAt: -1, generatedAt: -1 }); // Ordenamiento híbrido
+AIContentGenerationSchema.index({ generatedCategory: 1 }); // Filtrado por categoría
+AIContentGenerationSchema.index({ generatedTags: 1 }); // Filtrado por tags
+AIContentGenerationSchema.index({ generatedTitle: 1 }); // Ordenamiento por título
+AIContentGenerationSchema.index({ status: 1, generatedCategory: 1, generatedAt: -1 }); // Filtrado + ordenamiento

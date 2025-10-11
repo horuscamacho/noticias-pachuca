@@ -3,6 +3,8 @@ import { getNoticiaBySlug, getRelatedNoticias, useNoticiaAnalytics } from '../fe
 import type { PublishedNoticia } from '../features/noticias';
 import { OptimizedImage } from '../components/OptimizedImage';
 import { PachucaMural } from '../components/shared/PachucaMural';
+import { UniversalFooter } from '../components/shared/UniversalFooter';
+import { generateBreadcrumbSchema } from '../utils/generateBreadcrumbSchema';
 
 export const Route = createFileRoute('/noticia/$slug')({
   component: NoticiaPage,
@@ -35,6 +37,12 @@ export const Route = createFileRoute('/noticia/$slug')({
   head: ({ loaderData }) => {
     const { noticia } = loaderData;
 
+    const breadcrumbSchema = generateBreadcrumbSchema([
+      { name: 'Inicio', url: 'https://noticiaspachuca.com' },
+      { name: noticia.category, url: `https://noticiaspachuca.com/categoria/${noticia.category.toLowerCase()}` },
+      { name: noticia.title, url: noticia.seo.canonicalUrl }
+    ]);
+
     return {
       meta: [
         // Basic meta tags
@@ -55,15 +63,23 @@ export const Route = createFileRoute('/noticia/$slug')({
         { name: 'twitter:title', content: noticia.seo.twitterTitle },
         { name: 'twitter:description', content: noticia.seo.twitterDescription },
         { name: 'twitter:image', content: noticia.seo.twitterImage },
+
+        // SEO meta
+        { name: 'robots', content: 'index, follow, max-image-preview:large' },
       ],
       links: [
         { rel: 'canonical', href: noticia.seo.canonicalUrl },
       ],
       scripts: [
-        // Structured Data (JSON-LD)
+        // NewsArticle Structured Data (JSON-LD)
         {
           type: 'application/ld+json',
           children: JSON.stringify(noticia.seo.structuredData),
+        },
+        // BreadcrumbList Schema
+        {
+          type: 'application/ld+json',
+          children: JSON.stringify(breadcrumbSchema),
         },
       ],
     };
@@ -204,16 +220,8 @@ function NoticiaPage() {
                 </span>
               </div>
 
-              {/* Row 2: Read Time + Author */}
+              {/* Row 2: Author */}
               <div className="flex flex-wrap items-center gap-4 border-l-4 border-[#FFB22C] pl-4">
-                {noticia.stats.readTime > 0 && (
-                  <>
-                    <span className="font-mono text-sm text-[#854836] font-bold uppercase tracking-wide">
-                      {noticia.stats.readTime} MIN LECTURA
-                    </span>
-                    <div className="h-6 w-px bg-black"></div>
-                  </>
-                )}
                 <Link
                   to="/autor/$slug"
                   params={{ slug: noticia.author?.toLowerCase().replace(/\s+/g, '-') || 'redaccion' }}
@@ -373,18 +381,7 @@ function NoticiaPage() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-black text-white mt-12 border-t-4 border-[#FFB22C]">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="text-center">
-            <h3 className="text-2xl font-black uppercase tracking-[0.2em] mb-2">
-              NOTICIAS PACHUCA
-            </h3>
-            <p className="text-sm font-bold uppercase tracking-wider text-[#FFB22C]">
-              HIDALGO, MÉXICO - {new Date().getFullYear()}
-            </p>
-          </div>
-        </div>
-      </footer>
+      <UniversalFooter />
     </div>
   );
 }

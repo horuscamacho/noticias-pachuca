@@ -70,6 +70,8 @@ export class ContentGenerationService {
     category?: string;
     tags?: string[];
     search?: string;
+    sortBy?: 'generatedAt' | 'publishedAt' | 'title' | 'qualityScore' | 'category';
+    sortOrder?: 'asc' | 'desc';
     page?: number;
     limit?: number;
     skip?: number; // Viene del getter de PaginationDto
@@ -91,6 +93,7 @@ export class ContentGenerationService {
     };
 
     const query = this.buildFilterQuery(processedFilters);
+    const sortConfig = this.buildSortConfig(filters.sortBy, filters.sortOrder);
 
     const page = filters.page || 1;
     const limit = Math.min(filters.limit || 20, 100); // Max 100
@@ -103,7 +106,7 @@ export class ContentGenerationService {
         .populate('agentId', 'name agentType')
         .populate('templateId', 'name type')
         .populate('providerId', 'name model')
-        .sort({ generatedAt: -1 })
+        .sort(sortConfig)
         .skip(skip)
         .limit(limit)
         .exec(),
@@ -228,6 +231,7 @@ export class ContentGenerationService {
         generatedTags: parsedContent.tags as string[] || [],
         generatedCategory: parsedContent.category as string,
         generatedSummary: parsedContent.summary as string,
+        originalPublishedAt: originalContent.publishedAt, // Denormalizar fecha de publicación original
         generationMetadata: {
           model: response.model,
           promptTokens: response.usage.promptTokens,
@@ -588,6 +592,44 @@ export class ContentGenerationService {
     }
 
     return query;
+  }
+
+  /**
+   * 🔀 Construir configuración de ordenamiento dinámico
+   */
+  /**
+   * 🔧 Construye configuración de ordenamiento dinámico
+   * Soporta ordenamiento híbrido con fallback para publishedAt
+   */
+  private buildSortConfig(
+    sortBy: string = 'generatedAt',
+    sortOrder: 'asc' | 'desc' = 'desc'
+  ): Record<string, 1 | -1> {
+    const direction = sortOrder === 'asc' ? 1 : -1;
+
+    // Ordenamiento híbrido: publishedAt con fallback a generatedAt
+    if (sortBy === 'publishedAt') {
+      return {
+        originalPublishedAt: direction, // Campo denormalizado
+        generatedAt: direction, // Fallback con misma dirección
+      };
+    }
+
+    // Mapeo de campos de ordenamiento
+    const sortMap: Record<string, string> = {
+      generatedAt: 'generatedAt',
+      title: 'generatedTitle',
+      qualityScore: 'qualityMetrics.humanReviewScore',
+      category: 'generatedCategory',
+    };
+
+    const field = sortMap[sortBy] || 'generatedAt';
+
+    return {
+      [field]: direction,
+      // Fallback secundario para desempate
+      generatedAt: -1,
+    };
   }
 
   /**

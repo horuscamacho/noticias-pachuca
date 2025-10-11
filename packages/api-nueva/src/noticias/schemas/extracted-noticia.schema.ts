@@ -45,6 +45,9 @@ export class ExtractedNoticia {
   @Prop({ type: [String], default: [] })
   tags: string[]; // Tags extraídos
 
+  @Prop({ type: [String], default: [] })
+  keywords: string[]; // Keywords/palabras clave extraídas
+
   @Prop({ required: true })
   extractedAt: Date; // Timestamp de cuando se extrajo
 
@@ -125,6 +128,21 @@ ExtractedNoticiaSchema.index({ status: 1 });
 ExtractedNoticiaSchema.index({ publishedAt: -1 });
 ExtractedNoticiaSchema.index({ extractionConfigId: 1 });
 
+// Nuevos índices para filtrado avanzado
+ExtractedNoticiaSchema.index({ category: 1 });
+ExtractedNoticiaSchema.index({ author: 1 });
+ExtractedNoticiaSchema.index({ tags: 1 });
+ExtractedNoticiaSchema.index({ keywords: 1 });
+
 // Índice compuesto para queries frecuentes
 ExtractedNoticiaSchema.index({ domain: 1, extractedAt: -1 });
 ExtractedNoticiaSchema.index({ status: 1, extractedAt: -1 });
+ExtractedNoticiaSchema.index({ category: 1, publishedAt: -1 });
+ExtractedNoticiaSchema.index({ status: 1, category: 1, publishedAt: -1 });
+
+// Text Index para búsqueda full-text (mejor performance que regex)
+ExtractedNoticiaSchema.index({
+  title: 'text',
+  content: 'text',
+  excerpt: 'text',
+});

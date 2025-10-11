@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SuscripcionesRouteImport } from './routes/suscripciones'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as RegistroRouteImport } from './routes/registro'
 import { Route as PublicidadRouteImport } from './routes/publicidad'
 import { Route as PlanesRouteImport } from './routes/planes'
@@ -17,15 +18,20 @@ import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as PagoRouteImport } from './routes/pago'
 import { Route as NoticiasRouteImport } from './routes/noticias'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as EditorialRouteImport } from './routes/editorial'
 import { Route as DesuscribirRouteImport } from './routes/desuscribir'
 import { Route as DesignSystemRouteImport } from './routes/design-system'
 import { Route as CrearColumnaRouteImport } from './routes/crear-columna'
 import { Route as ContactoRouteImport } from './routes/contacto'
 import { Route as ConfirmarSuscripcionRouteImport } from './routes/confirmar-suscripcion'
+import { Route as ColumnaOpinionRouteImport } from './routes/columna-opinion'
 import { Route as AvisoPrivacidadRouteImport } from './routes/aviso-privacidad'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TagSlugRouteImport } from './routes/tag.$slug'
 import { Route as NoticiaSlugRouteImport } from './routes/noticia.$slug'
+import { Route as EditorialSlugRouteImport } from './routes/editorial.$slug'
+import { Route as ColumnistaSlugRouteImport } from './routes/columnista.$slug'
+import { Route as ColumnaSlugRouteImport } from './routes/columna.$slug'
 import { Route as CategoriaSlugRouteImport } from './routes/categoria.$slug'
 import { Route as BusquedaQueryRouteImport } from './routes/busqueda.$query'
 import { Route as BoletinTardeRouteImport } from './routes/boletin.tarde'
@@ -41,6 +47,11 @@ import { Route as DemoStartApiRequestRouteImport } from './routes/demo.start.api
 const SuscripcionesRoute = SuscripcionesRouteImport.update({
   id: '/suscripciones',
   path: '/suscripciones',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegistroRoute = RegistroRouteImport.update({
@@ -78,6 +89,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EditorialRoute = EditorialRouteImport.update({
+  id: '/editorial',
+  path: '/editorial',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DesuscribirRoute = DesuscribirRouteImport.update({
   id: '/desuscribir',
   path: '/desuscribir',
@@ -103,6 +119,11 @@ const ConfirmarSuscripcionRoute = ConfirmarSuscripcionRouteImport.update({
   path: '/confirmar-suscripcion',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ColumnaOpinionRoute = ColumnaOpinionRouteImport.update({
+  id: '/columna-opinion',
+  path: '/columna-opinion',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AvisoPrivacidadRoute = AvisoPrivacidadRouteImport.update({
   id: '/aviso-privacidad',
   path: '/aviso-privacidad',
@@ -121,6 +142,21 @@ const TagSlugRoute = TagSlugRouteImport.update({
 const NoticiaSlugRoute = NoticiaSlugRouteImport.update({
   id: '/noticia/$slug',
   path: '/noticia/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EditorialSlugRoute = EditorialSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => EditorialRoute,
+} as any)
+const ColumnistaSlugRoute = ColumnistaSlugRouteImport.update({
+  id: '/columnista/$slug',
+  path: '/columnista/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ColumnaSlugRoute = ColumnaSlugRouteImport.update({
+  id: '/columna/$slug',
+  path: '/columna/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CategoriaSlugRoute = CategoriaSlugRouteImport.update({
@@ -182,11 +218,13 @@ const DemoStartApiRequestRoute = DemoStartApiRequestRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/aviso-privacidad': typeof AvisoPrivacidadRoute
+  '/columna-opinion': typeof ColumnaOpinionRoute
   '/confirmar-suscripcion': typeof ConfirmarSuscripcionRoute
   '/contacto': typeof ContactoRoute
   '/crear-columna': typeof CrearColumnaRoute
   '/design-system': typeof DesignSystemRoute
   '/desuscribir': typeof DesuscribirRoute
+  '/editorial': typeof EditorialRouteWithChildren
   '/login': typeof LoginRoute
   '/noticias': typeof NoticiasRoute
   '/pago': typeof PagoRoute
@@ -194,6 +232,7 @@ export interface FileRoutesByFullPath {
   '/planes': typeof PlanesRoute
   '/publicidad': typeof PublicidadRoute
   '/registro': typeof RegistroRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/suscripciones': typeof SuscripcionesRoute
   '/api/demo-names': typeof ApiDemoNamesRoute
   '/articulo/$id': typeof ArticuloIdRoute
@@ -204,6 +243,9 @@ export interface FileRoutesByFullPath {
   '/boletin/tarde': typeof BoletinTardeRoute
   '/busqueda/$query': typeof BusquedaQueryRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
+  '/columna/$slug': typeof ColumnaSlugRoute
+  '/columnista/$slug': typeof ColumnistaSlugRoute
+  '/editorial/$slug': typeof EditorialSlugRoute
   '/noticia/$slug': typeof NoticiaSlugRoute
   '/tag/$slug': typeof TagSlugRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
@@ -212,11 +254,13 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/aviso-privacidad': typeof AvisoPrivacidadRoute
+  '/columna-opinion': typeof ColumnaOpinionRoute
   '/confirmar-suscripcion': typeof ConfirmarSuscripcionRoute
   '/contacto': typeof ContactoRoute
   '/crear-columna': typeof CrearColumnaRoute
   '/design-system': typeof DesignSystemRoute
   '/desuscribir': typeof DesuscribirRoute
+  '/editorial': typeof EditorialRouteWithChildren
   '/login': typeof LoginRoute
   '/noticias': typeof NoticiasRoute
   '/pago': typeof PagoRoute
@@ -224,6 +268,7 @@ export interface FileRoutesByTo {
   '/planes': typeof PlanesRoute
   '/publicidad': typeof PublicidadRoute
   '/registro': typeof RegistroRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/suscripciones': typeof SuscripcionesRoute
   '/api/demo-names': typeof ApiDemoNamesRoute
   '/articulo/$id': typeof ArticuloIdRoute
@@ -234,6 +279,9 @@ export interface FileRoutesByTo {
   '/boletin/tarde': typeof BoletinTardeRoute
   '/busqueda/$query': typeof BusquedaQueryRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
+  '/columna/$slug': typeof ColumnaSlugRoute
+  '/columnista/$slug': typeof ColumnistaSlugRoute
+  '/editorial/$slug': typeof EditorialSlugRoute
   '/noticia/$slug': typeof NoticiaSlugRoute
   '/tag/$slug': typeof TagSlugRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
@@ -243,11 +291,13 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/aviso-privacidad': typeof AvisoPrivacidadRoute
+  '/columna-opinion': typeof ColumnaOpinionRoute
   '/confirmar-suscripcion': typeof ConfirmarSuscripcionRoute
   '/contacto': typeof ContactoRoute
   '/crear-columna': typeof CrearColumnaRoute
   '/design-system': typeof DesignSystemRoute
   '/desuscribir': typeof DesuscribirRoute
+  '/editorial': typeof EditorialRouteWithChildren
   '/login': typeof LoginRoute
   '/noticias': typeof NoticiasRoute
   '/pago': typeof PagoRoute
@@ -255,6 +305,7 @@ export interface FileRoutesById {
   '/planes': typeof PlanesRoute
   '/publicidad': typeof PublicidadRoute
   '/registro': typeof RegistroRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/suscripciones': typeof SuscripcionesRoute
   '/api/demo-names': typeof ApiDemoNamesRoute
   '/articulo/$id': typeof ArticuloIdRoute
@@ -265,6 +316,9 @@ export interface FileRoutesById {
   '/boletin/tarde': typeof BoletinTardeRoute
   '/busqueda/$query': typeof BusquedaQueryRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
+  '/columna/$slug': typeof ColumnaSlugRoute
+  '/columnista/$slug': typeof ColumnistaSlugRoute
+  '/editorial/$slug': typeof EditorialSlugRoute
   '/noticia/$slug': typeof NoticiaSlugRoute
   '/tag/$slug': typeof TagSlugRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
@@ -275,11 +329,13 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/aviso-privacidad'
+    | '/columna-opinion'
     | '/confirmar-suscripcion'
     | '/contacto'
     | '/crear-columna'
     | '/design-system'
     | '/desuscribir'
+    | '/editorial'
     | '/login'
     | '/noticias'
     | '/pago'
@@ -287,6 +343,7 @@ export interface FileRouteTypes {
     | '/planes'
     | '/publicidad'
     | '/registro'
+    | '/sitemap.xml'
     | '/suscripciones'
     | '/api/demo-names'
     | '/articulo/$id'
@@ -297,6 +354,9 @@ export interface FileRouteTypes {
     | '/boletin/tarde'
     | '/busqueda/$query'
     | '/categoria/$slug'
+    | '/columna/$slug'
+    | '/columnista/$slug'
+    | '/editorial/$slug'
     | '/noticia/$slug'
     | '/tag/$slug'
     | '/demo/start/api-request'
@@ -305,11 +365,13 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/aviso-privacidad'
+    | '/columna-opinion'
     | '/confirmar-suscripcion'
     | '/contacto'
     | '/crear-columna'
     | '/design-system'
     | '/desuscribir'
+    | '/editorial'
     | '/login'
     | '/noticias'
     | '/pago'
@@ -317,6 +379,7 @@ export interface FileRouteTypes {
     | '/planes'
     | '/publicidad'
     | '/registro'
+    | '/sitemap.xml'
     | '/suscripciones'
     | '/api/demo-names'
     | '/articulo/$id'
@@ -327,6 +390,9 @@ export interface FileRouteTypes {
     | '/boletin/tarde'
     | '/busqueda/$query'
     | '/categoria/$slug'
+    | '/columna/$slug'
+    | '/columnista/$slug'
+    | '/editorial/$slug'
     | '/noticia/$slug'
     | '/tag/$slug'
     | '/demo/start/api-request'
@@ -335,11 +401,13 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/aviso-privacidad'
+    | '/columna-opinion'
     | '/confirmar-suscripcion'
     | '/contacto'
     | '/crear-columna'
     | '/design-system'
     | '/desuscribir'
+    | '/editorial'
     | '/login'
     | '/noticias'
     | '/pago'
@@ -347,6 +415,7 @@ export interface FileRouteTypes {
     | '/planes'
     | '/publicidad'
     | '/registro'
+    | '/sitemap.xml'
     | '/suscripciones'
     | '/api/demo-names'
     | '/articulo/$id'
@@ -357,6 +426,9 @@ export interface FileRouteTypes {
     | '/boletin/tarde'
     | '/busqueda/$query'
     | '/categoria/$slug'
+    | '/columna/$slug'
+    | '/columnista/$slug'
+    | '/editorial/$slug'
     | '/noticia/$slug'
     | '/tag/$slug'
     | '/demo/start/api-request'
@@ -366,11 +438,13 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AvisoPrivacidadRoute: typeof AvisoPrivacidadRoute
+  ColumnaOpinionRoute: typeof ColumnaOpinionRoute
   ConfirmarSuscripcionRoute: typeof ConfirmarSuscripcionRoute
   ContactoRoute: typeof ContactoRoute
   CrearColumnaRoute: typeof CrearColumnaRoute
   DesignSystemRoute: typeof DesignSystemRoute
   DesuscribirRoute: typeof DesuscribirRoute
+  EditorialRoute: typeof EditorialRouteWithChildren
   LoginRoute: typeof LoginRoute
   NoticiasRoute: typeof NoticiasRoute
   PagoRoute: typeof PagoRoute
@@ -378,6 +452,7 @@ export interface RootRouteChildren {
   PlanesRoute: typeof PlanesRoute
   PublicidadRoute: typeof PublicidadRoute
   RegistroRoute: typeof RegistroRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SuscripcionesRoute: typeof SuscripcionesRoute
   ApiDemoNamesRoute: typeof ApiDemoNamesRoute
   ArticuloIdRoute: typeof ArticuloIdRoute
@@ -388,6 +463,8 @@ export interface RootRouteChildren {
   BoletinTardeRoute: typeof BoletinTardeRoute
   BusquedaQueryRoute: typeof BusquedaQueryRoute
   CategoriaSlugRoute: typeof CategoriaSlugRoute
+  ColumnaSlugRoute: typeof ColumnaSlugRoute
+  ColumnistaSlugRoute: typeof ColumnistaSlugRoute
   NoticiaSlugRoute: typeof NoticiaSlugRoute
   TagSlugRoute: typeof TagSlugRoute
   DemoStartApiRequestRoute: typeof DemoStartApiRequestRoute
@@ -401,6 +478,13 @@ declare module '@tanstack/react-router' {
       path: '/suscripciones'
       fullPath: '/suscripciones'
       preLoaderRoute: typeof SuscripcionesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/registro': {
@@ -452,6 +536,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/editorial': {
+      id: '/editorial'
+      path: '/editorial'
+      fullPath: '/editorial'
+      preLoaderRoute: typeof EditorialRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/desuscribir': {
       id: '/desuscribir'
       path: '/desuscribir'
@@ -487,6 +578,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConfirmarSuscripcionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/columna-opinion': {
+      id: '/columna-opinion'
+      path: '/columna-opinion'
+      fullPath: '/columna-opinion'
+      preLoaderRoute: typeof ColumnaOpinionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/aviso-privacidad': {
       id: '/aviso-privacidad'
       path: '/aviso-privacidad'
@@ -513,6 +611,27 @@ declare module '@tanstack/react-router' {
       path: '/noticia/$slug'
       fullPath: '/noticia/$slug'
       preLoaderRoute: typeof NoticiaSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/editorial/$slug': {
+      id: '/editorial/$slug'
+      path: '/$slug'
+      fullPath: '/editorial/$slug'
+      preLoaderRoute: typeof EditorialSlugRouteImport
+      parentRoute: typeof EditorialRoute
+    }
+    '/columnista/$slug': {
+      id: '/columnista/$slug'
+      path: '/columnista/$slug'
+      fullPath: '/columnista/$slug'
+      preLoaderRoute: typeof ColumnistaSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/columna/$slug': {
+      id: '/columna/$slug'
+      path: '/columna/$slug'
+      fullPath: '/columna/$slug'
+      preLoaderRoute: typeof ColumnaSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/categoria/$slug': {
@@ -595,14 +714,28 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface EditorialRouteChildren {
+  EditorialSlugRoute: typeof EditorialSlugRoute
+}
+
+const EditorialRouteChildren: EditorialRouteChildren = {
+  EditorialSlugRoute: EditorialSlugRoute,
+}
+
+const EditorialRouteWithChildren = EditorialRoute._addFileChildren(
+  EditorialRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AvisoPrivacidadRoute: AvisoPrivacidadRoute,
+  ColumnaOpinionRoute: ColumnaOpinionRoute,
   ConfirmarSuscripcionRoute: ConfirmarSuscripcionRoute,
   ContactoRoute: ContactoRoute,
   CrearColumnaRoute: CrearColumnaRoute,
   DesignSystemRoute: DesignSystemRoute,
   DesuscribirRoute: DesuscribirRoute,
+  EditorialRoute: EditorialRouteWithChildren,
   LoginRoute: LoginRoute,
   NoticiasRoute: NoticiasRoute,
   PagoRoute: PagoRoute,
@@ -610,6 +743,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlanesRoute: PlanesRoute,
   PublicidadRoute: PublicidadRoute,
   RegistroRoute: RegistroRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   SuscripcionesRoute: SuscripcionesRoute,
   ApiDemoNamesRoute: ApiDemoNamesRoute,
   ArticuloIdRoute: ArticuloIdRoute,
@@ -620,6 +754,8 @@ const rootRouteChildren: RootRouteChildren = {
   BoletinTardeRoute: BoletinTardeRoute,
   BusquedaQueryRoute: BusquedaQueryRoute,
   CategoriaSlugRoute: CategoriaSlugRoute,
+  ColumnaSlugRoute: ColumnaSlugRoute,
+  ColumnistaSlugRoute: ColumnistaSlugRoute,
   NoticiaSlugRoute: NoticiaSlugRoute,
   TagSlugRoute: TagSlugRoute,
   DemoStartApiRequestRoute: DemoStartApiRequestRoute,

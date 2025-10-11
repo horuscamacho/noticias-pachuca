@@ -1,6 +1,7 @@
 import { IsOptional, IsPositive, Max, Min } from 'class-validator';
-import { Transform, Type } from 'class-transformer';
+import { Type } from 'class-transformer';
 
+// For HTTP request validation (controllers)
 export class PaginationDto {
   @IsOptional()
   @Type(() => Number)
@@ -15,7 +16,22 @@ export class PaginationDto {
   @Max(100)
   limit?: number = 10;
 
-  get skip(): number {
-    return ((this.page || 1) - 1) * (this.limit || 10);
-  }
+  @IsOptional()
+  @Type(() => Number)
+  skip?: number;
 }
+
+// For internal service usage (allows plain objects)
+export interface IPaginationParams {
+  page?: number;
+  limit?: number;
+  skip?: number;
+}
+
+// Utility function for skip calculation
+export function calculateSkip(page: number = 1, limit: number = 10): number {
+  return (page - 1) * limit;
+}
+
+export const DEFAULT_PAGE = 1;
+export const DEFAULT_LIMIT = 10;

@@ -5,7 +5,8 @@ module.exports = {
       cwd: '/var/www/noticias-pachuca/packages/api-nueva',
       script: 'dist/src/main.js',
       instances: 1,
-      exec_mode: 'cluster',
+      exec_mode: 'fork',
+      node_args: '-r dotenv/config',
       env: {
         NODE_ENV: 'production',
         PORT: 4000,

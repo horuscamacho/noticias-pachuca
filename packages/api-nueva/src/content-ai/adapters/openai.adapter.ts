@@ -11,6 +11,9 @@ import {
   BatchResponse,
   IMCPAdapter,
   MCPContext,
+  ImageGenerationOptions,
+  ImageEditOptions,
+  ImageGenerationResult,
 } from './ai-provider.interface';
 
 /**
@@ -395,6 +398,157 @@ export class OpenAIAdapter implements IAIProviderAdapter, IMCPAdapter {
     // Cleanup logic - cerrar conexiones, limpiar cache, etc.
   }
 
+  /**
+   * 🎨 Genera una imagen usando gpt-image-1
+   * @param options - Opciones de generación (prompt, calidad, tamaño, formato)
+   * @returns Buffer con la imagen generada y metadata
+   */
+  async generateImage(options: ImageGenerationOptions): Promise<ImageGenerationResult> {
+    const startTime = Date.now();
+    this.metrics.totalRequests++;
+
+    try {
+      const { prompt, quality = 'medium', size = '1024x1024', outputFormat = 'png' } = options;
+
+      this.logger.log(`Generating image with gpt-image-1: ${prompt.substring(0, 50)}...`);
+
+      const response = await fetch(`${this.baseUrl}/images/generations`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-image-1',
+          prompt,
+          n: 1,
+          size,
+          quality,
+          // NOTA: gpt-image-1 NO acepta response_format y retorna SOLO base64 (b64_json)
+        }),
+      });
+
+      if (!response.ok) {
+        throw await this.handleAPIError(response);
+      }
+
+      const data = await response.json();
+      const base64Image = data.data[0].b64_json;
+
+      if (!base64Image) {
+        throw new Error('No image data returned from gpt-image-1');
+      }
+
+      // Convertir base64 a buffer
+      this.logger.log(`Converting base64 image to buffer (${size})`);
+      const buffer = Buffer.from(base64Image, 'base64');
+
+      const cost = this.calculateImageCost(quality, size);
+      const responseTime = Date.now() - startTime;
+
+      // Actualizar métricas
+      this.metrics.totalCost += cost;
+      this.metrics.totalResponseTime += responseTime;
+      this.metrics.lastUsed = new Date();
+
+      this.logger.log(`Image generated successfully. Cost: $${cost.toFixed(4)}, Time: ${responseTime}ms`);
+
+      return {
+        imageBuffer: buffer,
+        format: outputFormat,
+        cost,
+        size,
+        quality,
+      };
+    } catch (error) {
+      this.metrics.errorCount++;
+      this.logger.error(`Image generation failed: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  /**
+   * 🖼️ Edita una imagen usando gpt-image-1
+   * @param options - Opciones de edición (imagen, prompt, máscara, tamaño)
+   * @returns Buffer con la imagen editada y metadata
+   */
+  async editImage(options: ImageEditOptions): Promise<ImageGenerationResult> {
+    const startTime = Date.now();
+    this.metrics.totalRequests++;
+
+    try {
+      const { imageBuffer, prompt, maskBuffer, size = '1024x1024' } = options;
+
+      this.logger.log(`Editing image with gpt-image-1: ${prompt.substring(0, 50)}...`);
+
+      // Crear FormData compatible con Node.js usando Blob polyfill
+      const formData = new FormData();
+
+      // Convertir Buffer a Blob usando Uint8Array como intermediario
+      const imageBlob = new Blob([new Uint8Array(imageBuffer)], { type: 'image/png' });
+      const imageFile = new File([imageBlob], 'image.png', { type: 'image/png' });
+      formData.append('image', imageFile);
+
+      formData.append('prompt', prompt);
+      formData.append('model', 'gpt-image-1');
+      formData.append('n', '1');
+      formData.append('size', size);
+      // NOTA: gpt-image-1 NO acepta response_format y retorna SOLO base64
+
+      if (maskBuffer) {
+        const maskBlob = new Blob([new Uint8Array(maskBuffer)], { type: 'image/png' });
+        const maskFile = new File([maskBlob], 'mask.png', { type: 'image/png' });
+        formData.append('mask', maskFile);
+      }
+
+      const response = await fetch(`${this.baseUrl}/images/edits`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw await this.handleAPIError(response);
+      }
+
+      const data = await response.json();
+      const base64Image = data.data[0].b64_json;
+
+      if (!base64Image) {
+        throw new Error('No image data returned from gpt-image-1');
+      }
+
+      // Convertir base64 a buffer
+      this.logger.log(`Converting edited base64 image to buffer (${size})`);
+      const buffer = Buffer.from(base64Image, 'base64');
+
+      // El costo de edición es similar a generación (usar calidad medium como base)
+      const cost = this.calculateImageCost('medium', size);
+      const responseTime = Date.now() - startTime;
+
+      // Actualizar métricas
+      this.metrics.totalCost += cost;
+      this.metrics.totalResponseTime += responseTime;
+      this.metrics.lastUsed = new Date();
+
+      this.logger.log(`Image edited successfully. Cost: $${cost.toFixed(4)}, Time: ${responseTime}ms`);
+
+      return {
+        imageBuffer: buffer,
+        format: 'png',
+        cost,
+        size,
+        quality: 'medium',
+      };
+    } catch (error) {
+      this.metrics.errorCount++;
+      this.logger.error(`Image editing failed: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
   // MCP Implementation
   async initializeMCP(context: MCPContext): Promise<void> {
     this.mcpContext = context;
@@ -507,5 +661,30 @@ export class OpenAIAdapter implements IAIProviderAdapter, IMCPAdapter {
       chunks.push(array.slice(i, i + size));
     }
     return chunks;
+  }
+
+  /**
+   * 💰 Calcula el costo de generación de imágenes
+   * @param quality - Calidad de la imagen (low, medium, high)
+   * @param size - Dimensiones de la imagen (ej: "1024x1024")
+   * @returns Costo en USD
+   */
+  private calculateImageCost(quality: 'low' | 'medium' | 'high', size: string): number {
+    // Costos base para gpt-image-1 según calidad (1024x1024)
+    const baseCosts: Record<'low' | 'medium' | 'high', number> = {
+      low: 0.01,
+      medium: 0.04,
+      high: 0.17,
+    };
+
+    let cost = baseCosts[quality];
+
+    // Escalar para tamaños diferentes (proporcional a píxeles)
+    const [width, height] = size.split('x').map(Number);
+    const basePixels = 1024 * 1024;
+    const actualPixels = width * height;
+    const scaleFactor = actualPixels / basePixels;
+
+    return cost * scaleFactor;
   }
 }

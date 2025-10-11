@@ -81,11 +81,6 @@ export const FeaturedArticleCard: React.FC<{ article: Article }> = ({ article })
         <span className="text-xs font-bold uppercase tracking-wider text-[#854836] bg-[#F7F7F7] px-3 py-1 border border-black">
           {article.category}
         </span>
-        {article.readTime && (
-          <span className="text-xs text-[#854836] uppercase tracking-wide">
-            {article.readTime} MIN LECTURA
-          </span>
-        )}
       </div>
 
       {/* Título */}

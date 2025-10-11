@@ -133,3 +133,87 @@ export interface ExtractAllResponse {
   duration: number;
   message: string;
 }
+
+// Estadísticas reales del outlet desde el backend
+export interface OutletStats {
+  totalUrlsExtracted: number;
+  successfulExtractions: number;
+  failedExtractions: number;
+  totalContentGenerated: number;
+  totalPublished: number;
+  lastExtractionDuration: number | null; // en ms
+}
+
+// Historial de extracción
+export interface ExtractionHistoryItem {
+  id: string;
+  timestamp: Date;
+  urlsFound: number;
+  contentExtracted: number;
+  duration: number; // en ms
+  status: 'success' | 'partial' | 'failed';
+  errorMessage?: string;
+}
+
+export interface OutletStatsResponse {
+  websiteId: string;
+  stats: OutletStats;
+}
+
+export interface ExtractionHistoryResponse {
+  websiteId: string;
+  history: ExtractionHistoryItem[];
+  total: number;
+}
+
+// DTOs para crear y testear outlets
+export interface CreateOutletDto {
+  name: string;
+  baseUrl: string;
+  listingUrl: string;
+  testUrl?: string;
+  listingSelectors: {
+    articleLinks: string;
+  };
+  contentSelectors: {
+    titleSelector: string;
+    contentSelector: string;
+    imageSelector?: string;
+    dateSelector?: string;
+    authorSelector?: string;
+    categorySelector?: string;
+  };
+}
+
+export interface TestListingDto {
+  listingUrl: string;
+  articleLinksSelector: string;
+}
+
+export interface TestListingResponse {
+  success: boolean;
+  urls: string[];
+  count: number;
+}
+
+export interface TestContentDto {
+  testUrl: string;
+  contentSelectors: {
+    titleSelector: string;
+    contentSelector: string;
+    imageSelector?: string;
+    dateSelector?: string;
+    authorSelector?: string;
+    categorySelector?: string;
+  };
+}
+
+export interface TestContentResponse {
+  success: boolean;
+  title: string;
+  content: string;
+  images: string[];
+  author?: string;
+  publishedAt?: string;
+  category?: string;
+}

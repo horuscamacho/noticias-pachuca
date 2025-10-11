@@ -38,22 +38,56 @@ export function useExtractionLogs(outletId: string) {
     !logs[logs.length - 1]?.message.includes('✅ Completado') &&
     !logs[logs.length - 1]?.message.includes('❌ Error');
 
-  // Clear logs when outletId changes
+  // Clear logs when outletId changes to a DIFFERENT valid outlet
+  // (pero NO limpiar cuando simplemente se abre/cierra el modal)
+  const prevOutletIdRef = useRef<string>('');
+
   useEffect(() => {
-    console.log(`🔄 [useExtractionLogs] Outlet changed to: ${outletId}, clearing logs`);
-    setLogs([]);
+    // Solo limpiar si cambiamos de un outlet válido a OTRO outlet válido diferente
+    const prevId = prevOutletIdRef.current;
+    const currentId = outletId || '';
+
+    if (currentId && prevId && currentId !== prevId) {
+      console.log(`🔄 [useExtractionLogs] Outlet changed from ${prevId} to ${currentId}, clearing logs`);
+      setLogs([]);
+    }
+
+    prevOutletIdRef.current = currentId;
   }, [outletId]);
 
   useEffect(() => {
+    // 🔥 NO HACER NADA SI NO HAY OUTLET ID
+    if (!outletId || outletId.length === 0) {
+      console.log('⏭️ [useExtractionLogs] No outletId provided, skipping setup');
+      return;
+    }
+
     const socketService = SocketService.getInstance(queryClient);
+
+    // 🔥 CONECTAR SOCKET SI NO ESTÁ CONECTADO
+    const setupSocket = async () => {
+      try {
+        await socketService.connect();
+        console.log('✅ [useExtractionLogs] Socket connected successfully');
+      } catch (error) {
+        console.error('❌ [useExtractionLogs] Failed to connect socket:', error);
+      }
+    };
+
     const socket = socketService.socket;
 
     console.log(`🔌 [useExtractionLogs] Setting up listeners for outlet: ${outletId}`);
     console.log(`🔌 [useExtractionLogs] Socket connected: ${socket?.connected}`);
     console.log(`🔌 [useExtractionLogs] Socket ID: ${socket?.id}`);
 
+    // Si no hay socket o no está conectado, conectar
+    if (!socket || !socket.connected) {
+      console.log('🔄 [useExtractionLogs] Socket not connected, connecting...');
+      setupSocket();
+    }
+
     if (!socket) {
-      console.warn('⚠️ [useExtractionLogs] Socket not available');
+      console.warn('⚠️ [useExtractionLogs] Socket not available after setup');
       return;
     }
 
