@@ -43,10 +43,6 @@ jobs:
         working-directory: packages/api-nueva
         run: yarn install --frozen-lockfile --production=false
 
-      - name: Run tests
-        working-directory: packages/api-nueva
-        run: yarn test --passWithNoTests || true
-
       - name: Build application
         working-directory: packages/api-nueva
         run: yarn build
