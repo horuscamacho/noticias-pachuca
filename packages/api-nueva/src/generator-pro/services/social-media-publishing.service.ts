@@ -5,11 +5,11 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { FacebookPublishingService } from './facebook-publishing.service';
 import { TwitterPublishingService } from './twitter-publishing.service';
-import { FacebookPublishingConfig, FacebookPublishingConfigDocument } from '../schemas/facebook-publishing-config.schema';
-import { TwitterPublishingConfig, TwitterPublishingConfigDocument } from '../schemas/twitter-publishing-config.schema';
-import { FacebookPost, FacebookPostDocument } from '../schemas/facebook-post.schema';
+// ❌ REMOVIDO: FacebookPublishingConfig, TwitterPublishingConfig - No existen en BD
+import { GeneratorProFacebookPost, FacebookPost, FacebookPostDocument } from '../schemas/facebook-post.schema'; // ✅ FIX: Importar clase real
 import { TwitterPost, TwitterPostDocument } from '../schemas/twitter-post.schema';
 import { Site, SiteDocument } from '../../pachuca-noticias/schemas/site.schema';
+import { AIContentGeneration, AIContentGenerationDocument } from '../../content-ai/schemas/ai-content-generation.schema'; // ✅ FIX: Para obtener socialMediaCopies
 
 /**
  * 📱 Servicio Orquestador de Publicación en Redes Sociales - Generator Pro
@@ -78,19 +78,18 @@ export class SocialMediaPublishingService {
   constructor(
     @InjectModel(Site.name)
     private readonly siteModel: Model<SiteDocument>,
-    @InjectModel(FacebookPublishingConfig.name)
-    private readonly facebookConfigModel: Model<FacebookPublishingConfigDocument>,
-    @InjectModel(TwitterPublishingConfig.name)
-    private readonly twitterConfigModel: Model<TwitterPublishingConfigDocument>,
-    @InjectModel(FacebookPost.name)
+    // ❌ REMOVIDO: facebookConfigModel, twitterConfigModel - No existen en BD
+    @InjectModel(GeneratorProFacebookPost.name) // ✅ FIX: Usar clase real, no type alias
     private readonly facebookPostModel: Model<FacebookPostDocument>,
     @InjectModel(TwitterPost.name)
     private readonly twitterPostModel: Model<TwitterPostDocument>,
+    @InjectModel(AIContentGeneration.name) // ✅ FIX: Para obtener socialMediaCopies
+    private readonly aiContentModel: Model<AIContentGenerationDocument>,
     private readonly facebookPublishingService: FacebookPublishingService,
     private readonly twitterPublishingService: TwitterPublishingService,
     private readonly eventEmitter: EventEmitter2,
   ) {
-    this.logger.log('📱 Social Media Publishing Service initialized');
+    this.logger.log('📱 Social Media Publishing Service initialized (✅ Refactored)');
   }
 
   /**
@@ -150,7 +149,7 @@ export class SocialMediaPublishingService {
       const result: SocialMediaPublishingResult = {
         noticia: {
           id: noticia._id.toString(),
-          title: noticia.titulo || noticia.title,
+          title: noticia.title, // ✅ FIX: PublishedNoticia solo tiene "title"
           slug: noticia.slug,
         },
         facebook: {
@@ -199,6 +198,9 @@ export class SocialMediaPublishingService {
 
   /**
    * 📘 PUBLICAR EN TODAS LAS PÁGINAS DE FACEBOOK DEL SITIO
+   *
+   * ✅ REFACTORIZADO: Usa site.socialMedia.facebookPages[] directamente
+   * ❌ ANTERIOR: Buscaba en FacebookPublishingConfig collection (que no existe)
    */
   async publishToFacebook(
     noticia: any,
@@ -211,62 +213,69 @@ export class SocialMediaPublishingService {
     const results: FacebookPublishResult[] = [];
 
     try {
-      // Obtener configuraciones de Facebook para este sitio
-      const facebookConfigs = await this.facebookConfigModel.find({
-        siteId: site._id,
-        isActive: true,
-      });
+      // ✅ NUEVO: Obtener páginas de Facebook desde site.socialMedia
+      const facebookPages = site.socialMedia?.facebookPages?.filter(page => page.isActive) || [];
 
-      if (facebookConfigs.length === 0) {
-        this.logger.warn(`⚠️ No active Facebook configs found for site ${site.name}`);
+      if (facebookPages.length === 0) {
+        this.logger.warn(`⚠️ No active Facebook pages found for site ${site.name}`);
         return results;
       }
 
-      this.logger.log(`📘 Found ${facebookConfigs.length} active Facebook configs`);
+      this.logger.log(`📘 Found ${facebookPages.length} active Facebook pages`);
 
-      // Publicar en cada configuración de Facebook
-      for (const config of facebookConfigs) {
+      // Obtener API Key (prioridad: site > fallback hardcodeado)
+      const getLateApiKey = site.socialMedia?.getLateApiKey ||
+        'sk_a7e92958841ee94d4d95b99f88b1f7b0fb7672a60b0fca50f27b190476d98cd8';
+
+      // ✅ FIX: Obtener AIContentGeneration para acceder a socialMediaCopies
+      const aiContent = await this.aiContentModel.findById(noticia.contentId);
+      if (!aiContent || !aiContent.socialMediaCopies?.facebook?.copy) {
+        this.logger.warn(`⚠️ No social media copy found for noticia ${noticia._id}`);
+        return results;
+      }
+
+      // ✅ FIX: Construir URL canónica
+      const canonicalUrl = `https://${site.domain}/${noticia.slug}`;
+
+      // Publicar en cada página de Facebook
+      for (const page of facebookPages) {
         try {
-          // Verificar límites diarios
-          if (!config.canPublishToday) {
-            this.logger.warn(`⚠️ Daily limit reached for Facebook config ${config.name}`);
-            results.push({
-              configId: (config._id as Types.ObjectId).toString(),
-              configName: config.name,
-              facebookPageId: config.facebookPageId,
-              facebookPageName: config.facebookPageName,
-              success: false,
-              error: 'Daily posting limit reached',
-            });
-            continue;
-          }
-
-          // Optimizar contenido si está habilitado
-          let postContent = noticia.generatedContent || noticia.titulo;
-          if (optimizeContent) {
-            postContent = await this.facebookPublishingService.optimizeContentForFacebook(noticia);
-          }
+          // ✅ FIX: Usar socialMediaCopy mejorado + URL canónica
+          const postContent = `${aiContent.socialMediaCopies.facebook.copy}\n\n${canonicalUrl}`;
 
           // Crear post en la base de datos
           const facebookPost = await this.facebookPostModel.create({
+            // 🆕 NUEVO FLUJO: publishedNoticiaId (flujo moderno)
             publishedNoticiaId: noticia._id,
+            // 🆕 FLUJO LEGACY: Datos desde PublishedNoticia para compatibilidad
+            originalNoticiaId: noticia.originalNoticiaId, // ✅ FIX: Pasar desde PublishedNoticia
+            generatedContentId: noticia.contentId,        // ✅ FIX: Pasar desde PublishedNoticia
             siteId: site._id,
-            facebookConfigId: config._id,
+            // ✅ NUEVO: facebookConfigId es opcional ahora (deprecado)
+            facebookConfigId: page.publishingConfigId || undefined,
+            // ✅ NUEVO: Guardamos pageId y pageName directamente
+            pageId: page.pageId,
+            pageName: page.pageName,
             postContent,
-            originalTitle: noticia.titulo,
-            mediaUrls: noticia.imagenDestacada ? [noticia.imagenDestacada] : [],
+            originalTitle: noticia.title,  // ✅ FIX: Usar "title" no "titulo"
+            mediaUrls: noticia.featuredImage?.large ? [noticia.featuredImage.large] : [], // ✅ FIX: Usar featuredImage.large
             scheduledAt,
             status: 'scheduled',
           });
 
-          // Publicar post
-          const publishResult = await this.facebookPublishingService.publishPost(facebookPost);
+          // ✅ NUEVO: Publicar post con pageId, pageName y apiKey directamente
+          const publishResult = await this.facebookPublishingService.publishPost(
+            facebookPost,
+            page.pageId,
+            page.pageName,
+            getLateApiKey
+          );
 
           results.push({
-            configId: (config._id as Types.ObjectId).toString(),
-            configName: config.name,
-            facebookPageId: config.facebookPageId,
-            facebookPageName: config.facebookPageName,
+            configId: page.publishingConfigId?.toString() || 'direct',
+            configName: page.pageName,
+            facebookPageId: page.pageId,
+            facebookPageName: page.pageName,
             success: publishResult.success,
             postId: publishResult.facebookPostId,
             postUrl: publishResult.facebookPostUrl,
@@ -274,12 +283,12 @@ export class SocialMediaPublishingService {
           });
 
         } catch (error) {
-          this.logger.error(`❌ Failed to publish to Facebook config ${config.name}: ${error.message}`);
+          this.logger.error(`❌ Failed to publish to Facebook page ${page.pageName}: ${error.message}`);
           results.push({
-            configId: (config._id as Types.ObjectId).toString(),
-            configName: config.name,
-            facebookPageId: config.facebookPageId,
-            facebookPageName: config.facebookPageName,
+            configId: page.publishingConfigId?.toString() || 'direct',
+            configName: page.pageName,
+            facebookPageId: page.pageId,
+            facebookPageName: page.pageName,
             success: false,
             error: error.message,
           });
@@ -296,6 +305,9 @@ export class SocialMediaPublishingService {
 
   /**
    * 🐦 PUBLICAR EN TODAS LAS CUENTAS DE TWITTER DEL SITIO
+   *
+   * ✅ REFACTORIZADO: Usa site.socialMedia.twitterAccounts[] directamente
+   * ❌ ANTERIOR: Buscaba en TwitterPublishingConfig collection (que no existe)
    */
   async publishToTwitter(
     noticia: any,
@@ -308,68 +320,74 @@ export class SocialMediaPublishingService {
     const results: TwitterPublishResult[] = [];
 
     try {
-      // Obtener configuraciones de Twitter para este sitio
-      const twitterConfigs = await this.twitterConfigModel.find({
-        siteId: site._id,
-        isActive: true,
-      });
+      // ✅ NUEVO: Obtener cuentas de Twitter desde site.socialMedia
+      const twitterAccounts = site.socialMedia?.twitterAccounts?.filter(account => account.isActive) || [];
 
-      if (twitterConfigs.length === 0) {
-        this.logger.warn(`⚠️ No active Twitter configs found for site ${site.name}`);
+      if (twitterAccounts.length === 0) {
+        this.logger.warn(`⚠️ No active Twitter accounts found for site ${site.name}`);
         return results;
       }
 
-      this.logger.log(`🐦 Found ${twitterConfigs.length} active Twitter configs`);
+      this.logger.log(`🐦 Found ${twitterAccounts.length} active Twitter accounts`);
 
-      // Publicar en cada configuración de Twitter
-      for (const config of twitterConfigs) {
+      // Obtener API Key (prioridad: site > fallback hardcodeado)
+      const getLateApiKey = site.socialMedia?.getLateApiKey ||
+        'sk_a7e92958841ee94d4d95b99f88b1f7b0fb7672a60b0fca50f27b190476d98cd8';
+
+      // ✅ FIX: Obtener AIContentGeneration para acceder a socialMediaCopies
+      const aiContent = await this.aiContentModel.findById(noticia.contentId);
+      if (!aiContent || !aiContent.socialMediaCopies?.twitter?.tweet) {
+        this.logger.warn(`⚠️ No social media copy found for noticia ${noticia._id}`);
+        return results;
+      }
+
+      // ✅ FIX: Construir URL canónica
+      const canonicalUrl = `https://${site.domain}/${noticia.slug}`;
+
+      // Publicar en cada cuenta de Twitter
+      for (const account of twitterAccounts) {
         try {
-          // Verificar límites diarios
-          if (!config.canPublishToday) {
-            this.logger.warn(`⚠️ Daily limit reached for Twitter config ${config.name}`);
-            results.push({
-              configId: (config._id as Types.ObjectId).toString(),
-              configName: config.name,
-              twitterAccountId: config.twitterAccountId,
-              twitterUsername: config.twitterUsername,
-              success: false,
-              error: 'Daily tweet limit reached',
-            });
-            continue;
-          }
-
-          // Optimizar contenido si está habilitado
-          let tweetContent = noticia.generatedContent || noticia.titulo;
-          if (optimizeContent) {
-            tweetContent = await this.twitterPublishingService.optimizeContentForTwitter(noticia);
-          }
+          // ✅ FIX: Usar socialMediaCopy mejorado + URL canónica
+          let tweetContent = `${aiContent.socialMediaCopies.twitter.tweet}\n\n${canonicalUrl}`;
 
           // Validar longitud del tweet
           if (tweetContent.length > 280) {
             this.logger.warn(`⚠️ Tweet content exceeds 280 characters, truncating...`);
-            tweetContent = tweetContent.substring(0, 277) + '...';
+            // ✅ FIX: Recortar preservando la URL
+            const maxCopyLength = 280 - canonicalUrl.length - 5; // -5 para "\n\n" y "..."
+            const truncatedCopy = aiContent.socialMediaCopies.twitter.tweet.substring(0, maxCopyLength) + '...';
+            tweetContent = `${truncatedCopy}\n\n${canonicalUrl}`;
           }
 
           // Crear tweet en la base de datos
           const twitterPost = await this.twitterPostModel.create({
             publishedNoticiaId: noticia._id,
             siteId: site._id,
-            twitterConfigId: config._id,
+            // ✅ NUEVO: twitterConfigId es opcional ahora (deprecado)
+            twitterConfigId: account.publishingConfigId || undefined,
+            // ✅ NUEVO: Guardamos accountId y username directamente
+            accountId: account.accountId,
+            username: account.username,
             tweetContent,
-            originalTitle: noticia.titulo,
-            mediaUrls: noticia.imagenDestacada ? [noticia.imagenDestacada] : [],
+            originalTitle: noticia.title,  // ✅ FIX: Usar "title" no "titulo"
+            mediaUrls: noticia.featuredImage?.large ? [noticia.featuredImage.large] : [], // ✅ FIX: Usar featuredImage.large
             scheduledAt,
             status: 'scheduled',
           });
 
-          // Publicar tweet
-          const publishResult = await this.twitterPublishingService.publishTweet(twitterPost);
+          // ✅ NUEVO: Publicar tweet con accountId, username y apiKey directamente
+          const publishResult = await this.twitterPublishingService.publishTweet(
+            twitterPost,
+            account.accountId,
+            account.username,
+            getLateApiKey
+          );
 
           results.push({
-            configId: (config._id as Types.ObjectId).toString(),
-            configName: config.name,
-            twitterAccountId: config.twitterAccountId,
-            twitterUsername: config.twitterUsername,
+            configId: account.publishingConfigId?.toString() || 'direct',
+            configName: account.displayName,
+            twitterAccountId: account.accountId,
+            twitterUsername: account.username,
             success: publishResult.success,
             tweetId: publishResult.tweetId,
             tweetUrl: publishResult.tweetUrl,
@@ -377,12 +395,12 @@ export class SocialMediaPublishingService {
           });
 
         } catch (error) {
-          this.logger.error(`❌ Failed to publish to Twitter config ${config.name}: ${error.message}`);
+          this.logger.error(`❌ Failed to publish to Twitter account ${account.username}: ${error.message}`);
           results.push({
-            configId: (config._id as Types.ObjectId).toString(),
-            configName: config.name,
-            twitterAccountId: config.twitterAccountId,
-            twitterUsername: config.twitterUsername,
+            configId: account.publishingConfigId?.toString() || 'direct',
+            configName: account.displayName,
+            twitterAccountId: account.accountId,
+            twitterUsername: account.username,
             success: false,
             error: error.message,
           });

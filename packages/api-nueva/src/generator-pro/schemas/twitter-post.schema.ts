@@ -29,8 +29,17 @@ export class TwitterPost {
   @Prop({ required: true, type: Types.ObjectId, ref: 'Site' })
   siteId: Types.ObjectId; // Referencia al sitio destino de publicación
 
-  @Prop({ required: true, type: Types.ObjectId, ref: 'TwitterPublishingConfig' })
-  twitterConfigId: Types.ObjectId; // Referencia a la configuración de Twitter
+  // ⚠️ DEPRECADO: twitterConfigId (ahora opcional para compatibilidad)
+  // Nuevos posts usan accountId y username directamente desde site.socialMedia
+  @Prop({ required: false, type: Types.ObjectId, ref: 'TwitterPublishingConfig' })
+  twitterConfigId?: Types.ObjectId; // [DEPRECADO] Referencia a la configuración de Twitter
+
+  // ✅ NUEVO: Campos directos desde site.socialMedia.twitterAccounts[]
+  @Prop({ type: String })
+  accountId?: string; // ID de la cuenta de Twitter en GetLate
+
+  @Prop({ type: String })
+  username?: string; // Username de Twitter (@noticiaspachuca)
 
   @Prop({ type: String })
   tweetId?: string; // ID único del tweet en Twitter
@@ -227,15 +236,22 @@ export const TwitterPostSchema = SchemaFactory.createForClass(TwitterPost);
 TwitterPostSchema.index({ tweetId: 1 });
 TwitterPostSchema.index({ status: 1, scheduledAt: 1 });
 TwitterPostSchema.index({ siteId: 1, publishedAt: -1 });
-TwitterPostSchema.index({ twitterConfigId: 1, status: 1 });
+TwitterPostSchema.index({ twitterConfigId: 1, status: 1 }); // Deprecado pero mantenido para compatibilidad
 TwitterPostSchema.index({ publishedAt: -1 });
 TwitterPostSchema.index({ category: 1, publishedAt: -1 });
 TwitterPostSchema.index({ 'engagement.engagementRate': -1 });
 TwitterPostSchema.index({ contentQualityScore: -1 });
 TwitterPostSchema.index({ publishedNoticiaId: 1 });
 
+// ✅ NUEVO: Índices para accountId y username
+TwitterPostSchema.index({ accountId: 1 });
+TwitterPostSchema.index({ accountId: 1, status: 1 });
+TwitterPostSchema.index({ siteId: 1, accountId: 1, publishedAt: -1 });
+TwitterPostSchema.index({ username: 1 });
+
 // 🔍 ÍNDICES COMPUESTOS
-TwitterPostSchema.index({ status: 1, scheduledAt: 1, twitterConfigId: 1 });
+TwitterPostSchema.index({ status: 1, scheduledAt: 1, twitterConfigId: 1 }); // Deprecado pero mantenido
+TwitterPostSchema.index({ status: 1, scheduledAt: 1, accountId: 1 }); // ✅ NUEVO: Reemplazo del anterior
 TwitterPostSchema.index({ siteId: 1, status: 1, publishedAt: -1 });
 TwitterPostSchema.index({ publishedNoticiaId: 1, siteId: 1 });
 

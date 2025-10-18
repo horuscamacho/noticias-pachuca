@@ -10,7 +10,7 @@ import { NewsWebsiteConfig, NewsWebsiteConfigSchema } from './schemas/news-websi
 import { FacebookPublishingConfig, FacebookPublishingConfigSchema } from './schemas/facebook-publishing-config.schema';
 import { TwitterPublishingConfig, TwitterPublishingConfigSchema } from './schemas/twitter-publishing-config.schema';
 import { GeneratorProJob, GeneratorProJobSchema } from './schemas/generator-pro-job.schema';
-import { FacebookPost, FacebookPostSchema } from './schemas/facebook-post.schema';
+import { GeneratorProFacebookPost, FacebookPostSchema } from './schemas/facebook-post.schema'; // ✅ FIX: Usar nuevo nombre
 import { TwitterPost, TwitterPostSchema } from './schemas/twitter-post.schema';
 import { ContentAgent, ContentAgentSchema } from './schemas/content-agent.schema';
 import { ExtractedUrlTracking, ExtractedUrlTrackingSchema } from './schemas/extracted-url-tracking.schema';
@@ -81,7 +81,7 @@ import { Site, SiteSchema } from '../pachuca-noticias/schemas/site.schema';
       { name: FacebookPublishingConfig.name, schema: FacebookPublishingConfigSchema },
       { name: TwitterPublishingConfig.name, schema: TwitterPublishingConfigSchema }, // 🐦 FASE 10: Twitter config
       { name: GeneratorProJob.name, schema: GeneratorProJobSchema },
-      { name: FacebookPost.name, schema: FacebookPostSchema },
+      { name: GeneratorProFacebookPost.name, schema: FacebookPostSchema }, // ✅ FIX: Nuevo nombre para evitar conflicto
       { name: TwitterPost.name, schema: TwitterPostSchema }, // 🐦 FASE 10: Twitter posts
       { name: ContentAgent.name, schema: ContentAgentSchema },
       { name: ExtractedUrlTracking.name, schema: ExtractedUrlTrackingSchema }, // 🔍 Smart URL Extraction: Tracking

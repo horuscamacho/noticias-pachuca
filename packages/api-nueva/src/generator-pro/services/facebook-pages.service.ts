@@ -59,24 +59,17 @@ export class FacebookPagesService {
         account.platform === 'facebook' && account.isActive
       );
 
-      // Extraer todas las páginas disponibles de todas las cuentas
-      const pages: FacebookPageDto[] = [];
-
-      for (const account of facebookAccounts) {
-        const availablePages = account.metadata?.availablePages || [];
-
-        for (const page of availablePages) {
-          pages.push({
-            id: page.id,
-            name: page.name,
-            username: page.username || `@${page.name?.toLowerCase().replace(/\s+/g, '').replace(/[0-9]/g, '')}`,
-            picture: account.profilePicture || '', // Foto del perfil de la cuenta
-            followerCount: 0, // GetLate no proporciona follower count en este endpoint
-            isVerified: false, // GetLate no proporciona verification status
-            accessToken: account.accessToken, // Token de acceso de la cuenta
-          });
-        }
-      }
+      // ✅ FIX: Cada account YA representa una página específica de Facebook conectada
+      // El account._id es el ID que necesitamos para publicar
+      const pages: FacebookPageDto[] = facebookAccounts.map((account: any) => ({
+        id: account._id, // ✅ FIX: Usar account._id de GetLate (ObjectId MongoDB)
+        name: account.displayName || account.username, // Nombre de la página
+        username: account.username, // Username de la página
+        picture: account.profilePicture || '', // Foto del perfil
+        followerCount: 0, // GetLate no proporciona follower count
+        isVerified: false, // GetLate no proporciona verification status
+        accessToken: account.accessToken, // Token de acceso
+      }));
 
       const result: FacebookPagesResponseDto = {
         pages,

@@ -34,11 +34,16 @@ interface OpinionColumnsWidgetProps {
 }
 
 interface EditorialWidgetProps {
-  editorial: Editorial;
+  editorial: Editorial | null;
 }
 
 // ==================== MOCK DATA ====================
 
+// ⚠️ COMENTADO TEMPORALMENTE - Contenido hardcodeado
+// TODO: Implementar sistema dinámico conectado a la base de datos
+
+// ⚠️ MOCK DATA HARDCODEADO - COMENTADO TEMPORALMENTE
+/*
 export const MOCK_COLUMNS: OpinionColumn[] = [
   {
     id: '1',
@@ -69,6 +74,11 @@ export const MOCK_EDITORIAL: Editorial = {
   date: '10 OCT 2025',
   author: 'REDACCIÓN NOTICIAS PACHUCA',
 };
+*/
+
+// ✅ Arrays vacíos mientras se implementa sistema dinámico
+export const MOCK_COLUMNS: OpinionColumn[] = [];
+export const MOCK_EDITORIAL: Editorial | null = null;
 
 // ==================== COMPONENTES ====================
 
@@ -144,50 +154,71 @@ export const OpinionColumnsWidget: React.FC<OpinionColumnsWidgetProps> = ({ colu
  * Widget Editorial
  * Muestra el editorial destacado del día con link a /editorial
  */
-export const EditorialWidget: React.FC<EditorialWidgetProps> = ({ editorial }) => (
-  <div className="bg-[#854836] border-4 border-black p-4 relative">
-    <div className="absolute -top-2 -right-2 w-6 h-6 bg-[#FFB22C] transform rotate-45"></div>
+export const EditorialWidget: React.FC<EditorialWidgetProps> = ({ editorial }) => {
+  // Si no hay editorial, mostrar mensaje de "próximamente"
+  if (!editorial) {
+    return (
+      <div className="bg-[#854836] border-4 border-black p-4 relative">
+        <div className="absolute -top-2 -right-2 w-6 h-6 bg-[#FFB22C] transform rotate-45"></div>
 
-    <h2 className="text-lg font-black uppercase tracking-tight text-white mb-3 border-b-2 border-white pb-2">
-      EDITORIAL
-    </h2>
+        <h2 className="text-lg font-black uppercase tracking-tight text-white mb-3 border-b-2 border-white pb-2">
+          EDITORIAL
+        </h2>
 
-    <article className="space-y-3">
-      {/* Título */}
-      <Link to="/editorial" className="block">
-        <h3 className="text-lg font-bold uppercase tracking-tight text-white leading-tight hover:text-[#FFB22C] transition-colors cursor-pointer">
-          {editorial.title}
-        </h3>
-      </Link>
-
-      {/* Excerpt - Truncado a 5 líneas */}
-      <p className="text-sm text-white leading-relaxed line-clamp-5">
-        {editorial.excerpt}
-      </p>
-
-      {/* Metadata */}
-      <div className="flex items-center justify-between text-xs text-white border-t-2 border-white pt-3">
-        <div className="flex flex-col gap-1">
-          <span className="font-bold uppercase tracking-wider">
-            {editorial.author}
-          </span>
-          <span className="font-bold uppercase opacity-80">
-            {editorial.date}
-          </span>
+        <div className="space-y-3 py-6 text-center">
+          <p className="text-sm text-white leading-relaxed">
+            Contenido editorial próximamente
+          </p>
         </div>
       </div>
+    );
+  }
 
-      {/* Botón Leer Más con Link */}
-      <Link
-        to="/editorial"
-        className="block w-full bg-white text-[#854836] py-2 font-bold uppercase text-sm border-2 border-black hover:bg-[#FFB22C] hover:text-black transition-colors relative group text-center"
-      >
-        LEER MÁS
-        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-black transform rotate-45 group-hover:bg-white transition-colors"></div>
-      </Link>
-    </article>
-  </div>
-);
+  return (
+    <div className="bg-[#854836] border-4 border-black p-4 relative">
+      <div className="absolute -top-2 -right-2 w-6 h-6 bg-[#FFB22C] transform rotate-45"></div>
+
+      <h2 className="text-lg font-black uppercase tracking-tight text-white mb-3 border-b-2 border-white pb-2">
+        EDITORIAL
+      </h2>
+
+      <article className="space-y-3">
+        {/* Título */}
+        <Link to="/editorial" className="block">
+          <h3 className="text-lg font-bold uppercase tracking-tight text-white leading-tight hover:text-[#FFB22C] transition-colors cursor-pointer">
+            {editorial.title}
+          </h3>
+        </Link>
+
+        {/* Excerpt - Truncado a 5 líneas */}
+        <p className="text-sm text-white leading-relaxed line-clamp-5">
+          {editorial.excerpt}
+        </p>
+
+        {/* Metadata */}
+        <div className="flex items-center justify-between text-xs text-white border-t-2 border-white pt-3">
+          <div className="flex flex-col gap-1">
+            <span className="font-bold uppercase tracking-wider">
+              {editorial.author}
+            </span>
+            <span className="font-bold uppercase opacity-80">
+              {editorial.date}
+            </span>
+          </div>
+        </div>
+
+        {/* Botón Leer Más con Link */}
+        <Link
+          to="/editorial"
+          className="block w-full bg-white text-[#854836] py-2 font-bold uppercase text-sm border-2 border-black hover:bg-[#FFB22C] hover:text-black transition-colors relative group text-center"
+        >
+          LEER MÁS
+          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-black transform rotate-45 group-hover:bg-white transition-colors"></div>
+        </Link>
+      </article>
+    </div>
+  );
+};
 
 // Exportar todo
 export default {

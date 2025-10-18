@@ -6,7 +6,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NewsWebsiteConfig, NewsWebsiteConfigDocument } from '../schemas/news-website-config.schema';
 import { FacebookPublishingConfig, FacebookPublishingConfigDocument } from '../schemas/facebook-publishing-config.schema';
 import { GeneratorProJob, GeneratorProJobDocument } from '../schemas/generator-pro-job.schema';
-import { FacebookPost, FacebookPostDocument } from '../schemas/facebook-post.schema';
+import { GeneratorProFacebookPost, FacebookPost, FacebookPostDocument } from '../schemas/facebook-post.schema'; // ✅ FIX: Importar clase real
 
 import { GeneratorProQueueService } from './generator-pro-queue.service';
 import { NewsWebsiteService } from './news-website.service';
@@ -58,7 +58,7 @@ export class GeneratorProOrchestratorService {
     private readonly facebookConfigModel: Model<FacebookPublishingConfigDocument>,
     @InjectModel(GeneratorProJob.name)
     private readonly jobModel: Model<GeneratorProJobDocument>,
-    @InjectModel(FacebookPost.name)
+    @InjectModel(GeneratorProFacebookPost.name) // ✅ FIX: Usar clase real, no type alias
     private readonly facebookPostModel: Model<FacebookPostDocument>,
     private readonly queueService: GeneratorProQueueService,
     private readonly websiteService: NewsWebsiteService,

@@ -42,7 +42,7 @@ export class Site {
   socialMedia: {
     // Facebook Pages asignadas a este sitio
     facebookPages?: Array<{
-      pageId: string; // ID de página en GetLate
+      pageId: string; // ✅ FIX: accountId de GetLate (account._id = ObjectId MongoDB)
       pageName: string;
       publishingConfigId?: Types.ObjectId; // Ref a FacebookPublishingConfig
       isActive: boolean;
@@ -51,7 +51,7 @@ export class Site {
 
     // Twitter Accounts asignadas a este sitio
     twitterAccounts?: Array<{
-      accountId: string; // ID de cuenta en GetLate
+      accountId: string; // ✅ FIX: accountId de GetLate (account._id = ObjectId MongoDB)
       username: string; // @noticiaspachuca
       displayName: string;
       publishingConfigId?: Types.ObjectId; // Ref a TwitterPublishingConfig

@@ -14,6 +14,8 @@ export const Route = createFileRoute('/editorial')({
 });
 
 // ==================== MOCK DATA ====================
+// ⚠️ COMENTADO TEMPORALMENTE - Contenido hardcodeado
+// TODO: Implementar sistema dinámico conectado a la base de datos
 
 export interface EditorialArticle {
   id: string;
@@ -26,6 +28,8 @@ export interface EditorialArticle {
   category: string;
 }
 
+// ⚠️ EDITORIALES HARDCODEADAS - COMENTADAS TEMPORALMENTE
+/*
 export const MOCK_EDITORIALS: EditorialArticle[] = [
   {
     id: '1',
@@ -90,6 +94,11 @@ export const MOCK_EDITORIALS: EditorialArticle[] = [
 ];
 
 const FEATURED_EDITORIAL = MOCK_EDITORIALS[0];
+*/
+
+// ✅ Array vacío mientras se implementa sistema dinámico
+export const MOCK_EDITORIALS: EditorialArticle[] = [];
+const FEATURED_EDITORIAL = null;
 
 // ==================== COMPONENT ====================
 
@@ -141,84 +150,104 @@ function EditorialPage() {
             </h2>
           </div>
 
-          <article className="bg-white border-4 border-black p-8 md:p-12 relative">
-            <div className="absolute -top-2 -left-2 w-6 h-6 bg-[#FF0000] transform rotate-45"></div>
+          {FEATURED_EDITORIAL ? (
+            <article className="bg-white border-4 border-black p-8 md:p-12 relative">
+              <div className="absolute -top-2 -left-2 w-6 h-6 bg-[#FF0000] transform rotate-45"></div>
 
-            {/* Category Badge */}
-            <div className="mb-6">
-              <span className="inline-block bg-[#FFB22C] text-black px-4 py-2 font-black uppercase text-xs tracking-wider border-2 border-black">
-                EDITORIAL
-              </span>
-              <span className="ml-3 inline-block bg-[#F7F7F7] text-[#854836] px-4 py-2 font-bold uppercase text-xs tracking-wider border border-black">
-                {FEATURED_EDITORIAL.category}
-              </span>
-            </div>
+              {/* Category Badge */}
+              <div className="mb-6">
+                <span className="inline-block bg-[#FFB22C] text-black px-4 py-2 font-black uppercase text-xs tracking-wider border-2 border-black">
+                  EDITORIAL
+                </span>
+                <span className="ml-3 inline-block bg-[#F7F7F7] text-[#854836] px-4 py-2 font-bold uppercase text-xs tracking-wider border border-black">
+                  {FEATURED_EDITORIAL.category}
+                </span>
+              </div>
 
-            {/* Title */}
-            <h2 className="text-3xl md:text-5xl lg:text-6xl font-black uppercase tracking-tight text-black mb-6 leading-tight">
-              {FEATURED_EDITORIAL.title}
-            </h2>
+              {/* Title */}
+              <h2 className="text-3xl md:text-5xl lg:text-6xl font-black uppercase tracking-tight text-black mb-6 leading-tight">
+                {FEATURED_EDITORIAL.title}
+              </h2>
 
-            {/* Excerpt */}
-            <p className="text-xl md:text-2xl text-black leading-relaxed mb-8 font-medium border-l-4 border-[#854836] pl-6">
-              {FEATURED_EDITORIAL.excerpt}
-            </p>
+              {/* Excerpt */}
+              <p className="text-xl md:text-2xl text-black leading-relaxed mb-8 font-medium border-l-4 border-[#854836] pl-6">
+                {FEATURED_EDITORIAL.excerpt}
+              </p>
 
-            {/* Metadata Bar */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between border-y-2 border-black py-6 mb-8 space-y-4 md:space-y-0">
-              <div className="flex items-center space-x-4">
-                <div className="w-14 h-14 bg-[#854836] border-2 border-black flex items-center justify-center">
-                  <span className="text-white font-black text-xl">NP</span>
+              {/* Metadata Bar */}
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between border-y-2 border-black py-6 mb-8 space-y-4 md:space-y-0">
+                <div className="flex items-center space-x-4">
+                  <div className="w-14 h-14 bg-[#854836] border-2 border-black flex items-center justify-center">
+                    <span className="text-white font-black text-xl">NP</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold uppercase tracking-wider text-black">
+                      {FEATURED_EDITORIAL.author}
+                    </p>
+                    <p className="text-xs text-[#854836] font-bold uppercase">
+                      {FEATURED_EDITORIAL.date}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-bold uppercase tracking-wider text-black">
-                    {FEATURED_EDITORIAL.author}
-                  </p>
-                  <p className="text-xs text-[#854836] font-bold uppercase">
-                    {FEATURED_EDITORIAL.date}
+
+                {/* Share Buttons */}
+                <div className="flex items-center space-x-3">
+                  <span className="text-xs font-bold uppercase text-black hidden md:inline">COMPARTIR:</span>
+                  <button className="w-10 h-10 bg-black text-white border-2 border-black hover:bg-[#FF0000] transition-colors flex items-center justify-center font-bold">
+                    F
+                  </button>
+                  <button className="w-10 h-10 bg-black text-white border-2 border-black hover:bg-[#FF0000] transition-colors flex items-center justify-center font-bold">
+                    X
+                  </button>
+                  <button className="w-10 h-10 bg-black text-white border-2 border-black hover:bg-[#FF0000] transition-colors flex items-center justify-center font-bold">
+                    W
+                  </button>
+                </div>
+              </div>
+
+              {/* Full Content */}
+              <div
+                className="prose prose-lg max-w-none text-black mb-8
+                  prose-headings:font-black prose-headings:uppercase prose-headings:tracking-tight
+                  prose-p:text-lg prose-p:leading-relaxed prose-p:mb-6
+                  prose-strong:text-black prose-strong:font-black
+                  prose-a:text-[#854836] prose-a:font-bold prose-a:no-underline hover:prose-a:underline"
+                dangerouslySetInnerHTML={{ __html: FEATURED_EDITORIAL.content }}
+              />
+
+              {/* Editorial Signature */}
+              <div className="mt-12 pt-8 border-t-2 border-black">
+                <div className="bg-[#F7F7F7] border-2 border-black p-6 relative">
+                  <div className="absolute -top-1 -left-1 w-4 h-4 bg-[#FFB22C] transform rotate-45"></div>
+                  <p className="text-sm font-bold uppercase text-black text-center">
+                    ⎯⎯⎯⎯⎯<br />
+                    EDITORIAL DE NOTICIAS PACHUCA<br />
+                    HIDALGO, MÉXICO
                   </p>
                 </div>
               </div>
 
-              {/* Share Buttons */}
-              <div className="flex items-center space-x-3">
-                <span className="text-xs font-bold uppercase text-black hidden md:inline">COMPARTIR:</span>
-                <button className="w-10 h-10 bg-black text-white border-2 border-black hover:bg-[#FF0000] transition-colors flex items-center justify-center font-bold">
-                  F
-                </button>
-                <button className="w-10 h-10 bg-black text-white border-2 border-black hover:bg-[#FF0000] transition-colors flex items-center justify-center font-bold">
-                  X
-                </button>
-                <button className="w-10 h-10 bg-black text-white border-2 border-black hover:bg-[#FF0000] transition-colors flex items-center justify-center font-bold">
-                  W
-                </button>
-              </div>
-            </div>
-
-            {/* Full Content */}
-            <div
-              className="prose prose-lg max-w-none text-black mb-8
-                prose-headings:font-black prose-headings:uppercase prose-headings:tracking-tight
-                prose-p:text-lg prose-p:leading-relaxed prose-p:mb-6
-                prose-strong:text-black prose-strong:font-black
-                prose-a:text-[#854836] prose-a:font-bold prose-a:no-underline hover:prose-a:underline"
-              dangerouslySetInnerHTML={{ __html: FEATURED_EDITORIAL.content }}
-            />
-
-            {/* Editorial Signature */}
-            <div className="mt-12 pt-8 border-t-2 border-black">
-              <div className="bg-[#F7F7F7] border-2 border-black p-6 relative">
-                <div className="absolute -top-1 -left-1 w-4 h-4 bg-[#FFB22C] transform rotate-45"></div>
-                <p className="text-sm font-bold uppercase text-black text-center">
-                  ⎯⎯⎯⎯⎯<br />
-                  EDITORIAL DE NOTICIAS PACHUCA<br />
-                  HIDALGO, MÉXICO
+              <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-[#FFB22C] transform rotate-45"></div>
+            </article>
+          ) : (
+            <article className="bg-white border-4 border-black p-8 md:p-12 relative">
+              <div className="absolute -top-2 -left-2 w-6 h-6 bg-[#FFB22C] transform rotate-45"></div>
+              <div className="text-center py-12">
+                <div className="mb-6">
+                  <span className="inline-block bg-[#F7F7F7] text-[#854836] px-6 py-3 font-black uppercase text-sm tracking-wider border-2 border-black">
+                    🚧 EN DESARROLLO
+                  </span>
+                </div>
+                <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-black mb-4">
+                  CONTENIDO EDITORIAL PRÓXIMAMENTE
+                </h3>
+                <p className="text-lg text-black leading-relaxed max-w-2xl mx-auto">
+                  Estamos trabajando en un nuevo sistema dinámico de editoriales. Pronto podrás leer las opiniones y análisis más relevantes de Noticias Pachuca.
                 </p>
               </div>
-            </div>
-
-            <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-[#FFB22C] transform rotate-45"></div>
-          </article>
+              <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-[#FFB22C] transform rotate-45"></div>
+            </article>
+          )}
         </section>
 
         {/* Editorials Archive */}
@@ -230,49 +259,61 @@ function EditorialPage() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {MOCK_EDITORIALS.slice(1).map((editorial) => (
-              <Link
-                key={editorial.id}
-                to="/editorial/$slug"
-                params={{ slug: editorial.slug }}
-                className="block"
-              >
-                <article className="bg-white border-4 border-black p-6 relative hover:shadow-[8px_8px_0_0_#000000] transition-all duration-300 group h-full">
-                  <div className="absolute -top-1 -left-1 w-4 h-4 bg-[#854836] transform rotate-45"></div>
+          {MOCK_EDITORIALS.length > 1 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {MOCK_EDITORIALS.slice(1).map((editorial) => (
+                <Link
+                  key={editorial.id}
+                  to="/editorial/$slug"
+                  params={{ slug: editorial.slug }}
+                  className="block"
+                >
+                  <article className="bg-white border-4 border-black p-6 relative hover:shadow-[8px_8px_0_0_#000000] transition-all duration-300 group h-full">
+                    <div className="absolute -top-1 -left-1 w-4 h-4 bg-[#854836] transform rotate-45"></div>
 
-                  {/* Category */}
-                  <div className="mb-3">
-                    <span className="inline-block bg-[#F7F7F7] text-[#854836] px-3 py-1 font-bold uppercase text-xs tracking-wider border border-black">
-                      {editorial.category}
-                    </span>
-                  </div>
-
-                  {/* Title */}
-                  <h3 className="text-xl md:text-2xl font-black uppercase tracking-tight text-black mb-4 leading-tight group-hover:text-[#854836] transition-colors">
-                    {editorial.title}
-                  </h3>
-
-                  {/* Excerpt */}
-                  <p className="text-sm text-black leading-relaxed mb-6 line-clamp-3">
-                    {editorial.excerpt}
-                  </p>
-
-                  {/* Metadata */}
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                    <div className="text-xs text-[#854836] font-bold uppercase">
-                      {editorial.date}
+                    {/* Category */}
+                    <div className="mb-3">
+                      <span className="inline-block bg-[#F7F7F7] text-[#854836] px-3 py-1 font-bold uppercase text-xs tracking-wider border border-black">
+                        {editorial.category}
+                      </span>
                     </div>
-                    <div className="text-[#FF0000] font-black text-lg group-hover:translate-x-1 transition-transform">
-                      →
-                    </div>
-                  </div>
 
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-[#FFB22C] transform rotate-45"></div>
-                </article>
-              </Link>
-            ))}
-          </div>
+                    {/* Title */}
+                    <h3 className="text-xl md:text-2xl font-black uppercase tracking-tight text-black mb-4 leading-tight group-hover:text-[#854836] transition-colors">
+                      {editorial.title}
+                    </h3>
+
+                    {/* Excerpt */}
+                    <p className="text-sm text-black leading-relaxed mb-6 line-clamp-3">
+                      {editorial.excerpt}
+                    </p>
+
+                    {/* Metadata */}
+                    <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                      <div className="text-xs text-[#854836] font-bold uppercase">
+                        {editorial.date}
+                      </div>
+                      <div className="text-[#FF0000] font-black text-lg group-hover:translate-x-1 transition-transform">
+                        →
+                      </div>
+                    </div>
+
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-[#FFB22C] transform rotate-45"></div>
+                  </article>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white border-4 border-black p-8 relative">
+              <div className="absolute -top-1 -left-1 w-4 h-4 bg-[#854836] transform rotate-45"></div>
+              <div className="text-center py-8">
+                <p className="text-lg text-black leading-relaxed">
+                  No hay editoriales anteriores disponibles en este momento.
+                </p>
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-[#854836] transform rotate-45"></div>
+            </div>
+          )}
         </section>
 
         {/* Info Box */}

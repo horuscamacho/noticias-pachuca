@@ -14,26 +14,48 @@ export interface FacebookPostVirtuals {
   engagementVelocity: number;
 }
 
-export type FacebookPostDocument = FacebookPost & Document & FacebookPostMethods & FacebookPostVirtuals;
+// ✅ FIX: Alias para compatibilidad backward
+export type FacebookPost = GeneratorProFacebookPost;
+export type FacebookPostDocument = GeneratorProFacebookPost & Document & FacebookPostMethods & FacebookPostVirtuals;
 
 /**
  * 🤖 Schema para posts publicados en Facebook - Generator Pro
  * Gestiona el ciclo completo desde contenido generado hasta métricas de engagement
  * Integra con GetLate.dev API y Facebook Graph API para tracking completo
+ *
+ * ✅ FIX: Renombrado a GeneratorProFacebookPost para evitar conflicto con
+ * el schema FacebookPost del módulo 'facebook' (monitoreo de competencia)
  */
-@Schema({ timestamps: true })
-export class FacebookPost {
-  @Prop({ required: true, type: Types.ObjectId, ref: 'ExtractedNoticia' })
-  originalNoticiaId: Types.ObjectId; // Referencia a la noticia original extraída
+@Schema({
+  timestamps: true,
+  collection: 'generatorpro_facebook_posts', // Collection explícita para evitar conflictos
+})
+export class GeneratorProFacebookPost {
+  // 🆕 NUEVO FLUJO: Referencia a PublishedNoticia (flujo moderno con site.socialMedia)
+  @Prop({ type: Types.ObjectId, ref: 'PublishedNoticia' })
+  publishedNoticiaId?: Types.ObjectId; // Referencia a la noticia publicada
 
-  @Prop({ required: true, type: Types.ObjectId, ref: 'AIContentGeneration' })
-  generatedContentId: Types.ObjectId; // Referencia al contenido generado por IA
+  // ⚠️ FLUJO LEGACY: Referencias para compatibilidad con Generator-Pro antiguo
+  @Prop({ required: false, type: Types.ObjectId, ref: 'ExtractedNoticia' })
+  originalNoticiaId?: Types.ObjectId; // Referencia a la noticia original extraída
+
+  @Prop({ required: false, type: Types.ObjectId, ref: 'AIContentGeneration' })
+  generatedContentId?: Types.ObjectId; // Referencia al contenido generado por IA
 
   @Prop({ required: true, type: Types.ObjectId, ref: 'Site' })
   siteId: Types.ObjectId; // Referencia al sitio destino de publicación
 
-  @Prop({ required: true, type: Types.ObjectId, ref: 'FacebookPublishingConfig' })
-  facebookConfigId: Types.ObjectId; // Referencia a la configuración de Facebook
+  // ⚠️ DEPRECADO: facebookConfigId (ahora opcional para compatibilidad)
+  // Nuevos posts usan pageId y pageName directamente desde site.socialMedia
+  @Prop({ required: false, type: Types.ObjectId, ref: 'FacebookPublishingConfig' })
+  facebookConfigId?: Types.ObjectId; // [DEPRECADO] Referencia a la configuración de Facebook
+
+  // ✅ NUEVO: Campos directos desde site.socialMedia.facebookPages[]
+  @Prop({ type: String })
+  pageId?: string; // ID de la página de Facebook en GetLate
+
+  @Prop({ type: String })
+  pageName?: string; // Nombre de la página de Facebook
 
   @Prop({ type: String })
   facebookPostId?: string; // ID único del post en Facebook
@@ -225,20 +247,30 @@ export class FacebookPost {
   updatedAt: Date;
 }
 
-export const FacebookPostSchema = SchemaFactory.createForClass(FacebookPost);
+export const FacebookPostSchema = SchemaFactory.createForClass(GeneratorProFacebookPost);
 
 // 🔍 ÍNDICES PARA PERFORMANCE
 FacebookPostSchema.index({ facebookPostId: 1 });
 FacebookPostSchema.index({ status: 1, scheduledAt: 1 });
 FacebookPostSchema.index({ siteId: 1, publishedAt: -1 });
-FacebookPostSchema.index({ facebookConfigId: 1, status: 1 });
+FacebookPostSchema.index({ facebookConfigId: 1, status: 1 }); // Deprecado pero mantenido para compatibilidad
 FacebookPostSchema.index({ publishedAt: -1 });
 FacebookPostSchema.index({ category: 1, publishedAt: -1 });
 FacebookPostSchema.index({ 'engagement.engagementRate': -1 });
 FacebookPostSchema.index({ contentQualityScore: -1 });
 
+// 🆕 NUEVO: Índices para publishedNoticiaId (flujo moderno)
+FacebookPostSchema.index({ publishedNoticiaId: 1 });
+FacebookPostSchema.index({ publishedNoticiaId: 1, siteId: 1 });
+
+// ✅ NUEVO: Índices para pageId y pageName
+FacebookPostSchema.index({ pageId: 1 });
+FacebookPostSchema.index({ pageId: 1, status: 1 });
+FacebookPostSchema.index({ siteId: 1, pageId: 1, publishedAt: -1 });
+
 // 🔍 ÍNDICES COMPUESTOS
-FacebookPostSchema.index({ status: 1, scheduledAt: 1, facebookConfigId: 1 });
+FacebookPostSchema.index({ status: 1, scheduledAt: 1, facebookConfigId: 1 }); // Deprecado pero mantenido
+FacebookPostSchema.index({ status: 1, scheduledAt: 1, pageId: 1 }); // ✅ NUEVO: Reemplazo del anterior
 FacebookPostSchema.index({ siteId: 1, status: 1, publishedAt: -1 });
 
 // 🧮 VIRTUAL PARA ENGAGEMENT TOTAL

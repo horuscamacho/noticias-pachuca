@@ -282,13 +282,15 @@ twitter-post.schema.ts:              🟡⚪⚪⚪⚪ (Baja - 2 líneas)
 
 | Fase | Tiempo Estimado | Responsable | Complejidad |
 |------|----------------|-------------|-------------|
-| FASE 0 | 1 hora | Jarvis | Baja (Análisis y preparación) |
+| FASE 0 | 15 minutos | Jarvis | Baja (Lectura y análisis) |
 | FASE 1 | 3-4 horas | Jarvis | Alta (Core services) |
 | FASE 2 | 2-3 horas | Jarvis | Media (Schemas y DTOs) |
 | FASE 3 | Variable | **Coyotito** | Media (Testing manual) |
 | FASE 4 | 1 hora | Jarvis | Baja (Limpieza opcional) |
-| **TOTAL (Jarvis)** | **7-9 horas** | Jarvis | Media-Alta |
+| **TOTAL (Jarvis)** | **6-8 horas** | Jarvis | Media-Alta |
 | **TOTAL (Coyotito)** | **Variable** | Coyotito | Testing y validación |
+
+**NOTA:** Jarvis NO maneja git/github. Coyotito hace commits/branches.
 
 ---
 
@@ -300,46 +302,32 @@ twitter-post.schema.ts:              🟡⚪⚪⚪⚪ (Baja - 2 líneas)
 
 **Objetivo:** Preparar el entorno y crear respaldos antes de modificar código.
 
-**Duración Estimada:** 1 hora
+**Duración Estimada:** 15 minutos
+
+**NOTA:** Jarvis NO toca git. Coyotito maneja el repo.
 
 #### ✅ Checklist FASE 0
 
-- [ ] **0.1** Crear branch de feature
-  ```bash
-  git checkout -b fix/social-media-publications-system
-  ```
+- [ ] **0.1** Leer archivos críticos para tener contexto
+  - `social-media-publishing.service.ts`
+  - `facebook-publishing.service.ts`
+  - `twitter-publishing.service.ts`
+  - `facebook-post.schema.ts`
+  - `twitter-post.schema.ts`
 
-- [ ] **0.2** Crear backup de archivos críticos
-  ```bash
-  # Respaldar en carpeta temporal
-  cp social-media-publishing.service.ts social-media-publishing.service.ts.backup
-  cp facebook-publishing.service.ts facebook-publishing.service.ts.backup
-  cp twitter-publishing.service.ts twitter-publishing.service.ts.backup
-  ```
+- [ ] **0.2** Documentar GetLate API Key ubicación
+  - Buscar en `facebook-pages.service.ts` donde está hardcodeada
+  - Documentar para usar como fallback
 
-- [ ] **0.3** Verificar estado actual de Site en MongoDB
-  ```bash
-  # Confirmar que socialMedia.facebookPages y twitterAccounts existen
-  db.sites.findOne({ "slug": "noticiaspachuca" })
-  ```
-
-- [ ] **0.4** Documentar GetLate API Key
-  - Ubicación actual: `facebook-pages.service.ts:15`
-  - Valor: `sk_a7e92958841ee94d4d95b99f88b1f7b0fb7672a60b0fca50f27b190476d98cd8`
-  - Acción: Verificar que funciona con GetLate API
-
-- [ ] **0.5** Verificar que NO existen documentos en collections incorrectas
-  ```bash
-  db.facebookpublishingconfigs.count() # Debe ser 0
-  db.twitterpublishingconfigs.count()  # Debe ser 0
-  ```
+- [ ] **0.3** Verificar estructura de Site.socialMedia
+  - Confirmar campos: facebookPages[], twitterAccounts[]
+  - Verificar tipos en site.schema.ts
 
 #### 📋 Entregables FASE 0
 
-✅ Branch creado
-✅ Backups creados
-✅ Estado de BD documentado
-✅ GetLate API Key verificada
+✅ Archivos críticos leídos y contexto cargado
+✅ GetLate API Key ubicada
+✅ Estructura de Site.socialMedia verificada
 
 ---
 
@@ -1297,14 +1285,16 @@ Corregir el sistema de publicación en redes sociales para que use la configurac
 ### 📊 Distribución de Trabajo por Fase
 
 ```
-FASE 0: Preparación (Jarvis)       [████░░░░░░] 12%  (1 hora)
-FASE 1: Core Services (Jarvis)     [████████░░] 50%  (3-4 horas)
+FASE 0: Preparación (Jarvis)       [█░░░░░░░░░]  3%  (15 min)
+FASE 1: Core Services (Jarvis)     [█████████░] 55%  (3-4 horas)
 FASE 2: Schemas y Models (Jarvis)  [█████░░░░░] 30%  (2-3 horas)
 FASE 3: Testing (COYOTITO)         [░░░░░░░░░░]  -   (Variable - Coyotito)
-FASE 4: Limpieza (Jarvis OPCIONAL) [██░░░░░░░░]  8%  (1 hora)
+FASE 4: Limpieza (Jarvis OPCIONAL) [███░░░░░░░] 12%  (1 hora)
                                    ─────────────────
-                          TOTAL JARVIS: 7-9 horas
+                          TOTAL JARVIS: 6-8 horas
                        TOTAL COYOTITO: Variable (testing manual)
+
+⚠️ JARVIS NO TOCA GIT - Coyotito maneja commits/branches
 ```
 
 ---
@@ -1313,8 +1303,9 @@ FASE 4: Limpieza (Jarvis OPCIONAL) [██░░░░░░░░]  8%  (1 hora
 
 #### FASE 0: PREPARACIÓN
 ```
-✅ Git branch
-✅ Backups de archivos críticos
+✅ Archivos críticos leídos
+✅ GetLate API Key ubicada
+✅ Estructura Site.socialMedia verificada
 ```
 
 #### FASE 1: CORE SERVICES (3 archivos, ~440 líneas)
@@ -1550,12 +1541,13 @@ pageId?: string; // Nuevo: ID desde GetLate
 
 **Comenzar con FASE 0: Preparación**
 
-1. Crear branch: `fix/social-media-publications-system`
-2. Crear backups de archivos críticos
-3. Verificar estado actual en MongoDB
-4. Confirmar GetLate API key funcional
+1. Leer archivos críticos para contexto
+2. Documentar GetLate API Key ubicación
+3. Verificar estructura de Site.socialMedia
 
 **Después proceder a FASE 1 → FASE 2 → FASE 3 → (Opcional) FASE 4**
+
+**IMPORTANTE:** Jarvis NO maneja git. Coyotito hace los commits/branches.
 
 ---
 
@@ -1563,13 +1555,15 @@ pageId?: string; // Nuevo: ID desde GetLate
 
 Después de cada FASE, validar con Coyotito:
 
-- ✅ **FASE 0 (Jarvis):** ¿Branch creado? ¿Backups listos?
+- ✅ **FASE 0 (Jarvis):** ¿Archivos leídos? ¿Contexto cargado?
 - ✅ **FASE 1 (Jarvis):** ¿Services refactorizados? ¿Compila sin errores?
 - ✅ **FASE 2 (Jarvis):** ¿Schemas actualizados? ¿Sin breaking changes?
 - ⚠️ **FASE 3 (COYOTITO):** ¿Todos los tests pasaron? ¿Publicaciones funcionan? ← **Ejecutado por Coyotito**
 - ✅ **FASE 4 (Jarvis OPCIONAL):** ¿Limpieza completada? ¿Documentación actualizada?
 
-**IMPORTANTE:** Jarvis NO ejecuta tests ni levanta servidores. FASE 3 es responsabilidad de Coyotito.
+**IMPORTANTE:**
+- Jarvis NO ejecuta tests ni levanta servidores. FASE 3 es responsabilidad de Coyotito.
+- Jarvis NO toca git/github. Coyotito maneja el repo.
 
 ---
 

@@ -4,8 +4,8 @@ import { Model, Types } from 'mongoose';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import axios from 'axios';
 
-import { FacebookPublishingConfig, FacebookPublishingConfigDocument } from '../schemas/facebook-publishing-config.schema';
-import { FacebookPost, FacebookPostDocument } from '../schemas/facebook-post.schema';
+// ❌ REMOVIDO: FacebookPublishingConfig - No existe en BD
+import { GeneratorProFacebookPost, FacebookPost, FacebookPostDocument } from '../schemas/facebook-post.schema'; // ✅ FIX: Importar nuevo nombre
 // import { AIContentGeneration, AIContentGenerationDocument } from '../../content-ai/schemas/ai-content-generation.schema';
 
 /**
@@ -54,43 +54,47 @@ interface MediaUploadResult {
 @Injectable()
 export class FacebookPublishingService {
   private readonly logger = new Logger(FacebookPublishingService.name);
-  private readonly getLateBaseUrl = 'https://api.getlate.dev/v1';
+  private readonly getLateBaseUrl = 'https://getlate.dev/api/v1'; // ✅ FIX: URL correcta de GetLate API
 
   constructor(
-    @InjectModel(FacebookPublishingConfig.name)
-    private readonly facebookConfigModel: Model<FacebookPublishingConfigDocument>,
-    @InjectModel(FacebookPost.name)
+    // ❌ REMOVIDO: facebookConfigModel - No existe en BD
+    @InjectModel(GeneratorProFacebookPost.name) // ✅ FIX: Usar nuevo nombre
     private readonly facebookPostModel: Model<FacebookPostDocument>,
     // @InjectModel(AIContentGeneration.name)
     // private readonly contentGenerationModel: Model<AIContentGenerationDocument>,
     private readonly eventEmitter: EventEmitter2,
   ) {
-    this.logger.log('🤖 Facebook Publishing Service initialized');
+    this.logger.log('🤖 Facebook Publishing Service initialized (✅ Refactored)');
   }
 
   /**
    * 📱 PUBLICAR POST EN FACEBOOK VIA GETLATE
+   *
+   * ✅ REFACTORIZADO: Recibe pageId, pageName y apiKey directamente
+   * ❌ ANTERIOR: Buscaba FacebookPublishingConfig (que no existe)
+   *
+   * @param post - FacebookPost document
+   * @param pageId - ID de la página de Facebook en GetLate
+   * @param pageName - Nombre de la página de Facebook
+   * @param getLateApiKey - API Key de GetLate
    */
-  async publishPost(post: FacebookPostDocument): Promise<PublishResult> {
-    this.logger.log(`📱 Publishing post to Facebook: ${post._id}`);
+  async publishPost(
+    post: FacebookPostDocument,
+    pageId: string,
+    pageName: string,
+    getLateApiKey: string
+  ): Promise<PublishResult> {
+    this.logger.log(`📱 Publishing post to Facebook page ${pageName}: ${post._id}`);
 
     try {
-      const facebookConfig = await this.facebookConfigModel.findById(post.facebookConfigId);
-      if (!facebookConfig) {
-        throw new Error(`Facebook config ${post.facebookConfigId} not found`);
-      }
-
-      // Verificar límites diarios
-      if (!facebookConfig.canPublishToday) {
-        throw new Error('Daily posting limit reached');
-      }
-
       // Preparar datos del post para GetLate API
       const postData = {
         content: post.postContent,
+        scheduledFor: post.scheduledAt.toISOString(),  // ✅ FIX: scheduledFor (no scheduledDate)
+        timezone: "UTC",                                // ✅ FIX: timezone requerido por GetLate API
         platforms: [{
           platform: 'facebook',
-          accountId: facebookConfig.facebookPageId,
+          accountId: pageId, // ✅ NUEVO: Usar pageId directamente
           platformSpecificData: {
             firstComment: this.generateFirstComment(post),
           }
@@ -101,8 +105,15 @@ export class FacebookPublishingService {
             url: url,
           }))
         }),
-        scheduledDate: post.scheduledAt.toISOString(),
       };
+
+      // 🔍 DIAGNÓSTICO: Loguear REQUEST completo que enviamos a GetLate
+      this.logger.debug(`🔍 GetLate API REQUEST:
+        URL: ${this.getLateBaseUrl}/posts
+        Method: POST
+        Body: ${JSON.stringify(postData, null, 2)}
+        API Key: ${getLateApiKey.substring(0, 10)}...
+      `);
 
       // Realizar petición a GetLate API
       const response = await axios.post(
@@ -110,7 +121,7 @@ export class FacebookPublishingService {
         postData,
         {
           headers: {
-            'Authorization': `Bearer ${facebookConfig.getLateApiKey}`,
+            'Authorization': `Bearer ${getLateApiKey}`, // ✅ NUEVO: Usar apiKey directamente
             'Content-Type': 'application/json',
           },
           timeout: 30000,
@@ -132,9 +143,6 @@ export class FacebookPublishingService {
         facebookResult.platformPostUrl
       );
 
-      // Actualizar contador diario de Facebook config
-      await this.updateDailyPostCounter(facebookConfig._id as Types.ObjectId);
-
       const publishResult: PublishResult = {
         success: true,
         facebookPostId: facebookResult.platformPostId,
@@ -142,23 +150,33 @@ export class FacebookPublishingService {
         getLatePostUrl: result.postUrl,
         engagement: {
           initialReach: 0, // Se actualizará después con sync
-          estimatedImpressions: this.estimateImpressions(facebookConfig),
+          estimatedImpressions: 1000, // ✅ NUEVO: Estimación fija (sin config)
         }
       };
 
       this.eventEmitter.emit('generator-pro.facebook.published', {
         postId: post._id,
         facebookPostId: facebookResult.platformPostId,
-        configId: facebookConfig._id,
+        pageId, // ✅ NUEVO: Emitir pageId en lugar de configId
+        pageName, // ✅ NUEVO: Emitir pageName
         timestamp: new Date(),
       });
 
-      this.logger.log(`✅ Post published successfully: ${post._id}`);
+      this.logger.log(`✅ Post published successfully to ${pageName}: ${post._id}`);
 
       return publishResult;
 
     } catch (error) {
-      this.logger.error(`❌ Failed to publish post ${post._id}: ${error.message}`);
+      // 🔍 DIAGNÓSTICO: Loguear error COMPLETO de GetLate API
+      if (error.response) {
+        this.logger.error(`❌ GetLate API Error Details:
+          Status: ${error.response.status}
+          Data: ${JSON.stringify(error.response.data, null, 2)}
+          Headers: ${JSON.stringify(error.response.headers, null, 2)}
+        `);
+      }
+
+      this.logger.error(`❌ Failed to publish post ${post._id} to ${pageName}: ${error.message}`);
 
       await post.markAsFailed(error.message, {
         httpStatus: error.response?.status,
@@ -167,6 +185,8 @@ export class FacebookPublishingService {
 
       this.eventEmitter.emit('generator-pro.facebook.publish_failed', {
         postId: post._id,
+        pageId,
+        pageName,
         error: error.message,
         timestamp: new Date(),
       });
@@ -211,8 +231,18 @@ export class FacebookPublishingService {
     this.logger.log(`🎯 Optimizing content for Facebook: ${content._id}`);
 
     try {
-      // Obtener contenido base
-      const baseContent = content.generatedContent || content.generatedTitle;
+      // ✅ FIX: Obtener contenido base (soporta tanto PublishedNoticia como AIContentGeneration)
+      const baseContent =
+        content.content ||             // ✅ PublishedNoticia
+        content.generatedContent ||    // ✅ AIContentGeneration
+        content.title ||               // ✅ PublishedNoticia fallback
+        content.generatedTitle ||      // ✅ AIContentGeneration fallback
+        '';
+
+      if (!baseContent) {
+        this.logger.warn(`⚠️ No content found for optimization: ${content._id}`);
+        return 'Sin contenido disponible';
+      }
 
       // Generar optimización completa
       const optimization = await this.optimizeForFacebook(baseContent);
@@ -231,8 +261,8 @@ export class FacebookPublishingService {
     } catch (error) {
       this.logger.error(`❌ Failed to optimize content ${content._id}: ${error.message}`);
 
-      // Fallback: retornar contenido original
-      return content.generatedContent || content.generatedTitle || 'Sin contenido disponible';
+      // ✅ FIX: Fallback con campos correctos
+      return content.content || content.generatedContent || content.title || content.generatedTitle || 'Sin contenido disponible';
     }
   }
 
@@ -475,21 +505,8 @@ export class FacebookPublishingService {
     }
   }
 
-  private async updateDailyPostCounter(facebookConfigId: Types.ObjectId): Promise<void> {
-    const config = await this.facebookConfigModel.findById(facebookConfigId);
-    if (config) {
-      await config.resetDailyCounter(); // Método del schema
-      config.postsToday += 1;
-      config.lastPublishedAt = new Date();
-      await config.save();
-    }
-  }
-
-  private estimateImpressions(config: FacebookPublishingConfigDocument): number {
-    // Estimación básica basada en followers (simulado)
-    const baseFollowers = config.connectionStatus?.pageInfo?.followers || 1000;
-    return Math.floor(baseFollowers * 0.1); // ~10% reach estimado
-  }
+  // ❌ REMOVIDO: updateDailyPostCounter() - Ya no usamos FacebookPublishingConfig
+  // ❌ REMOVIDO: estimateImpressions() - Ya no usamos FacebookPublishingConfig
 
   private generateFirstComment(post: FacebookPostDocument): string | undefined {
     // Generar primer comentario si está configurado

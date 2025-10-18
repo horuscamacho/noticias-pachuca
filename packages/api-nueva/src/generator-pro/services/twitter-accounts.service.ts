@@ -59,9 +59,10 @@ export class TwitterAccountsService {
         account.platform === 'twitter' && account.isActive
       );
 
-      // Mapear cuentas de Twitter al formato DTO
+      // ✅ FIX: Cada account YA representa una cuenta específica de Twitter conectada
+      // El account._id es el ID que necesitamos para publicar (ObjectId de MongoDB)
       const accounts: TwitterAccountDto[] = twitterAccounts.map((account: any) => ({
-        id: account._id || account.accountId,
+        id: account._id, // ✅ FIX: Usar solo account._id de GetLate (ObjectId MongoDB)
         username: account.username?.replace('@', '') || 'unknown', // Remover @ si existe
         displayName: account.displayName || account.name || account.username || 'Unknown',
         profilePicture: account.profilePicture || '',

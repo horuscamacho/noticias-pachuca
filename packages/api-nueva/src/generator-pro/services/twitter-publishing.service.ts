@@ -4,7 +4,7 @@ import { Model, Types } from 'mongoose';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import axios from 'axios';
 
-import { TwitterPublishingConfig, TwitterPublishingConfigDocument } from '../schemas/twitter-publishing-config.schema';
+// ❌ REMOVIDO: TwitterPublishingConfig - No existe en BD
 import { TwitterPost, TwitterPostDocument } from '../schemas/twitter-post.schema';
 
 /**
@@ -55,39 +55,41 @@ interface MediaUploadResult {
 @Injectable()
 export class TwitterPublishingService {
   private readonly logger = new Logger(TwitterPublishingService.name);
-  private readonly getLateBaseUrl = 'https://api.getlate.dev/v1';
+  private readonly getLateBaseUrl = 'https://getlate.dev/api/v1'; // ✅ FIX: URL correcta de GetLate API
   private readonly MAX_TWEET_LENGTH = 280;
   private readonly RECOMMENDED_TWEET_LENGTH = 240; // Óptimo para engagement
   private readonly MAX_EMOJIS = 2;
   private readonly MAX_HASHTAGS = 3;
 
   constructor(
-    @InjectModel(TwitterPublishingConfig.name)
-    private readonly twitterConfigModel: Model<TwitterPublishingConfigDocument>,
+    // ❌ REMOVIDO: twitterConfigModel - No existe en BD
     @InjectModel(TwitterPost.name)
     private readonly twitterPostModel: Model<TwitterPostDocument>,
     private readonly eventEmitter: EventEmitter2,
   ) {
-    this.logger.log('🐦 Twitter Publishing Service initialized');
+    this.logger.log('🐦 Twitter Publishing Service initialized (✅ Refactored)');
   }
 
   /**
    * 🐦 PUBLICAR TWEET VIA GETLATE
+   *
+   * ✅ REFACTORIZADO: Recibe accountId, username y apiKey directamente
+   * ❌ ANTERIOR: Buscaba TwitterPublishingConfig (que no existe)
+   *
+   * @param tweet - TwitterPost document
+   * @param accountId - ID de la cuenta de Twitter en GetLate
+   * @param username - Username de Twitter (@noticiaspachuca)
+   * @param getLateApiKey - API Key de GetLate
    */
-  async publishTweet(tweet: TwitterPostDocument): Promise<PublishResult> {
-    this.logger.log(`🐦 Publishing tweet to Twitter: ${tweet._id}`);
+  async publishTweet(
+    tweet: TwitterPostDocument,
+    accountId: string,
+    username: string,
+    getLateApiKey: string
+  ): Promise<PublishResult> {
+    this.logger.log(`🐦 Publishing tweet to Twitter account ${username}: ${tweet._id}`);
 
     try {
-      const twitterConfig = await this.twitterConfigModel.findById(tweet.twitterConfigId);
-      if (!twitterConfig) {
-        throw new Error(`Twitter config ${tweet.twitterConfigId} not found`);
-      }
-
-      // Verificar límites diarios
-      if (!twitterConfig.canPublishToday) {
-        throw new Error('Daily tweet limit reached');
-      }
-
       // Validar longitud del tweet
       if (tweet.tweetContent.length > this.MAX_TWEET_LENGTH) {
         throw new Error(`Tweet exceeds ${this.MAX_TWEET_LENGTH} characters`);
@@ -96,9 +98,11 @@ export class TwitterPublishingService {
       // Preparar datos del tweet para GetLate API
       const postData = {
         content: tweet.tweetContent,
+        scheduledFor: tweet.scheduledAt.toISOString(),  // ✅ FIX: scheduledFor (no scheduledDate)
+        timezone: "UTC",                                 // ✅ FIX: timezone requerido por GetLate API
         platforms: [{
           platform: 'twitter',
-          accountId: twitterConfig.twitterAccountId,
+          accountId: accountId, // ✅ NUEVO: Usar accountId directamente
         }],
         ...(tweet.mediaUrls.length > 0 && {
           mediaItems: tweet.mediaUrls.map(url => ({
@@ -106,8 +110,15 @@ export class TwitterPublishingService {
             url: url,
           }))
         }),
-        scheduledDate: tweet.scheduledAt.toISOString(),
       };
+
+      // 🔍 DIAGNÓSTICO: Loguear REQUEST completo que enviamos a GetLate
+      this.logger.debug(`🔍 GetLate API REQUEST:
+        URL: ${this.getLateBaseUrl}/posts
+        Method: POST
+        Body: ${JSON.stringify(postData, null, 2)}
+        API Key: ${getLateApiKey.substring(0, 10)}...
+      `);
 
       // Realizar petición a GetLate API
       const response = await axios.post(
@@ -115,7 +126,7 @@ export class TwitterPublishingService {
         postData,
         {
           headers: {
-            'Authorization': `Bearer ${twitterConfig.getLateApiKey}`,
+            'Authorization': `Bearer ${getLateApiKey}`, // ✅ NUEVO: Usar apiKey directamente
             'Content-Type': 'application/json',
           },
           timeout: 30000,
@@ -137,9 +148,6 @@ export class TwitterPublishingService {
         twitterResult.platformPostUrl
       );
 
-      // Actualizar contador diario de Twitter config
-      await this.updateDailyTweetCounter(twitterConfig._id as Types.ObjectId);
-
       const publishResult: PublishResult = {
         success: true,
         tweetId: twitterResult.platformPostId,
@@ -147,23 +155,33 @@ export class TwitterPublishingService {
         getLateTweetUrl: result.postUrl,
         engagement: {
           initialImpressions: 0, // Se actualizará después con sync
-          estimatedEngagement: this.estimateEngagement(twitterConfig),
+          estimatedEngagement: 500, // ✅ NUEVO: Estimación fija (sin config)
         }
       };
 
       this.eventEmitter.emit('generator-pro.twitter.published', {
         tweetId: tweet._id,
         platformTweetId: twitterResult.platformPostId,
-        configId: twitterConfig._id,
+        accountId, // ✅ NUEVO: Emitir accountId en lugar de configId
+        username, // ✅ NUEVO: Emitir username
         timestamp: new Date(),
       });
 
-      this.logger.log(`✅ Tweet published successfully: ${tweet._id}`);
+      this.logger.log(`✅ Tweet published successfully to ${username}: ${tweet._id}`);
 
       return publishResult;
 
     } catch (error) {
-      this.logger.error(`❌ Failed to publish tweet ${tweet._id}: ${error.message}`);
+      // 🔍 DIAGNÓSTICO: Loguear error COMPLETO de GetLate API
+      if (error.response) {
+        this.logger.error(`❌ GetLate API Error Details:
+          Status: ${error.response.status}
+          Data: ${JSON.stringify(error.response.data, null, 2)}
+          Headers: ${JSON.stringify(error.response.headers, null, 2)}
+        `);
+      }
+
+      this.logger.error(`❌ Failed to publish tweet ${tweet._id} to ${username}: ${error.message}`);
 
       await tweet.markAsFailed(error.message, {
         httpStatus: error.response?.status,
@@ -172,6 +190,8 @@ export class TwitterPublishingService {
 
       this.eventEmitter.emit('generator-pro.twitter.publish_failed', {
         tweetId: tweet._id,
+        accountId,
+        username,
         error: error.message,
         timestamp: new Date(),
       });
@@ -216,8 +236,18 @@ export class TwitterPublishingService {
     this.logger.log(`🎯 Optimizing content for Twitter: ${content._id}`);
 
     try {
-      // Obtener contenido base
-      const baseContent = content.generatedContent || content.generatedTitle;
+      // ✅ FIX: Obtener contenido base (soporta tanto PublishedNoticia como AIContentGeneration)
+      const baseContent =
+        content.content ||             // ✅ PublishedNoticia
+        content.generatedContent ||    // ✅ AIContentGeneration
+        content.title ||               // ✅ PublishedNoticia fallback
+        content.generatedTitle ||      // ✅ AIContentGeneration fallback
+        '';
+
+      if (!baseContent) {
+        this.logger.warn(`⚠️ No content found for optimization: ${content._id}`);
+        return 'Sin contenido disponible';
+      }
 
       // Generar optimización completa
       const optimization = await this.optimizeForTwitter(baseContent);
@@ -236,8 +266,8 @@ export class TwitterPublishingService {
     } catch (error) {
       this.logger.error(`❌ Failed to optimize content ${content._id}: ${error.message}`);
 
-      // Fallback: retornar contenido truncado
-      const fallback = content.generatedContent || content.generatedTitle || 'Sin contenido disponible';
+      // ✅ FIX: Fallback con campos correctos
+      const fallback = content.content || content.generatedContent || content.title || content.generatedTitle || 'Sin contenido disponible';
       return this.truncateToTwitterLength(fallback);
     }
   }
@@ -489,21 +519,8 @@ export class TwitterPublishingService {
     }
   }
 
-  private async updateDailyTweetCounter(twitterConfigId: Types.ObjectId): Promise<void> {
-    const config = await this.twitterConfigModel.findById(twitterConfigId);
-    if (config) {
-      await config.resetDailyCounter(); // Método del schema
-      config.tweetsToday += 1;
-      config.lastPublishedAt = new Date();
-      await config.save();
-    }
-  }
-
-  private estimateEngagement(config: TwitterPublishingConfigDocument): number {
-    // Estimación básica basada en followers (simulado)
-    const baseFollowers = config.connectionStatus?.accountInfo?.followers || 500;
-    return Math.floor(baseFollowers * 0.05); // ~5% engagement estimado
-  }
+  // ❌ REMOVIDO: updateDailyTweetCounter() - Ya no usamos TwitterPublishingConfig
+  // ❌ REMOVIDO: estimateEngagement() - Ya no usamos TwitterPublishingConfig
 
   private buildOptimizedTweet(content: string, emojis: string[], hashtags: string[]): string {
     const emojiString = emojis.length > 0 ? emojis.join(' ') + ' ' : '';

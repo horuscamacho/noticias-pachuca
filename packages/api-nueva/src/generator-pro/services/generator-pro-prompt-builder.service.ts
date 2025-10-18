@@ -234,6 +234,35 @@ ${styleNote}
 - Enriquece el texto con contexto, antecedentes y consecuencias.
 - Varía ritmo, longitud y tono de párrafos naturalmente.
 
+🏷️ CATEGORIZACIÓN - ¡MUY IMPORTANTE!:
+- La categoría DEBE ser EXACTAMENTE UNA de estas 8 opciones:
+  ✅ Política
+  ✅ Deportes
+  ✅ Cultura
+  ✅ Economía
+  ✅ Seguridad
+  ✅ Salud
+  ✅ Educación
+  ✅ Tecnología
+
+- 🚫 PROHIBIDO usar estas categorías genéricas:
+  ❌ "Noticias"
+  ❌ "General"
+  ❌ "Actualidad"
+  ❌ "Información"
+  ❌ "Municipios"
+  ❌ "Local"
+
+- EJEMPLOS DE CLASIFICACIÓN CORRECTA:
+  • Exalcalde condenado por corrupción → "Política" o "Seguridad"
+  • Brigadas médicas del IMSS → "Salud"
+  • Tormenta afecta municipio → "Seguridad"
+  • Inauguración de museo → "Cultura"
+  • Inversión empresarial → "Economía"
+  • Torneo de fútbol → "Deportes"
+  • Nueva universidad → "Educación"
+  • Aplicación móvil → "Tecnología"
+
 🧠 DETALLES:
 - Usa HTML (<p>, <strong>, <em>, <blockquote>, <ul>/<ol>) de forma orgánica.
 - <blockquote> solo para citas reales de personas.
@@ -246,9 +275,9 @@ ${styleNote}
 {
   "title": "Nuevo título creativo y original para este artículo",
   "content": "Artículo completo en HTML con redacción fluida, enriquecida y 100% original.",
-  "keywords": ["Palabras clave relevantes"],
-  "tags": ["Etiquetas contextuales"],
-  "category": "Categoría más apropiada",
+  "keywords": ["Palabras clave relevantes (3-5 keywords)"],
+  "tags": ["Etiquetas contextuales (4-6 tags)"],
+  "category": "OBLIGATORIO: Política | Deportes | Cultura | Economía | Seguridad | Salud | Educación | Tecnología",
   "summary": "Resumen conciso en 3-4 líneas",
   "socialMediaCopies": {
     "facebook": {

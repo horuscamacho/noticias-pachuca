@@ -34,7 +34,7 @@ import {
 @Injectable()
 export class GetLateAnalyticsSyncService {
   private readonly logger = new Logger(GetLateAnalyticsSyncService.name);
-  private readonly GETLATE_API_BASE = 'https://api.getlate.dev/v1';
+  private readonly GETLATE_API_BASE = 'https://getlate.dev/api/v1'; // ✅ FIX: URL correcta de GetLate API
 
   constructor(
     @InjectModel(ScheduledPost.name)

@@ -7,7 +7,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { GeneratorProJob, GeneratorProJobDocument } from '../schemas/generator-pro-job.schema';
 import { FacebookPublishingConfig, FacebookPublishingConfigDocument } from '../schemas/facebook-publishing-config.schema';
-import { FacebookPost, FacebookPostDocument } from '../schemas/facebook-post.schema';
+import { GeneratorProFacebookPost, FacebookPost, FacebookPostDocument } from '../schemas/facebook-post.schema'; // ✅ FIX: Importar clase real
 import { AIContentGeneration, AIContentGenerationDocument } from '../../content-ai/schemas/ai-content-generation.schema';
 import { ExtractedNoticia, ExtractedNoticiaDocument } from '../../noticias/schemas/extracted-noticia.schema';
 import { FacebookPublishingService } from '../services/facebook-publishing.service';
@@ -53,7 +53,7 @@ export class PublishingProcessor {
     private readonly jobModel: Model<GeneratorProJobDocument>,
     @InjectModel(FacebookPublishingConfig.name)
     private readonly facebookConfigModel: Model<FacebookPublishingConfigDocument>,
-    @InjectModel(FacebookPost.name)
+    @InjectModel(GeneratorProFacebookPost.name) // ✅ FIX: Usar clase real, no type alias
     private readonly facebookPostModel: Model<FacebookPostDocument>,
     @InjectModel(AIContentGeneration.name)
     private readonly aiContentGenerationModel: Model<AIContentGenerationDocument>,
@@ -178,7 +178,13 @@ export class PublishingProcessor {
 
       // Publicar en Facebook usando GetLate
       this.logger.log(`Publishing to Facebook: ${facebookConfig.facebookPageName}`);
-      const publishResult = await this.facebookService.publishPost(existingPost);
+      // ✅ REFACTORIZADO: Pasar pageId, pageName y apiKey explícitamente
+      const publishResult = await this.facebookService.publishPost(
+        existingPost,
+        facebookConfig.facebookPageId,
+        facebookConfig.facebookPageName,
+        facebookConfig.getLateApiKey
+      );
 
       job.progress(90);
 

@@ -1150,6 +1150,37 @@ RESPONDE ÚNICAMENTE CON EL JSON VÁLIDO. NO INCLUYAS EXPLICACIONES.`;
         throw new Error('Category debe ser un string no vacío');
       }
 
+      // ✅ VALIDACIÓN ESTRICTA DE CATEGORÍAS
+      const ALLOWED_CATEGORIES = [
+        'Política',
+        'Deportes',
+        'Cultura',
+        'Economía',
+        'Seguridad',
+        'Salud',
+        'Educación',
+        'Tecnología'
+      ];
+
+      const categoryNormalized = parsed.category.trim();
+
+      if (!ALLOWED_CATEGORIES.includes(categoryNormalized)) {
+        // Intentar encontrar coincidencia case-insensitive
+        const matchedCategory = ALLOWED_CATEGORIES.find(
+          cat => cat.toLowerCase() === categoryNormalized.toLowerCase()
+        );
+
+        if (matchedCategory) {
+          // Corregir capitalización
+          parsed.category = matchedCategory;
+          this.logger.warn(`⚠️ Categoría corregida de "${categoryNormalized}" a "${matchedCategory}"`);
+        } else {
+          throw new Error(
+            `Categoría inválida: "${categoryNormalized}". Solo se permiten: ${ALLOWED_CATEGORIES.join(', ')}`
+          );
+        }
+      }
+
       if (typeof parsed.summary !== 'string' || parsed.summary.trim().length === 0) {
         throw new Error('Summary debe ser un string no vacío');
       }
