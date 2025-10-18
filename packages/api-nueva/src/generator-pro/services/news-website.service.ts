@@ -88,7 +88,13 @@ export class NewsWebsiteService {
       // Obtener HTML del listado de noticias
       const response = await axios.get(config.listingUrl, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; GeneratorPro/1.0)',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'es-MX,es;q=0.9,en;q=0.8',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Connection': 'keep-alive',
+          'Upgrade-Insecure-Requests': '1',
+          'Cache-Control': 'max-age=0',
           ...config.customHeaders,
         },
         timeout: config.extractionSettings?.timeout || 30000,
@@ -209,7 +215,13 @@ export class NewsWebsiteService {
       // Obtener HTML de la noticia
       const response = await axios.get(url, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; GeneratorPro/1.0)',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'es-MX,es;q=0.9,en;q=0.8',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Connection': 'keep-alive',
+          'Upgrade-Insecure-Requests': '1',
+          'Cache-Control': 'max-age=0',
           ...config.customHeaders,
         },
         timeout: config.extractionSettings?.timeout || 30000,
@@ -465,7 +477,13 @@ export class NewsWebsiteService {
       // Obtener HTML del listado de noticias
       const response = await axios.get(dto.listingUrl, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; GeneratorPro/1.0)',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'es-MX,es;q=0.9,en;q=0.8',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Connection': 'keep-alive',
+          'Upgrade-Insecure-Requests': '1',
+          'Cache-Control': 'max-age=0',
         },
         timeout: 30000,
       });
@@ -572,7 +590,13 @@ export class NewsWebsiteService {
       // Obtener HTML de la noticia
       const response = await axios.get(dto.testUrl, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; GeneratorPro/1.0)',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'es-MX,es;q=0.9,en;q=0.8',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Connection': 'keep-alive',
+          'Upgrade-Insecure-Requests': '1',
+          'Cache-Control': 'max-age=0',
         },
         timeout: 30000,
       });

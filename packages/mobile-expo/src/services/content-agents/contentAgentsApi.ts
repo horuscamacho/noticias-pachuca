@@ -3,7 +3,10 @@ import { ContentAgentMapper } from '@/src/utils/mappers';
 import type {
   ContentAgent,
   AgentFilters,
-  ContentAgentListResponse
+  ContentAgentListResponse,
+  CreateContentAgentRequest,
+  UpdateContentAgentRequest,
+  ContentAgentResponse
 } from '@/src/types/content-agent.types';
 
 /**
@@ -66,6 +69,61 @@ export const contentAgentsApi = {
           return null;
         }
       }
+      throw error;
+    }
+  },
+
+  /**
+   * Crear un nuevo agente
+   * POST /generator-pro/agents
+   */
+  createAgent: async (data: CreateContentAgentRequest): Promise<ContentAgent> => {
+    try {
+      const rawClient = ApiClient.getRawClient();
+
+      const response = await rawClient.post<ContentAgentResponse>(
+        '/generator-pro/agents',
+        data
+      );
+
+      return ContentAgentMapper.toApp(response.data.agent as unknown as Record<string, unknown>);
+    } catch (error) {
+      console.error('Error creating content agent:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Actualizar un agente existente
+   * PUT /generator-pro/agents/:id
+   */
+  updateAgent: async (id: string, data: UpdateContentAgentRequest): Promise<ContentAgent> => {
+    try {
+      const rawClient = ApiClient.getRawClient();
+
+      const response = await rawClient.put<ContentAgentResponse>(
+        `/generator-pro/agents/${id}`,
+        data
+      );
+
+      return ContentAgentMapper.toApp(response.data.agent as unknown as Record<string, unknown>);
+    } catch (error) {
+      console.error(`Error updating agent ${id}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Eliminar un agente
+   * DELETE /generator-pro/agents/:id
+   */
+  deleteAgent: async (id: string): Promise<void> => {
+    try {
+      const rawClient = ApiClient.getRawClient();
+
+      await rawClient.delete(`/generator-pro/agents/${id}`);
+    } catch (error) {
+      console.error(`Error deleting agent ${id}:`, error);
       throw error;
     }
   }

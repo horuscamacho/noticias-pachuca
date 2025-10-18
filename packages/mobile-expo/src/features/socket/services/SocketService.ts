@@ -8,7 +8,7 @@ import { ENV } from '@/src/config/env'
 
 export class SocketService {
   private static instance: SocketService | null = null
-  private socket: Socket | null = null
+  private _socket: Socket | null = null
   private queryClient: QueryClient
   private connectionPromise: Promise<void> | null = null
 
@@ -51,7 +51,7 @@ export class SocketService {
       console.log('🔌 Connecting to socket URL:', socketUrl)
       console.log('🔌 Using token:', token ? `${token.substring(0, 20)}...` : 'null')
 
-      this.socket = io(socketUrl, {
+      this._socket = io(socketUrl, {
         auth: { token },
         extraHeaders: {
           'authorization': `Bearer ${token}`,
@@ -69,19 +69,19 @@ export class SocketService {
 
       // Conectar y esperar evento 'connect'
       return new Promise((resolve, reject) => {
-        this.socket!.once('connect', () => {
+        this._socket!.once('connect', () => {
           console.log('🔌 Socket connected successfully!')
           this.updateConnectionState('connected')
           resolve()
         })
 
-        this.socket!.once('connect_error', (error) => {
+        this._socket!.once('connect_error', (error) => {
           console.log('🔌 Socket connection error:', error)
           this.updateConnectionState('error')
           reject(SocketErrorMapper.toSocketError(error))
         })
 
-        this.socket!.connect()
+        this._socket!.connect()
         this.updateConnectionState('connecting')
         console.log('🔌 Socket connection initiated')
       })
@@ -92,22 +92,22 @@ export class SocketService {
   }
 
   private setupEventHandlers(): void {
-    if (!this.socket) return
+    if (!this._socket) return
 
     // Connection events
-    this.socket.on('connect', () => this.updateConnectionState('connected'))
-    this.socket.on('disconnect', () => this.updateConnectionState('disconnected'))
-    this.socket.on('connect_error', (error) => {
+    this._socket.on('connect', () => this.updateConnectionState('connected'))
+    this._socket.on('disconnect', () => this.updateConnectionState('disconnected'))
+    this._socket.on('connect_error', (error) => {
       this.updateConnectionState('error')
       console.error('Socket connection error:', error)
     })
 
     // Backend specific events
-    this.socket.on('notification', (data: SocketAPI.SocketMessage) => {
+    this._socket.on('notification', (data: SocketAPI.SocketMessage) => {
       this.handleNotification(data)
     })
 
-    this.socket.on('message', (data: SocketAPI.SocketMessage) => {
+    this._socket.on('message', (data: SocketAPI.SocketMessage) => {
       this.handleMessage(data)
     })
   }
@@ -152,17 +152,17 @@ export class SocketService {
 
   // Public methods
   emit<K extends keyof SocketEventMap>(event: K, data: SocketEventMap[K]): boolean {
-    if (this.socket?.connected) {
-      this.socket.emit(event as string, data)
+    if (this._socket?.connected) {
+      this._socket.emit(event as string, data)
       return true
     }
     return false
   }
 
   disconnect(): void {
-    if (this.socket) {
-      this.socket.disconnect()
-      this.socket = null
+    if (this._socket) {
+      this._socket.disconnect()
+      this._socket = null
     }
     this.updateConnectionState('disconnected')
   }
@@ -190,13 +190,21 @@ export class SocketService {
 
   // Getters
   get isConnected(): boolean {
-    return this.socket?.connected || false
+    return this._socket?.connected || false
   }
 
   get connectionState(): SocketApp.ConnectionState {
-    if (!this.socket) return 'disconnected'
-    if (this.socket.connected) return 'connected'
-    if (this.socket.connecting) return 'connecting'
+    if (!this._socket) return 'disconnected'
+    if (this._socket.connected) return 'connected'
+    if (this._socket.connecting) return 'connecting'
     return 'disconnected'
+  }
+
+  /**
+   * Get socket instance for registering custom listeners
+   * Used by hooks like useImageGenerationSocket
+   */
+  get socket(): Socket | null {
+    return this._socket
   }
 }

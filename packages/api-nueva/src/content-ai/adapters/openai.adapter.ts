@@ -27,7 +27,7 @@ export class OpenAIAdapter implements IAIProviderAdapter, IMCPAdapter {
   // Configuración
   private apiKey: string;
   private baseUrl: string = 'https://api.openai.com/v1';
-  private model: string = 'gpt-4o';
+  private model: string = 'gpt-5-nano'; // ⭐ Cambiado a GPT-5 nano (más barato con conocimiento 2025)
   private defaultParams: Partial<AIProviderRequest> = {};
 
   // Métricas
@@ -45,6 +45,9 @@ export class OpenAIAdapter implements IAIProviderAdapter, IMCPAdapter {
 
   readonly providerName = 'OpenAI';
   readonly supportedModels = [
+    'gpt-5',           // ⭐ GPT-5 (nuevo)
+    'gpt-5-mini',      // ⭐ GPT-5 mini (nuevo)
+    'gpt-5-nano',      // ⭐ GPT-5 nano (nuevo, default)
     'gpt-4o',
     'gpt-4o-mini',
     'gpt-4-turbo',
@@ -93,8 +96,39 @@ export class OpenAIAdapter implements IAIProviderAdapter, IMCPAdapter {
 
       this.updateMetrics(data.usage, responseTime, 0);
 
+      // 🐛 DEBUG: Log the response structure for GPT-5 models
+      if (this.model.includes('gpt-5')) {
+        this.logger.debug(`GPT-5 Response Structure: ${JSON.stringify({
+          model: data.model,
+          choices: data.choices?.map((c: any) => ({
+            index: c.index,
+            finish_reason: c.finish_reason,
+            message: {
+              role: c.message?.role,
+              content: c.message?.content ? `[${c.message.content.length} chars]` : 'NULL',
+              refusal: c.message?.refusal || 'N/A',
+            }
+          })),
+          usage: data.usage
+        }, null, 2)}`);
+      }
+
+      // Check for refusal or empty content
+      const messageContent = data.choices[0].message.content;
+      const refusal = data.choices[0].message.refusal;
+
+      if (refusal) {
+        this.logger.warn(`Model refused to generate content: ${refusal}`);
+        throw new Error(`Model refused: ${refusal}`);
+      }
+
+      if (!messageContent || messageContent.trim() === '') {
+        this.logger.error(`Empty content received from model. Full response: ${JSON.stringify(data)}`);
+        throw new Error('Empty content received from AI model');
+      }
+
       return {
-        content: data.choices[0].message.content,
+        content: messageContent,
         finishReason: this.mapFinishReason(data.choices[0].finish_reason),
         usage: {
           promptTokens: data.usage.prompt_tokens,
@@ -267,14 +301,15 @@ export class OpenAIAdapter implements IAIProviderAdapter, IMCPAdapter {
       supportsBatching: true,
       supportsTools: true,
       supportsFunctionCalling: true,
-      supportsVision: this.model.includes('gpt-4'),
+      supportsVision: this.model.includes('gpt-5') || this.model.includes('gpt-4'), // ⭐ GPT-5 también tiene visión
       costPerInputToken: this.getModelCostPerToken(this.model, 'input'),
       costPerOutputToken: this.getModelCostPerToken(this.model, 'output'),
       rateLimits: {
-        requestsPerMinute: this.model.includes('gpt-4') ? 500 : 3500,
-        requestsPerHour: this.model.includes('gpt-4') ? 10000 : 50000,
-        tokensPerMinute: this.model.includes('gpt-4') ? 30000 : 90000,
-        tokensPerDay: this.model.includes('gpt-4') ? 1000000 : 2000000,
+        // ⭐ GPT-5 tiene mejores límites que GPT-4
+        requestsPerMinute: (this.model.includes('gpt-5') || this.model.includes('gpt-4')) ? 500 : 3500,
+        requestsPerHour: (this.model.includes('gpt-5') || this.model.includes('gpt-4')) ? 10000 : 50000,
+        tokensPerMinute: (this.model.includes('gpt-5') || this.model.includes('gpt-4')) ? 30000 : 90000,
+        tokensPerDay: (this.model.includes('gpt-5') || this.model.includes('gpt-4')) ? 1000000 : 2000000,
       },
     };
   }
@@ -358,17 +393,47 @@ export class OpenAIAdapter implements IAIProviderAdapter, IMCPAdapter {
       content: mergedRequest.userPrompt,
     });
 
-    return {
+    // ⚠️ GPT-5 models use 'max_completion_tokens' instead of 'max_tokens'
+    const isGPT5Model = this.model.includes('gpt-5');
+    const maxTokensParam = isGPT5Model ? 'max_completion_tokens' : 'max_tokens';
+
+    const payload: Record<string, unknown> = {
       model: this.model,
       messages,
-      max_tokens: mergedRequest.maxTokens,
-      temperature: mergedRequest.temperature,
-      top_p: mergedRequest.topP,
-      frequency_penalty: mergedRequest.frequencyPenalty,
-      presence_penalty: mergedRequest.presencePenalty,
-      stop: mergedRequest.stopSequences,
+      [maxTokensParam]: mergedRequest.maxTokens,
       stream: mergedRequest.stream || false,
     };
+
+    // ⚠️ GPT-5 models have limited parameter support
+    // They ONLY support: model, messages, max_completion_tokens, stream, stop
+    // They do NOT support: temperature, top_p, frequency_penalty, presence_penalty
+    if (!isGPT5Model) {
+      // For GPT-4 and earlier models, include all standard parameters
+      if (mergedRequest.temperature !== undefined) {
+        payload.temperature = mergedRequest.temperature;
+      }
+      if (mergedRequest.topP !== undefined) {
+        payload.top_p = mergedRequest.topP;
+      }
+      if (mergedRequest.frequencyPenalty !== undefined) {
+        payload.frequency_penalty = mergedRequest.frequencyPenalty;
+      }
+      if (mergedRequest.presencePenalty !== undefined) {
+        payload.presence_penalty = mergedRequest.presencePenalty;
+      }
+    } else {
+      // ⚠️ GPT-5 models support reasoning_effort parameter
+      // Use "minimal" to reduce reasoning tokens and get faster visible output
+      // Options: minimal, low, medium, high
+      payload.reasoning_effort = 'low'; // Balance between speed and quality
+    }
+
+    // Stop sequences are supported by all models
+    if (mergedRequest.stopSequences !== undefined) {
+      payload.stop = mergedRequest.stopSequences;
+    }
+
+    return payload;
   }
 
   async getMetrics(): Promise<{
@@ -628,6 +693,9 @@ export class OpenAIAdapter implements IAIProviderAdapter, IMCPAdapter {
 
   private getModelMaxTokens(model: string): number {
     const limits: Record<string, number> = {
+      'gpt-5': 200000,        // ⭐ GPT-5 (200K context)
+      'gpt-5-mini': 200000,   // ⭐ GPT-5 mini (200K context)
+      'gpt-5-nano': 128000,   // ⭐ GPT-5 nano (128K context)
       'gpt-4o': 128000,
       'gpt-4o-mini': 128000,
       'gpt-4-turbo': 128000,
@@ -640,18 +708,30 @@ export class OpenAIAdapter implements IAIProviderAdapter, IMCPAdapter {
   }
 
   private getModelCostPerToken(model: string, type: 'input' | 'output'): number {
-    // Precios en USD por 1M tokens (actualizar según precios reales)
+    // Precios en USD por 1M tokens (actualizados Octubre 2025)
     const costs: Record<string, { input: number; output: number }> = {
-      'gpt-4o': { input: 2.50, output: 10.00 },
+      // ⭐ GPT-5 Series (Nuevo - Agosto 2025)
+      'gpt-5': { input: 1.25, output: 10.00 },        // GPT-5 completo
+      'gpt-5-mini': { input: 0.25, output: 2.00 },    // GPT-5 mini (balance)
+      'gpt-5-nano': { input: 0.05, output: 0.40 },    // ⭐ GPT-5 nano (más barato, default)
+
+      // GPT-4o Series
+      'gpt-4o': { input: 5.00, output: 15.00 },
       'gpt-4o-mini': { input: 0.15, output: 0.60 },
+
+      // GPT-4 Series (legacy)
       'gpt-4-turbo': { input: 10.00, output: 30.00 },
       'gpt-4': { input: 30.00, output: 60.00 },
+
+      // GPT-3.5 Series (legacy)
       'gpt-3.5-turbo': { input: 0.50, output: 1.50 },
+
+      // o1 Series (reasoning models)
       'o1-preview': { input: 15.00, output: 60.00 },
       'o1-mini': { input: 3.00, output: 12.00 },
     };
 
-    const modelCosts = costs[model] || costs['gpt-3.5-turbo'];
+    const modelCosts = costs[model] || costs['gpt-5-nano']; // Default a GPT-5 nano si no se encuentra
     return (modelCosts[type] / 1000000); // Convert to per-token cost
   }
 

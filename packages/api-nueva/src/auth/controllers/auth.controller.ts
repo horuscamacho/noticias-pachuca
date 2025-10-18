@@ -101,7 +101,32 @@ export class AuthController {
     @Body() refreshTokenDto: RefreshTokenDto,
     @Req() request: AuthRequest,
   ) {
-    return this.authService.refreshToken(refreshTokenDto, request);
+    const tokenPreview = refreshTokenDto.refresh_token
+      ? refreshTokenDto.refresh_token.substring(0, 30) + '...'
+      : 'undefined';
+
+    console.log('🎯 [AuthController] POST /auth/refresh - Request received:', {
+      hasRefreshToken: !!refreshTokenDto.refresh_token,
+      tokenPreview,
+      headers: {
+        deviceId: request.headers['x-device-id'],
+        platform: request.headers['x-platform'],
+        userAgent: request.headers['user-agent'],
+      },
+    });
+
+    try {
+      const result = await this.authService.refreshToken(refreshTokenDto, request);
+      console.log('✅ [AuthController] Refresh successful');
+      return result;
+    } catch (error) {
+      console.error('❌ [AuthController] Refresh failed:', {
+        error: error.message,
+        stack: error.stack?.split('\n')[0],
+        tokenPreview,
+      });
+      throw error;
+    }
   }
 
   @Post('logout')

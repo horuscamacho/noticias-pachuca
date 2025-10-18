@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, Logger, NotFoundException, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
@@ -13,10 +13,12 @@ import { ExtractedNoticia } from '../../noticias/schemas/extracted-noticia.schem
 import { ContentAgent } from '../../generator-pro/schemas/content-agent.schema';
 import { ImageProcessorService, ProcessedImage } from './image-processor.service';
 import { SlugGeneratorService } from './slug-generator.service';
+import { SiteDetectionService } from './site-detection.service';
 import { PublishNoticiaDto } from '../dto/publish-noticia.dto';
 import { UpdateNoticiaDto } from '../dto/update-noticia.dto';
 import { QueryNoticiasDto } from '../dto/query-noticias.dto';
 import { AppConfigService } from '../../config/config.service';
+import { SocialMediaPublishingService } from '../../generator-pro/services/social-media-publishing.service'; // 📱 FASE 12
 
 @Injectable()
 export class PublishService {
@@ -29,13 +31,16 @@ export class PublishService {
     private aiContentModel: Model<AIContentGenerationDocument>,
     private readonly imageProcessor: ImageProcessorService,
     private readonly slugGenerator: SlugGeneratorService,
+    private readonly siteDetectionService: SiteDetectionService,
     private readonly eventEmitter: EventEmitter2,
     private readonly configService: AppConfigService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private readonly socialMediaPublishingService: SocialMediaPublishingService, // 📱 FASE 12: Social Media Integration
   ) {}
 
   /**
    * Publica una noticia desde el contenido generado por IA
+   * 🌐 FASE 4: Soporte multi-sitio
    * @param dto - DTO con los datos para publicar
    * @returns Noticia publicada completa
    */
@@ -43,6 +48,23 @@ export class PublishService {
     const startTime = Date.now();
 
     try {
+      // 0️⃣ 🌐 FASE 4: Determinar sitios donde publicar
+      let siteIds: string[];
+
+      if (dto.siteIds && dto.siteIds.length > 0) {
+        // Usar sitios especificados en el DTO
+        siteIds = dto.siteIds;
+        this.logger.log(`📍 Publicando en ${siteIds.length} sitio(s): ${siteIds.join(', ')}`);
+      } else {
+        // Usar sitio principal por defecto
+        const mainSite = await this.siteDetectionService.getMainSite();
+        siteIds = [mainSite.id];
+        this.logger.log(`📍 Publicando en sitio principal: ${mainSite.name} (${mainSite.id})`);
+      }
+
+      // Convertir a ObjectIds para MongoDB
+      const siteObjectIds = siteIds.map(id => new Types.ObjectId(id));
+
       // 1️⃣ Validar que no exista noticia publicada con ese contentId
       const existingPublished = await this.publishedNoticiaModel.findOne({
         contentId: dto.contentId,
@@ -70,9 +92,10 @@ export class PublishService {
         );
       }
 
-      // 3️⃣ Generar slug único
+      // 3️⃣ Generar slug único (verificando en los sitios especificados)
       const slug = await this.slugGenerator.generateUniqueSlug(
         generatedContent.generatedTitle,
+        siteIds, // 🌐 Pasar siteIds para verificación multi-sitio
       );
 
       // 4️⃣ Procesar imágenes (opcional)
@@ -128,6 +151,9 @@ export class PublishService {
         tags: generatedContent.generatedTags || [],
         keywords: generatedContent.generatedKeywords || [],
         author: (generatedContent.agentId as unknown as ContentAgent)?.name || 'Redacción',
+
+        // 🌐 FASE 4: Asignar sitios
+        sites: siteObjectIds,
 
         seo: {
           metaTitle: generatedContent.generatedTitle.substring(0, 60),
@@ -205,12 +231,88 @@ export class PublishService {
         title: publishedNoticia.title,
         category: publishedNoticia.category,
         publishedAt: publishedNoticia.publishedAt,
+        sites: siteIds, // 🌐 Incluir sitios en el evento
       });
 
-      this.logger.log(`✅ Noticia publicada: ${slug} (${processingTime}ms)`);
+      this.logger.log(
+        `✅ Noticia publicada: ${slug} en ${siteIds.length} sitio(s) (${processingTime}ms)`,
+      );
 
       // 🔟 Invalidar cache relacionado
       await this.invalidateRelatedCache(slug, publishedNoticia.category.toString());
+
+      // 1️⃣1️⃣ 📱 FASE 12: Publicar en redes sociales (opcional)
+      if (dto.publishToSocialMedia) {
+        try {
+          this.logger.log(`📱 Publicando en redes sociales: ${slug}`);
+
+          const platforms = dto.socialMediaPlatforms || ['facebook', 'twitter'];
+          const optimizeContent = dto.optimizeSocialContent !== false; // Default true
+
+          const socialMediaResult = await this.socialMediaPublishingService.publishToSocialMedia(
+            publishedNoticia,
+            siteObjectIds,
+            {
+              platforms,
+              optimizeContent,
+            },
+          );
+
+          // Actualizar PublishedNoticia con tracking de social media
+          const facebookPublishing = socialMediaResult.facebook.results.map((result) => ({
+            pageId: result.facebookPageId,
+            postId: result.postId,
+            status: result.success ? ('published' as const) : ('failed' as const),
+            engagement: {
+              likes: 0,
+              comments: 0,
+              shares: 0,
+            },
+          }));
+
+          const twitterPublishing = socialMediaResult.twitter.results.map((result) => ({
+            accountId: result.twitterAccountId,
+            tweetId: result.tweetId,
+            status: result.success ? ('published' as const) : ('failed' as const),
+            engagement: {
+              likes: 0,
+              retweets: 0,
+              replies: 0,
+            },
+          }));
+
+          publishedNoticia.socialMediaPublishing = {
+            facebook: facebookPublishing,
+            twitter: twitterPublishing,
+          };
+
+          await publishedNoticia.save();
+
+          this.logger.log(
+            `✅ Publicación en redes sociales completada: ` +
+            `${socialMediaResult.summary.totalPublished}/${socialMediaResult.summary.totalPlatforms} exitosas`,
+          );
+
+          // Emitir evento de publicación en redes sociales
+          this.eventEmitter.emit('noticia.social-media-published', {
+            noticiaId: publishedNoticia._id,
+            slug: publishedNoticia.slug,
+            result: socialMediaResult,
+            timestamp: new Date(),
+          });
+
+        } catch (error) {
+          // NO bloquear la publicación principal si falla social media
+          this.logger.error(`⚠️ Error publicando en redes sociales (no crítico): ${error.message}`);
+
+          this.eventEmitter.emit('noticia.social-media-failed', {
+            noticiaId: publishedNoticia._id,
+            slug: publishedNoticia.slug,
+            error: error.message,
+            timestamp: new Date(),
+          });
+        }
+      }
 
       return publishedNoticia;
     } catch (error) {

@@ -10,15 +10,34 @@ CRITERIOS IMPORTANTES:
 2. contentSelector: Debe capturar TODO el cuerpo del artículo, no solo un párrafo
    - Busca contenedores como .article-body, .entry-content, article .content
    - Si hay múltiples párrafos, el selector debe capturar el contenedor padre
-3. imageSelector: Imagen principal del artículo (opcional)
+3. imageSelector: Todas las imágenes del contenido del artículo (opcional)
+   - IMPORTANTE: Si un contenedor tiene MÚLTIPLES versiones de la MISMA imagen (ej: responsive images con diferentes resoluciones),
+     el selector DEBE ser específico para capturar SOLO la versión de MAYOR RESOLUCIÓN
+   - Usa atributos width para filtrar: Ejemplo: "figure.main-photo img[width='960']" o "figure img[width='1200']"
+   - Si hay múltiples <img> o <amp-img> en el mismo contenedor con diferentes width, usa el width más alto
+   - Patrones comunes de responsive images que DEBES detectar:
+     * <picture> con múltiples <source>: Selecciona solo el <img> final o usa :first-of-type
+     * Múltiples <amp-img>: Usa [width='XXX'] donde XXX es el width más alto que veas
+     * Si NO hay múltiples versiones, usa el selector general (ej: "article img", ".content figure img")
 4. dateSelector: Fecha de publicación (opcional, busca <time>, .publish-date, etc.)
 5. authorSelector: Nombre del autor (opcional, busca .author, .by-line, etc.)
 6. categorySelector: Categoría/sección (opcional, busca .category, .section, etc.)
+
+EJEMPLOS DE SELECTORES CORRECTOS PARA IMÁGENES:
+✅ CORRECTO (múltiples versiones detectadas):
+   - "figure.main-photo amp-img[width='960']" (cuando hay amp-img con width="960" y width="425")
+   - "article picture img:first-of-type" (cuando hay múltiples img en picture)
+   - ".content figure img[width='1200']" (cuando hay img con diferentes widths)
+
+❌ INCORRECTO (captura todas las versiones):
+   - "figure.main-photo amp-img" (captura TODAS las versiones, no solo la de alta resolución)
+   - "article picture img" (captura TODAS las versiones)
 
 PRIORIZA:
 - Selectores específicos con clases semánticas
 - Atributos schema.org (itemprop="headline", itemprop="articleBody")
 - Elementos semánticos HTML5 (article, time, etc.)
+- Para imágenes: SIEMPRE analiza si hay múltiples versiones y filtra por width
 
 Si un campo opcional no existe en el HTML, devuelve una cadena vacía "".
 

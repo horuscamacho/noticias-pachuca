@@ -64,10 +64,10 @@ export class AuthService {
       })
 
       const tokens = {
-        access_token: response.access_token,
-        refresh_token: response.refresh_token,
-        token_type: response.token_type,
-        expires_in: response.expires_in
+        access_token: response.accessToken,  // ✅ FIX: Backend devuelve camelCase
+        refresh_token: response.refreshToken,  // ✅ FIX: Backend devuelve camelCase
+        token_type: response.tokenType,  // ✅ FIX: Backend devuelve camelCase
+        expires_in: response.expiresIn  // ✅ FIX: Backend devuelve camelCase
       }
 
       const newTokens = AuthMapper.tokenResponseToApp ?

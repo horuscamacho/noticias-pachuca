@@ -283,7 +283,22 @@ export const useAuthStore = create<AuthStore>()(
 
       // Logout
       logout: async (allDevices = false) => {
-        console.log('🚨 authStore.logout() - Starting logout process', { allDevices })
+        // ✅ FIX: Logging detallado para diagnosticar pérdidas de sesión
+        const currentState = get()
+        const stack = new Error().stack
+
+        console.log('🚨 authStore.logout() - INICIANDO LOGOUT', {
+          allDevices,
+          callStack: stack,
+          currentUser: currentState.user?.username,
+          userId: currentState.user?.id,
+          isAuthenticated: currentState.isAuthenticated,
+          isInitialized: currentState.isInitialized,
+          sessionExpiresAt: currentState.sessionExpiresAt,
+          lastLoginAt: currentState.lastLoginAt,
+          authMethod: currentState.authMethod,
+        })
+
         set({ isLoggingOut: true, error: null })
 
         try {
@@ -367,18 +382,18 @@ export const useAuthStore = create<AuthStore>()(
       // Configuración de hydratación
       onRehydrateStorage: () => (state) => {
         if (state) {
-          // Asegurar que el estado esté limpio al hidratar
+          // ✅ FIX: Solo limpiar estados transitorios, NO resetear auth
           state.isLoading = false
           state.isLoggingIn = false
           state.isLoggingOut = false
           state.isRefreshing = false
           state.error = null
 
-          // Resetear inicialización para forzar verificación de tokens
+          // ✅ FIX: Resetear solo isInitialized para forzar verificación de tokens
+          // pero mantener user, isAuthenticated, sessionExpiresAt para evitar pérdida de sesión
           state.isInitialized = false
-          state.user = null
-          state.isAuthenticated = false
-          state.sessionExpiresAt = null
+          // NO resetear: user, isAuthenticated, sessionExpiresAt
+          // Dejar que initialize() maneje la verificación de tokens de forma inteligente
         }
       }
     }

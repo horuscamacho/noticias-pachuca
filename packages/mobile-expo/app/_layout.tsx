@@ -8,6 +8,7 @@ import { AnalyticsProvider } from "@/src/features/analytics/components/Analytics
 import { ResponsiveProvider } from "@/src/features/responsive";
 import { QueryClientProvider } from "@tanstack/react-query";
 import queryClient from "@/src/config/queryClient";
+import { useAutoTokenRefresh } from "@/src/hooks";
 export const unstable_settings = {
   anchor: "(tabs)",
 };
@@ -34,6 +35,9 @@ export default function RootLayout() {
     "Aleo-Black": require("@/assets/fonts/Aleo-Black.ttf"),
     "Aleo-BlackItalic": require("@/assets/fonts/Aleo-BlackItalic.ttf"),
   });
+
+  // Auto-refresh de tokens de forma proactiva
+  useAutoTokenRefresh();
 
   if (!loaded) return null;
   return (

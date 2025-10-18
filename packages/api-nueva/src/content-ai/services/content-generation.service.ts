@@ -874,13 +874,10 @@ export class ContentGenerationService {
 
 <thinking>
 Voy a procesar esta noticia siguiendo estos pasos:
-1. Extraer TODOS los hechos relevantes del input
-2. Identificar personajes, fechas, lugares, cifras, declaraciones
-3. Determinar múltiples ángulos editoriales posibles
-4. Crear título ÚNICO y CREATIVO usando técnicas de variación
-5. Desarrollar contenido EXTENSO y DETALLADO
-6. Generar keywords y tags basados en el contenido real
-7. Crear copys sociales con hooks únicos y llamativos
+1. PRIMERO: Extraer TODOS los hechos clave DEL TEXTO (nombres CON cargos EXACTOS, fechas, cifras)
+2. SEGUNDO: VERIFICAR cada elemento contra el texto original
+3. TERCERO: Generar contenido USANDO SOLO los hechos extraídos
+4. CUARTO: NO agregar contexto de mi memoria
 </thinking>
 
 🎯 REGLAS CRÍTICAS PARA TÍTULOS:
@@ -988,6 +985,57 @@ INSTAGRAM - Estructura Scroll-Stopper:
 • CTA genuino sin presión
 • Mix hashtags: 3 locales + 3 temáticos + 2 trending
 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️⚠️⚠️ REGLAS CRÍTICAS - LEER ANTES DE PROCESAR ⚠️⚠️⚠️
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚨 PASO 1: EXTRAE LOS HECHOS CLAVE DEL TEXTO ORIGINAL
+Antes de generar NADA, identifica y COPIA TEXTUALMENTE:
+
+1. NOMBRES CON SUS CARGOS EXACTOS (no cambies "presidenta" por "jefa de gobierno")
+2. FECHAS tal cual aparecen
+3. CIFRAS Y NÚMEROS exactos
+4. LUGARES específicos mencionados
+5. DECLARACIONES o citas textuales
+
+⛔ PROHIBICIONES ABSOLUTAS (SI HACES ESTO, FALLAS):
+• NO uses tu conocimiento previo del año 2018 o anterior
+• NO cambies cargos políticos (presidenta ≠ jefa de gobierno)
+• NO agregues contexto histórico que no esté en el texto
+• NO "corrijas" la información aunque creas que está mal
+• SI EL TEXTO DICE "presidenta", DEBES ESCRIBIR "presidenta"
+• SI EL TEXTO DICE "secretario", DEBES ESCRIBIR "secretario"
+
+✅ VERIFICACIÓN OBLIGATORIA:
+Antes de escribir CADA párrafo, pregúntate:
+1. ¿Este dato está EN EL TEXTO? NO → No lo uses
+2. ¿Estoy copiando el cargo EXACTO? NO → Corrígelo
+3. ¿Estoy agregando mi conocimiento? SÍ → Bórralo
+
+📋 EJEMPLOS CRÍTICOS:
+
+❌ MAL (PROHIBIDO):
+Input: "La presidenta Claudia Sheinbaum declaró..."
+Output: "La jefa de Gobierno de la Ciudad de México, Claudia Sheinbaum..."
+Razón: ¡Cambiaste "presidenta" por "jefa de gobierno"!
+
+✅ BIEN (CORRECTO):
+Input: "La presidenta Claudia Sheinbaum declaró..."
+Output: "La presidenta Claudia Sheinbaum declaró..."
+Razón: Copiaste el cargo EXACTO del texto
+
+❌ MAL (PROHIBIDO):
+Input: "El secretario de Marina, Raymundo Morales..."
+Output: "El almirante Raymundo Morales..."
+Razón: ¡Cambiaste "secretario de Marina" por "almirante"!
+
+✅ BIEN (CORRECTO):
+Input: "El secretario de Marina, Raymundo Morales..."
+Output: "El secretario de Marina, Raymundo Morales..."
+Razón: Copiaste el cargo EXACTO del texto
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 TÍTULO DE LA NOTICIA:
 ${variables.title}
 
@@ -995,6 +1043,12 @@ CONTENIDO DE LA NOTICIA A PROCESAR:
 ${variables.content}
 
 ${variables.referenceContent ? `CONTENIDO DE REFERENCIA:\n${variables.referenceContent}\n` : ''}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ RECUERDA: USA SOLO LO QUE ESTÁ EN EL TEXTO ARRIBA
+NO uses tu memoria del 2018 donde Sheinbaum era jefa de gobierno
+SI EL TEXTO DICE "presidenta", TÚ ESCRIBES "presidenta"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 REQUISITOS DEL JSON - TODOS LOS CAMPOS SON OBLIGATORIOS:
 {
@@ -1137,6 +1191,162 @@ RESPONDE ÚNICAMENTE CON EL JSON VÁLIDO. NO INCLUYAS EXPLICACIONES.`;
   }
 
   /**
+   * 🔍 Verificar fidelidad factual del contenido generado
+   * Compara el contenido generado con el original para detectar alucinaciones
+   */
+  private verifyFactualFidelity(
+    generatedContent: string,
+    originalContent: string,
+    generatedTitle?: string
+  ): { isValid: boolean; warnings: string[] } {
+    const warnings: string[] = [];
+
+    try {
+      // Extraer nombres propios del original y generado
+      const originalNames = this.extractProperNouns(originalContent);
+      const generatedNames = this.extractProperNouns(generatedContent);
+
+      // Verificar que los nombres importantes del original aparezcan en el generado
+      for (const originalName of originalNames) {
+        const found = generatedNames.some(genName =>
+          genName.toLowerCase().includes(originalName.toLowerCase()) ||
+          originalName.toLowerCase().includes(genName.toLowerCase())
+        );
+
+        if (!found && originalName.length > 5) { // Solo nombres significativos
+          warnings.push(`⚠️ Posible omisión: "${originalName}" del original no encontrado en generado`);
+        }
+      }
+
+      // Verificar cargos/títulos comunes que no deben cambiar
+      const criticalTerms = [
+        { original: /\bpresidenta?\b/gi, term: 'presidente/presidenta' },
+        { original: /\balcalde(sa)?\b/gi, term: 'alcalde/alcaldesa' },
+        { original: /\bsecretario(a)?\b/gi, term: 'secretario/secretaria' },
+        { original: /\bgobernador(a)?\b/gi, term: 'gobernador/gobernadora' },
+        { original: /\bdiputado(a)?\b/gi, term: 'diputado/diputada' },
+        { original: /\bsenador(a)?\b/gi, term: 'senador/senadora' },
+        { original: /\bministro(a)?\b/gi, term: 'ministro/ministra' },
+      ];
+
+      for (const { original: regex, term } of criticalTerms) {
+        const originalMatches = originalContent.match(regex);
+        const generatedMatches = generatedContent.match(regex);
+
+        if (originalMatches && !generatedMatches) {
+          warnings.push(`⚠️ Cargo político faltante: "${term}" aparece en original pero no en generado`);
+        }
+
+        // Verificar que el contexto del cargo sea similar
+        if (originalMatches && generatedMatches) {
+          const originalContexts = this.extractContext(originalContent, regex);
+          const generatedContexts = this.extractContext(generatedContent, regex);
+
+          for (const origCtx of originalContexts) {
+            const similar = generatedContexts.some(genCtx =>
+              this.contextSimilarity(origCtx, genCtx) > 0.5
+            );
+
+            if (!similar) {
+              warnings.push(`⚠️ Posible cambio de contexto en cargo: "${origCtx.substring(0, 50)}..."`);
+            }
+          }
+        }
+      }
+
+      // Verificar fechas
+      const dateRegex = /\b\d{1,2}\s+de\s+\w+\s+de\s+\d{4}\b|\b\d{4}-\d{2}-\d{2}\b|\b\d{1,2}\/\d{1,2}\/\d{4}\b/gi;
+      const originalDates = originalContent.match(dateRegex) || [];
+      const generatedDates = generatedContent.match(dateRegex) || [];
+
+      for (const origDate of originalDates) {
+        const found = generatedDates.some(genDate => genDate === origDate);
+        if (!found && originalDates.length <= 3) {
+          warnings.push(`⚠️ Fecha del original no encontrada: "${origDate}"`);
+        }
+      }
+
+      // Verificar números/cifras importantes
+      const numberRegex = /\b\d{1,3}(?:,?\d{3})*(?:\.\d+)?\s*(?:millones?|mil(?:es)?|billones?|personas?|muertos?|desaparecidos?|pesos?|dólares?|%|porcentaje|por\s+ciento)\b/gi;
+      const originalNumbers = originalContent.match(numberRegex) || [];
+      const generatedNumbers = generatedContent.match(numberRegex) || [];
+
+      for (const origNum of originalNumbers) {
+        const found = generatedNumbers.some((genNum: string) =>
+          genNum.toLowerCase().includes(origNum.toLowerCase().split(/\s+/)[0])
+        );
+
+        if (!found) {
+          warnings.push(`⚠️ Cifra importante del original no encontrada: "${origNum}"`);
+        }
+      }
+
+      // Log de warnings
+      if (warnings.length > 0) {
+        this.logger.warn(`🔍 Verificación de fidelidad factual encontró ${warnings.length} advertencia(s):`);
+        warnings.forEach(w => this.logger.warn(w));
+      } else {
+        this.logger.log(`✅ Verificación de fidelidad factual: contenido fiel al original`);
+      }
+
+      return {
+        isValid: warnings.length === 0,
+        warnings
+      };
+
+    } catch (error) {
+      this.logger.error(`Error en verificación de fidelidad: ${error.message}`);
+      return {
+        isValid: true, // No fallar la generación por error en verificación
+        warnings: [`Error en verificación: ${error.message}`]
+      };
+    }
+  }
+
+  /**
+   * 📝 Extraer nombres propios de un texto
+   */
+  private extractProperNouns(text: string): string[] {
+    // Regex para nombres propios (palabras capitalizadas)
+    const regex = /\b[A-ZÑÁÉÍÓÚ][a-zñáéíóúü]+(?:\s+(?:de|del|la|los|las|y|e)\s+)?(?:[A-ZÑÁÉÍÓÚ][a-zñáéíóúü]+)*\b/g;
+    const matches = text.match(regex) || [];
+
+    // Filtrar stopwords comunes que pueden estar capitalizadas
+    const stopwords = ['El', 'La', 'Los', 'Las', 'Un', 'Una', 'Este', 'Esta', 'Ese', 'Esa', 'Aquel', 'Aquella'];
+    return matches.filter((name: string) => !stopwords.includes(name) && name.length > 2);
+  }
+
+  /**
+   * 🔍 Extraer contexto alrededor de un patrón
+   */
+  private extractContext(text: string, regex: RegExp, contextLength: number = 100): string[] {
+    const contexts: string[] = [];
+    const matches = text.matchAll(new RegExp(regex, 'gi'));
+
+    for (const match of matches) {
+      const index = match.index || 0;
+      const start = Math.max(0, index - contextLength);
+      const end = Math.min(text.length, index + match[0].length + contextLength);
+      contexts.push(text.substring(start, end));
+    }
+
+    return contexts;
+  }
+
+  /**
+   * 📊 Calcular similitud entre dos contextos
+   */
+  private contextSimilarity(context1: string, context2: string): number {
+    const words1 = context1.toLowerCase().split(/\s+/);
+    const words2 = context2.toLowerCase().split(/\s+/);
+
+    const commonWords = words1.filter(word => words2.includes(word)).length;
+    const totalWords = Math.max(words1.length, words2.length);
+
+    return totalWords > 0 ? commonWords / totalWords : 0;
+  }
+
+  /**
    * 📊 Estimar tokens de un prompt
    */
   private estimateTokens(text: string): number {
@@ -1229,6 +1439,18 @@ RESPONDE ÚNICAMENTE CON EL JSON VÁLIDO. NO INCLUYAS EXPLICACIONES.`;
 
       result = this.parseAndValidateResponse(aiResponse.content, template.staticOutputFormat || {});
 
+      // Verificar fidelidad factual del contenido generado
+      const fidelityCheck = this.verifyFactualFidelity(
+        result.content || '',
+        request.content,
+        result.title
+      );
+
+      // Log de verificación
+      if (!fidelityCheck.isValid) {
+        this.logger.warn(`⚠️ Verificación de fidelidad detectó ${fidelityCheck.warnings.length} problemas potenciales`);
+      }
+
       // Calcular métricas
       const processingTime = Date.now() - startTime;
       const tokensUsed = aiResponse.usage?.totalTokens || this.estimateTokens(dynamicPrompt + JSON.stringify(result));
@@ -1249,6 +1471,8 @@ RESPONDE ÚNICAMENTE CON EL JSON VÁLIDO. NO INCLUYAS EXPLICACIONES.`;
         socialMediaCopies: result.social_media_copies || {},
         seoData: result.seo_data || {},
         extractedMetadata: result.metadata || {},
+        // Agregar warnings de verificación de fidelidad factual
+        warnings: fidelityCheck.warnings.length > 0 ? fidelityCheck.warnings : [],
         // Guardar el contenido original directamente en el documento
         originalTitle: request.title,
         originalContent: request.content,

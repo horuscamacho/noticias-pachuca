@@ -182,28 +182,57 @@ export class AuthService {
     refreshTokenDto: RefreshTokenDto,
     request: AuthRequest,
   ): Promise<TokenResponse> {
-    const { refreshToken } = refreshTokenDto;
+    const { refresh_token: refreshToken } = refreshTokenDto;
+    const tokenPreview = refreshToken ? refreshToken.substring(0, 30) + '...' : 'null';
     const platformInfo = this.platformDetection.detectPlatform(request);
+
+    console.log('🔄 [AuthService] Refresh token request:', {
+      tokenPreview,
+      platform: platformInfo.type,
+      deviceId: request.headers['x-device-id'],
+      userAgent: request.headers['user-agent'],
+      ip: request.ip,
+    });
 
     // Validar refresh token
     const validation =
       await this.tokenManager.validateRefreshToken(refreshToken);
     if (!validation.isValid || !validation.payload) {
+      console.error('❌ [AuthService] Token validation failed:', {
+        tokenPreview,
+        error: validation.error,
+      });
       throw new UnauthorizedException('Invalid refresh token');
     }
 
     const refreshPayload = validation.payload as RefreshTokenPayload;
     const { sub: userId, username } = refreshPayload;
 
+    console.log('🔄 [AuthService] Token validated, checking user:', {
+      userId,
+      username,
+      tokenFamily: refreshPayload.tokenFamily,
+      version: refreshPayload.version,
+    });
+
     // Verificar que el usuario aún existe y está activo
     const user = await this.userModel.findById(userId);
     if (!user || !user.isActive) {
+      console.error('❌ [AuthService] User not found or disabled:', {
+        userId,
+        userExists: !!user,
+        isActive: user?.isActive,
+      });
       throw new UnauthorizedException('User not found or disabled');
     }
+
+    console.log('🔄 [AuthService] User verified, rotating token...');
 
     // Rotar refresh token (token rotation security)
     const newRefreshToken =
       await this.tokenManager.rotateRefreshToken(refreshToken);
+
+    console.log('🔄 [AuthService] Token rotated, generating access token...');
 
     // Generar nuevo access token
     const accessToken = await this.tokenManager.generateAccessToken(
@@ -212,12 +241,22 @@ export class AuthService {
       platformInfo,
     );
 
-    return {
+    const response: TokenResponse = {
       accessToken,
       refreshToken: newRefreshToken,
-      tokenType: 'Bearer',
+      tokenType: 'Bearer' as const,
       expiresIn: this.tokenManager['getAccessTokenTTL'](),
     };
+
+    console.log('✅ [AuthService] Refresh token successful:', {
+      userId,
+      username,
+      tokenFamily: refreshPayload.tokenFamily,
+      accessTokenPreview: accessToken.substring(0, 30) + '...',
+      newRefreshTokenPreview: newRefreshToken.substring(0, 30) + '...',
+    });
+
+    return response;
   }
 
   // 🚪 LOGOUT

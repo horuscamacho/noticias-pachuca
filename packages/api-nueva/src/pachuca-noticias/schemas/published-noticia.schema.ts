@@ -23,11 +23,19 @@ export class PublishedNoticia {
   originalNoticiaId?: Types.ObjectId; // Referencia a la noticia original (opcional)
 
   // ========================================
+  // 🌐 MULTI-SITIO (FASE 0)
+  // ========================================
+
+  @Prop({ type: [Types.ObjectId], ref: 'Site', default: [], index: true })
+  sites: Types.ObjectId[]; // Array de sitios donde está publicada esta noticia
+
+  // ========================================
   // 📝 CONTENIDO PRINCIPAL
   // ========================================
 
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true })
   slug: string; // URL-friendly slug: "migrantes-hidalgo-trabajo-oportunidades-abc123"
+  // ⚠️ FASE 5: Uniqueness ahora se garantiza con índice compuesto { sites: 1, slug: 1 }
 
   @Prop({ required: true, trim: true })
   title: string; // Título generado por IA
@@ -155,10 +163,18 @@ export class PublishedNoticia {
   isFeatured: boolean; // Destacado en home
 
   @Prop({ default: false })
-  isBreaking: boolean; // Noticia de último momento
+  isBreaking: boolean; // Noticia de último momento (DEPRECADO: usar contentType)
 
   @Prop({ default: false })
-  isNoticia: boolean; // Es noticia (prioridad alta en cola de publicación)
+  isNoticia: boolean; // Es noticia (DEPRECADO: usar contentType)
+
+  // 🆕 COMMUNITY MANAGER: Tipo de contenido (FASE 0)
+  @Prop({
+    enum: ['breaking_news', 'normal_news', 'blog', 'evergreen'],
+    default: 'normal_news',
+    index: true,
+  })
+  contentType: 'breaking_news' | 'normal_news' | 'blog' | 'evergreen';
 
   @Prop({ default: 5 })
   priority: number; // 1-10, para ordenamiento
@@ -185,20 +201,41 @@ export class PublishedNoticia {
     linkedin?: string;
   };
 
-  @Prop({ type: Object })
+  // ========================================
+  // 📱 TRACKING DE PUBLICACIÓN EN REDES SOCIALES (FASE 0 - Mejorado)
+  // ========================================
+
+  @Prop({ type: Object, default: {} })
   socialMediaPublishing?: {
-    facebook?: {
-      published: boolean;
-      postId?: string;
-      url?: string;
-      publishedAt?: Date;
-    };
-    twitter?: {
-      published: boolean;
-      tweetId?: string;
-      url?: string;
-      publishedAt?: Date;
-    };
+    facebook?: Array<{
+      pageId: string; // ID de la página de Facebook
+      pageName?: string; // Nombre de la página (opcional)
+      postId?: string; // ID del post en Facebook
+      postUrl?: string; // URL del post
+      publishedAt?: Date; // Fecha de publicación
+      status: 'pending' | 'published' | 'failed'; // Estado de publicación
+      errorMessage?: string; // Mensaje de error si falló
+      engagement?: {
+        likes?: number;
+        comments?: number;
+        shares?: number;
+      };
+    }>;
+
+    twitter?: Array<{
+      accountId: string; // ID de la cuenta de Twitter
+      username?: string; // @username (opcional)
+      tweetId?: string; // ID del tweet
+      tweetUrl?: string; // URL del tweet
+      publishedAt?: Date; // Fecha de publicación
+      status: 'pending' | 'published' | 'failed'; // Estado de publicación
+      errorMessage?: string; // Mensaje de error si falló
+      engagement?: {
+        likes?: number;
+        retweets?: number;
+        replies?: number;
+      };
+    }>;
   };
 
   // ========================================
@@ -265,8 +302,13 @@ export const PublishedNoticiaSchema = SchemaFactory.createForClass(PublishedNoti
 // 📇 ÍNDICES PARA PERFORMANCE
 // ========================================
 
-// Índices únicos (slug y contentId ya tienen unique: true en @Prop)
-PublishedNoticiaSchema.index({ slug: 1 }, { unique: true });
+// 🌐 FASE 5: Índice único compuesto (mismo slug puede existir en diferentes sitios)
+PublishedNoticiaSchema.index({ sites: 1, slug: 1 }, { unique: true });
+
+// Índices para multi-sitio (FASE 0)
+PublishedNoticiaSchema.index({ sites: 1 });
+PublishedNoticiaSchema.index({ sites: 1, status: 1, publishedAt: -1 });
+PublishedNoticiaSchema.index({ sites: 1, category: 1, publishedAt: -1 });
 
 // Índices para queries comunes
 PublishedNoticiaSchema.index({ status: 1, publishedAt: -1 });
@@ -274,6 +316,10 @@ PublishedNoticiaSchema.index({ category: 1, publishedAt: -1 });
 PublishedNoticiaSchema.index({ status: 1, category: 1, publishedAt: -1 });
 PublishedNoticiaSchema.index({ isFeatured: 1, publishedAt: -1 });
 PublishedNoticiaSchema.index({ isBreaking: 1, publishedAt: -1 });
+
+// 🆕 COMMUNITY MANAGER: Índice para contentType (FASE 0)
+PublishedNoticiaSchema.index({ contentType: 1, publishedAt: -1 });
+PublishedNoticiaSchema.index({ contentType: 1, status: 1 });
 
 // Índices para búsqueda de texto (Fase 2)
 PublishedNoticiaSchema.index({ title: 'text', summary: 'text', content: 'text' });

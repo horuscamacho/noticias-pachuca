@@ -43,10 +43,24 @@ export class RedisAuthService {
     metadata: RefreshTokenMetadata,
   ): Promise<void> {
     const key = `refresh:${userId}:${token}`;
+    const tokenPreview = token ? token.substring(0, 30) + '...' : 'null';
+
+    console.log('💾 [RedisAuthService] Storing refresh token:', {
+      userId,
+      key,
+      tokenPreview,
+      family: metadata.family,
+      platform: metadata.platform,
+      deviceId: metadata.deviceId,
+      ttlDays: 7,
+    });
+
     await this.cache.set(key, metadata, 604800 * 1000); // 7 días
 
     // También guardar en lista de tokens del usuario
     await this.addToUserTokenList(userId, token, metadata.platform);
+
+    console.log('✅ [RedisAuthService] Token stored successfully');
   }
 
   async getRefreshToken(
@@ -54,15 +68,44 @@ export class RedisAuthService {
     token: string,
   ): Promise<RefreshTokenMetadata | null> {
     const key = `refresh:${userId}:${token}`;
-    return (await this.cache.get<RefreshTokenMetadata>(key)) || null;
+    const tokenPreview = token ? token.substring(0, 30) + '...' : 'null';
+
+    console.log('🔍 [RedisAuthService] Getting refresh token:', {
+      userId,
+      key,
+      tokenPreview,
+    });
+
+    const result = (await this.cache.get<RefreshTokenMetadata>(key)) || null;
+
+    console.log('🔍 [RedisAuthService] Token lookup result:', {
+      userId,
+      found: !!result,
+      family: result?.family,
+      platform: result?.platform,
+      deviceId: result?.deviceId,
+      createdAt: result?.createdAt,
+    });
+
+    return result;
   }
 
   async invalidateRefreshToken(userId: string, token: string): Promise<void> {
     const key = `refresh:${userId}:${token}`;
+    const tokenPreview = token ? token.substring(0, 30) + '...' : 'null';
+
+    console.log('🗑️  [RedisAuthService] Invalidating refresh token:', {
+      userId,
+      key,
+      tokenPreview,
+    });
+
     await this.cache.del(key);
 
     // Remover de la lista de tokens del usuario
     await this.removeFromUserTokenList(userId, token);
+
+    console.log('✅ [RedisAuthService] Token invalidated successfully');
   }
 
   async revokeAllUserTokens(userId: string): Promise<void> {
@@ -101,6 +144,15 @@ export class RedisAuthService {
   ): Promise<void> {
     const key = `user_tokens:${userId}`;
     const tokens = (await this.cache.get<string[]>(key)) || [];
+    const tokenPreview = token ? token.substring(0, 30) + '...' : 'null';
+
+    console.log('📱 [RedisAuthService] Adding token to user list:', {
+      userId,
+      platform,
+      tokenPreview,
+      currentTokenCount: tokens.length,
+      maxTokens: 5,
+    });
 
     tokens.push(token);
 
@@ -108,12 +160,20 @@ export class RedisAuthService {
     const maxTokens = 5;
     if (tokens.length > maxTokens) {
       const oldToken = tokens.shift();
+      const oldTokenPreview = oldToken ? oldToken.substring(0, 30) + '...' : 'null';
+      console.warn('⚠️  [RedisAuthService] Max tokens exceeded, removing oldest token:', {
+        userId,
+        oldTokenPreview,
+        remainingTokens: tokens.length,
+      });
       if (oldToken) {
         await this.invalidateRefreshToken(userId, oldToken);
       }
     }
 
     await this.cache.set(key, tokens, 604800 * 1000); // 7 días
+
+    console.log('✅ [RedisAuthService] Token added to user list, total:', tokens.length);
   }
 
   private async removeFromUserTokenList(

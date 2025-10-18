@@ -42,10 +42,11 @@ export class PublicContentService {
 
   /**
    * Obtener lista de categorías activas con contadores
+   * 🌐 FASE 3: Filtrado por sitio
    */
-  async getCategories(): Promise<CategoryResponseDto[]> {
-    // Revisar caché
-    if (this.categoriesCache && this.cacheTimestamp) {
+  async getCategories(siteId?: string): Promise<CategoryResponseDto[]> {
+    // Revisar caché (por ahora, caché compartido - TODO: caché por sitio)
+    if (this.categoriesCache && this.cacheTimestamp && !siteId) {
       const age = Date.now() - this.cacheTimestamp;
       if (age < this.CACHE_TTL) {
         this.logger.log('Retornando categorías desde caché');
@@ -53,9 +54,15 @@ export class PublicContentService {
       }
     }
 
+    // Construir filtros
+    const categoryFilters: Record<string, unknown> = { isActive: true };
+    if (siteId) {
+      categoryFilters.sites = new Types.ObjectId(siteId);
+    }
+
     // Intentar primero desde colección Category
     const categories = await this.categoryModel
-      .find({ isActive: true })
+      .find(categoryFilters)
       .sort({ order: 1, name: 1 })
       .lean()
       .exec();
@@ -66,10 +73,15 @@ export class PublicContentService {
       // Si existen categorías en la colección, usarlas
       categoriesWithCount = await Promise.all(
         categories.map(async (cat) => {
-          const count = await this.publishedNoticiaModel.countDocuments({
+          const noticiaFilters: Record<string, unknown> = {
             category: cat._id,
             status: 'published',
-          });
+          };
+          if (siteId) {
+            noticiaFilters.sites = new Types.ObjectId(siteId);
+          }
+
+          const count = await this.publishedNoticiaModel.countDocuments(noticiaFilters);
 
           return {
             id: cat._id.toString(),
@@ -88,8 +100,13 @@ export class PublicContentService {
       // Si no hay categorías en colección, extraer desde noticias publicadas
       this.logger.warn('No se encontraron categorías en Category collection, extrayendo desde noticias publicadas');
 
+      const matchFilters: Record<string, unknown> = { status: 'published' };
+      if (siteId) {
+        matchFilters.sites = new Types.ObjectId(siteId);
+      }
+
       const categoryAggregation = await this.publishedNoticiaModel.aggregate([
-        { $match: { status: 'published' } },
+        { $match: matchFilters },
         {
           $group: {
             _id: '$category',
@@ -134,11 +151,13 @@ export class PublicContentService {
 
   /**
    * Obtener noticias por categoría (paginadas)
+   * 🌐 FASE 3: Filtrado por sitio
    */
   async getNoticiasByCategory(
     slug: string,
     page: number = 1,
     limit: number = 20,
+    siteId?: string,
   ): Promise<PaginatedResponseDto<PublicNoticiaResponseDto>> {
     const skip = (page - 1) * limit;
 
@@ -167,6 +186,11 @@ export class PublicContentService {
         category: { $regex: new RegExp(`^${normalizedPattern}$`, 'i') },
         status: 'published',
       };
+    }
+
+    // 🌐 Agregar filtro por sitio
+    if (siteId) {
+      categoryFilter.sites = new Types.ObjectId(siteId);
     }
 
     // Buscar noticias (sin populate si category es string)
@@ -207,32 +231,37 @@ export class PublicContentService {
 
   /**
    * Obtener noticias por tag (paginadas)
+   * 🌐 FASE 3: Filtrado por sitio
    */
   async getNoticiasByTag(
     slug: string,
     page: number = 1,
     limit: number = 20,
+    siteId?: string,
   ): Promise<PaginatedResponseDto<PublicNoticiaResponseDto>> {
     const skip = (page - 1) * limit;
 
     // Convertir slug a tag (reemplazar guiones por espacios)
     const tag = slug.replace(/-/g, ' ');
 
+    // Construir filtros
+    const tagFilters: Record<string, unknown> = {
+      status: 'published',
+      tags: { $regex: new RegExp(`^${tag}$`, 'i') },
+    };
+    if (siteId) {
+      tagFilters.sites = new Types.ObjectId(siteId);
+    }
+
     const [noticias, total] = await Promise.all([
       this.publishedNoticiaModel
-        .find({
-          status: 'published',
-          tags: { $regex: new RegExp(`^${tag}$`, 'i') },
-        })
+        .find(tagFilters)
         .sort({ publishedAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean()
         .exec(),
-      this.publishedNoticiaModel.countDocuments({
-        status: 'published',
-        tags: { $regex: new RegExp(`^${tag}$`, 'i') },
-      }),
+      this.publishedNoticiaModel.countDocuments(tagFilters),
     ]);
 
     if (total === 0) {
@@ -256,32 +285,37 @@ export class PublicContentService {
 
   /**
    * Obtener noticias por autor (paginadas)
+   * 🌐 FASE 3: Filtrado por sitio
    */
   async getNoticiasByAuthor(
     slug: string,
     page: number = 1,
     limit: number = 20,
+    siteId?: string,
   ): Promise<PaginatedResponseDto<PublicNoticiaResponseDto>> {
     const skip = (page - 1) * limit;
 
     // Convertir slug a nombre de autor (reemplazar guiones por espacios y capitalizar)
     const authorName = slug.replace(/-/g, ' ');
 
+    // Construir filtros
+    const authorFilters: Record<string, unknown> = {
+      status: 'published',
+      author: { $regex: new RegExp(`^${authorName}$`, 'i') },
+    };
+    if (siteId) {
+      authorFilters.sites = new Types.ObjectId(siteId);
+    }
+
     const [noticias, total] = await Promise.all([
       this.publishedNoticiaModel
-        .find({
-          status: 'published',
-          author: { $regex: new RegExp(`^${authorName}$`, 'i') },
-        })
+        .find(authorFilters)
         .sort({ publishedAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean()
         .exec(),
-      this.publishedNoticiaModel.countDocuments({
-        status: 'published',
-        author: { $regex: new RegExp(`^${authorName}$`, 'i') },
-      }),
+      this.publishedNoticiaModel.countDocuments(authorFilters),
     ]);
 
     if (total === 0) {
@@ -305,6 +339,7 @@ export class PublicContentService {
 
   /**
    * Búsqueda full-text de noticias
+   * 🌐 FASE 3: Filtrado por sitio
    */
   async searchNoticias(
     query: string,
@@ -312,6 +347,7 @@ export class PublicContentService {
     sortBy: 'relevance' | 'date' = 'relevance',
     page: number = 1,
     limit: number = 20,
+    siteId?: string,
   ): Promise<PaginatedResponseDto<SearchResultDto>> {
     const skip = (page - 1) * limit;
 
@@ -320,6 +356,11 @@ export class PublicContentService {
       status: 'published',
       $text: { $search: query },
     };
+
+    // 🌐 Filtrar por sitio
+    if (siteId) {
+      filters.sites = new Types.ObjectId(siteId);
+    }
 
     // Filtro por categoría si se proporciona
     let categoryObjectId: Record<string, unknown> | null = null;

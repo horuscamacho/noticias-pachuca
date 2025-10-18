@@ -135,11 +135,20 @@ export class GeneratorProOrchestratorService {
 
   /**
    * 🔄 INICIALIZAR CICLOS PARA UN SITIO WEB
+   *
+   * ⚠️ NOTA: El ciclo de extracción de URLs ha sido reemplazado por SmartExtractionSchedulerService
+   * Este método ahora solo inicializa ciclos de generación y publicación.
+   *
+   * Migración:
+   * - SmartExtractionSchedulerService maneja extracción con OnModuleInit
+   * - Considera última extracción al programar próxima ejecución
+   * - No usa setInterval, usa setTimeout dinámico
    */
   private async initializeWebsiteCycles(website: NewsWebsiteConfigDocument): Promise<void> {
     const websiteId = (website._id as Types.ObjectId).toString();
 
     this.logger.log(`🔄 Initializing cycles for website: ${website.name}`);
+    this.logger.warn(`⚠️ Extraction cycle is now handled by SmartExtractionSchedulerService`);
 
     // Limpiar ciclos existentes si los hay
     const existingInterval = this.cycleIntervals.get(websiteId);
@@ -147,12 +156,17 @@ export class GeneratorProOrchestratorService {
       clearInterval(existingInterval);
     }
 
-    // Configurar ciclo de extracción de URLs
+    // ⚠️ DEPRECATED: Ciclo de extracción de URLs
+    // Ahora manejado por SmartExtractionSchedulerService
+    // El siguiente código está comentado intencionalmente:
+    /*
     const extractionInterval = setInterval(async () => {
       if (this.isSystemRunning) {
         await this.runExtractionCycle(websiteId);
       }
-    }, website.extractionFrequency * 60 * 1000); // Convertir minutos a ms
+    }, website.extractionFrequency * 60 * 1000);
+    this.cycleIntervals.set(`${websiteId}-extraction`, extractionInterval);
+    */
 
     // Configurar ciclo de generación de contenido
     const generationInterval = setInterval(async () => {
@@ -169,19 +183,23 @@ export class GeneratorProOrchestratorService {
     }, website.publishingFrequency * 60 * 1000);
 
     // Guardar referencias a los intervalos
-    this.cycleIntervals.set(`${websiteId}-extraction`, extractionInterval);
+    // this.cycleIntervals.set(`${websiteId}-extraction`, extractionInterval); // DEPRECATED
     this.cycleIntervals.set(`${websiteId}-generation`, generationInterval);
     this.cycleIntervals.set(`${websiteId}-publishing`, publishingInterval);
 
-    this.logger.log(`✅ Cycles initialized for website: ${website.name}`);
+    this.logger.log(`✅ Cycles initialized for website: ${website.name} (generation & publishing only)`);
   }
 
   /**
    * 🔍 EJECUTAR CICLO DE EXTRACCIÓN DE URLs
+   *
+   * ⚠️ DEPRECATED: Este método aún funciona pero se recomienda usar SmartExtractionSchedulerService
+   * @deprecated Usar SmartExtractionSchedulerService.triggerImmediateExtraction() en su lugar
    */
   async runExtractionCycle(websiteId: string): Promise<CycleResult> {
     const startTime = Date.now();
 
+    this.logger.warn(`⚠️ DEPRECATED: runExtractionCycle() - Usar SmartExtractionSchedulerService`);
     this.logger.log(`🔍 Starting URL extraction cycle for website: ${websiteId}`);
 
     try {

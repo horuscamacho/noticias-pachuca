@@ -180,15 +180,22 @@ export class NewsletterService {
 
   /**
    * 🌅 Generar boletín de la mañana (Top 5 últimas 24h)
+   * 🌐 FASE 3: Filtrado por sitio
    */
-  async generateBoletinManana(): Promise<NewsletterContentDto> {
+  async generateBoletinManana(siteId?: string): Promise<NewsletterContentDto> {
     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
+    // Construir filtros
+    const filters: Record<string, unknown> = {
+      publishedAt: { $gte: yesterday },
+      status: 'published',
+    };
+    if (siteId) {
+      filters.sites = new Types.ObjectId(siteId);
+    }
+
     const noticias = await this.publishedNoticiaModel
-      .find({
-        publishedAt: { $gte: yesterday },
-        status: 'published',
-      })
+      .find(filters)
       .sort({ publishedAt: -1 })
       .limit(5)
       .lean()
@@ -214,16 +221,23 @@ export class NewsletterService {
 
   /**
    * 🌆 Generar boletín de la tarde (Top 3 más leídas del día)
+   * 🌐 FASE 3: Filtrado por sitio
    */
-  async generateBoletinTarde(): Promise<NewsletterContentDto> {
+  async generateBoletinTarde(siteId?: string): Promise<NewsletterContentDto> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    // Construir filtros
+    const filters: Record<string, unknown> = {
+      publishedAt: { $gte: today },
+      status: 'published',
+    };
+    if (siteId) {
+      filters.sites = new Types.ObjectId(siteId);
+    }
+
     const noticias = await this.publishedNoticiaModel
-      .find({
-        publishedAt: { $gte: today },
-        status: 'published',
-      })
+      .find(filters)
       .sort({ 'stats.views': -1 })
       .limit(3)
       .lean()
@@ -249,15 +263,22 @@ export class NewsletterService {
 
   /**
    * 📅 Generar boletín semanal (Top 10 de la semana)
+   * 🌐 FASE 3: Filtrado por sitio
    */
-  async generateBoletinSemanal(): Promise<NewsletterContentDto> {
+  async generateBoletinSemanal(siteId?: string): Promise<NewsletterContentDto> {
     const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
+    // Construir filtros
+    const filters: Record<string, unknown> = {
+      publishedAt: { $gte: lastWeek },
+      status: 'published',
+    };
+    if (siteId) {
+      filters.sites = new Types.ObjectId(siteId);
+    }
+
     const noticias = await this.publishedNoticiaModel
-      .find({
-        publishedAt: { $gte: lastWeek },
-        status: 'published',
-      })
+      .find(filters)
       .sort({ 'stats.views': -1 })
       .limit(10)
       .lean()
@@ -283,20 +304,27 @@ export class NewsletterService {
 
   /**
    * ⚽ Generar boletín de deportes (si hay noticias)
+   * 🌐 FASE 3: Filtrado por sitio
    */
-  async generateBoletinDeportes(): Promise<NewsletterContentDto | null> {
+  async generateBoletinDeportes(siteId?: string): Promise<NewsletterContentDto | null> {
     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    // Construir filtros
+    const filters: Record<string, unknown> = {
+      publishedAt: { $gte: yesterday },
+      status: 'published',
+      $or: [
+        { tags: { $in: ['deportes', 'deporte', 'fútbol', 'futbol', 'tuzos', 'pachuca'] } },
+        { keywords: { $in: ['deportes', 'deporte', 'fútbol', 'futbol', 'tuzos', 'pachuca'] } },
+      ],
+    };
+    if (siteId) {
+      filters.sites = new Types.ObjectId(siteId);
+    }
 
     // Buscar noticias de deportes directamente por tags
     const noticias = await this.publishedNoticiaModel
-      .find({
-        publishedAt: { $gte: yesterday },
-        status: 'published',
-        $or: [
-          { tags: { $in: ['deportes', 'deporte', 'fútbol', 'futbol', 'tuzos', 'pachuca'] } },
-          { keywords: { $in: ['deportes', 'deporte', 'fútbol', 'futbol', 'tuzos', 'pachuca'] } },
-        ],
-      })
+      .find(filters)
       .sort({ publishedAt: -1 })
       .limit(5)
       .lean()

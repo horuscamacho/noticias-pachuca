@@ -1,12 +1,14 @@
 import { createServerFn } from '@tanstack/react-start';
 import type { CategoryResponse, Category } from '../types/public-content.types';
+import { getSiteHeaders } from '../../../lib/site-headers';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
 /**
  * 📂 Server Function: Obtener categorías
  *
  * Fetch de todas las categorías activas con contadores de noticias
+ * 🌐 FASE 6: Incluye header x-site-domain para multi-sitio
  */
 export const getCategories = createServerFn({ method: 'GET' }).handler(
   async (): Promise<CategoryResponse> => {
@@ -17,9 +19,7 @@ export const getCategories = createServerFn({ method: 'GET' }).handler(
 
       const response = await fetch(url, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getSiteHeaders(), // 🌐 FASE 6: Header con x-site-domain
         next: { revalidate: 300 }, // Cache por 5 minutos
       });
 

@@ -26,6 +26,7 @@ import { GenerationProgress } from '@/src/components/image-generation/Generation
 import { GeneratedImagePreview } from '@/src/components/image-generation/GeneratedImagePreview';
 import { useImageGenerationById } from '@/src/hooks/useImageGenerationById';
 import { useImageGenerationLogs } from '@/src/hooks/useImageGenerationLogs';
+import { useImageGenerationSocket } from '@/src/hooks/useImageGenerationSocket';
 import { useStoreInBank } from '@/src/hooks/useStoreInBank';
 import type { App } from '@/src/types/image-generation.types';
 
@@ -50,6 +51,22 @@ export default function ImageGenerationResultScreen() {
   // Escuchar eventos de socket en tiempo real (usa jobId, no generationId)
   // Socket events usan jobId (BullMQ job ID) para matchear
   const logs = useImageGenerationLogs(generation?.jobId?.toString() || '');
+
+  // Socket listeners en tiempo real para progreso y completado
+  const { processingIds, isProcessing } = useImageGenerationSocket({
+    onGenerationProgress: (data) => {
+      console.log(`📊 Progress update: ${data.progress}% - ${data.message}`);
+      // React Query auto-invalida y actualiza la UI
+    },
+    onGenerationCompleted: (data) => {
+      console.log(`✅ Generation completed: ${data.generationId}`);
+      // React Query auto-invalida y actualiza la UI
+    },
+    onGenerationFailed: (data) => {
+      console.error(`❌ Generation failed: ${data.error}`);
+      // React Query auto-invalida y actualiza la UI
+    },
+  });
 
   // Hook para almacenar en banco
   const { mutate: storeInBank, isPending: isStoring } = useStoreInBank();

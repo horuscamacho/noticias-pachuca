@@ -204,6 +204,18 @@ class ApiClientImpl {
       return response.data as T
     }
 
+    // ✅ FIX: Verificar que data existe antes de retornar
+    if (!response.data) {
+      console.error('❌ API response has no data:', url)
+      throw new Error('API response has no data')
+    }
+
+    // ✅ FIX: Si data.data no existe, retornar response.data directamente
+    if (response.data.data === undefined) {
+      console.warn('⚠️ API response.data.data is undefined, returning response.data:', url)
+      return response.data as unknown as T
+    }
+
     return response.data.data
   }
 

@@ -172,6 +172,8 @@ export interface CreateOutletDto {
   baseUrl: string;
   listingUrl: string;
   testUrl?: string;
+  extractionFrequency?: number; // En minutos, default: 60
+  useJavaScript?: boolean; // Si requiere Puppeteer, default: false
   listingSelectors: {
     articleLinks: string;
   };

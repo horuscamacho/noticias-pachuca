@@ -49,8 +49,14 @@ export class TokenManager {
 
       const { token, expiresAt } = JSON.parse(storedData)
 
-      // Verificar si el token ha expirado
-      if (new Date(expiresAt) <= new Date()) {
+      // ✅ FIX: Grace period de 30 segundos para permitir que auto-refresh actúe
+      const GRACE_PERIOD = 30 * 1000 // 30 segundos
+      const expirationTime = new Date(expiresAt).getTime()
+      const now = Date.now()
+
+      // Solo remover si está más allá del grace period
+      if (expirationTime + GRACE_PERIOD <= now) {
+        console.warn('⚠️ Access token expiró más allá del grace period, removiendo')
         await this.removeAccessToken()
         return null
       }
@@ -154,18 +160,26 @@ export class TokenManager {
     try {
       // Importación dinámica para evitar dependencias circulares
       const { ApiClient } = await import('@/src/services/api/ApiClient')
-      const { TokenMapper } = await import('@/src/utils/mappers')
 
+      // ✅ FIX: Backend retorna camelCase, necesitamos mapearlo correctamente
       const response = await ApiClient.post<{
-        access_token: string
-        refresh_token: string
-        token_type: string
-        expires_in: number
+        accessToken: string
+        refreshToken: string
+        tokenType: string
+        expiresIn: number
       }>('/auth/refresh', {
         refresh_token: refreshToken
       })
 
-      const tokens = TokenMapper.toApp(response)
+      // ✅ FIX: Crear tokens siguiendo el mismo patrón que AuthService.refreshTokens()
+      const tokens: App.TokenPair = {
+        accessToken: response.accessToken,
+        refreshToken: response.refreshToken,
+        tokenType: response.tokenType,
+        expiresIn: response.expiresIn,
+        expiresAt: new Date(Date.now() + response.expiresIn * 1000)
+      }
+
       await this.setTokens(tokens)
 
       return tokens.accessToken

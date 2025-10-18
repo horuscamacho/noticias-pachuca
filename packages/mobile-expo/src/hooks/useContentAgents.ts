@@ -1,6 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { contentAgentsApi } from '@/src/services/content-agents/contentAgentsApi';
-import type { AgentFilters } from '@/src/types/content-agent.types';
+import type { AgentFilters, CreateContentAgentRequest, UpdateContentAgentRequest } from '@/src/types/content-agent.types';
 
 /**
  * Query keys para React Query
@@ -37,5 +37,56 @@ export function useContentAgentById(id: string) {
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     enabled: !!id
+  });
+}
+
+/**
+ * Hook para crear un nuevo agente
+ * Invalida todas las queries de agentes al completarse
+ */
+export function useCreateContentAgent() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateContentAgentRequest) => contentAgentsApi.createAgent(data),
+    onSuccess: () => {
+      // Invalidar todas las listas de agentes
+      queryClient.invalidateQueries({ queryKey: contentAgentsKeys.all });
+    }
+  });
+}
+
+/**
+ * Hook para actualizar un agente existente
+ * Invalida las queries de agentes y el detalle específico al completarse
+ */
+export function useUpdateContentAgent() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateContentAgentRequest }) =>
+      contentAgentsApi.updateAgent(id, data),
+    onSuccess: (_, variables) => {
+      // Invalidar todas las listas
+      queryClient.invalidateQueries({ queryKey: contentAgentsKeys.all });
+      // Invalidar el detalle específico
+      queryClient.invalidateQueries({ queryKey: contentAgentsKeys.detail(variables.id) });
+    }
+  });
+}
+
+/**
+ * Hook para eliminar un agente
+ * Invalida todas las queries de agentes al completarse
+ */
+export function useDeleteContentAgent() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => contentAgentsApi.deleteAgent(id),
+    onSuccess: () => {
+      // Invalidar todas las queries de agentes
+      queryClient.invalidateQueries({ queryKey: contentAgentsKeys.all });
+    }
   });
 }

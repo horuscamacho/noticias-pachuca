@@ -40,6 +40,8 @@ import {
 } from '../interfaces';
 import { GeneratedContentFiltersDto } from '../dto/generated-content-filters.dto';
 import { PaginatedResponse } from '../../common/interfaces/paginated-response.interface';
+import { ImproveCopyDto, ImprovedCopyResponseDto } from '../dto/improve-copy.dto';
+import { CopyImproverService } from '../services/copy-improver.service';
 
 // DTOs específicos del controller
 export class GenerateContentDto {
@@ -81,6 +83,7 @@ export class ContentAIController {
     private readonly queueService: ContentGenerationQueueService,
     private readonly costMonitoringService: CostMonitoringService,
     private readonly dlqService: DeadLetterQueueService,
+    private readonly copyImproverService: CopyImproverService,
   ) {}
 
   // ==================== PROVIDERS ENDPOINTS ====================
@@ -1103,6 +1106,52 @@ export class ContentAIController {
     } catch (error) {
       this.logger.error(`❌ Error creando template desde wizard: ${error.message}`, error.stack);
       throw new BadRequestException(`Error creando template: ${error.message}`);
+    }
+  }
+
+  // ==================== COPY IMPROVER ENDPOINTS ====================
+
+  /**
+   * 📱 Mejorar copy de redes sociales con agente especializado
+   * Se usa antes de publicar en redes sociales para optimizar hooks y copys
+   */
+  @Post('improve-copy')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Mejorar copy de redes sociales con IA',
+    description: 'Mejora los copys de Facebook y Twitter de un contenido generado usando un agente especializado. Agrega URL canónica y optimiza hooks.'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Copy mejorado exitosamente',
+    type: ImprovedCopyResponseDto
+  })
+  @ApiResponse({ status: 404, description: 'Contenido no encontrado' })
+  @ApiResponse({ status: 400, description: 'Datos inválidos' })
+  async improveSocialMediaCopy(
+    @Body(ValidationPipe) dto: ImproveCopyDto
+  ): Promise<{
+    success: boolean;
+    message: string;
+    data: ImprovedCopyResponseDto;
+  }> {
+    this.logger.log(`📱 Improving social media copy for content ${dto.contentId}`);
+
+    try {
+      const improvedCopy = await this.copyImproverService.improveSocialMediaCopy(
+        dto.contentId,
+        dto.canonicalUrl
+      );
+
+      return {
+        success: true,
+        message: 'Copy mejorado exitosamente',
+        data: improvedCopy
+      };
+
+    } catch (error) {
+      this.logger.error(`❌ Error improving copy: ${error.message}`, error.stack);
+      throw error;
     }
   }
 }

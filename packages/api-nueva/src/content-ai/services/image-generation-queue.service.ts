@@ -14,6 +14,8 @@ export interface ImageGenerationJobData {
   basePrompt?: string; // Prompt editorial limpio (sin branding)
   contentAnalysis?: Record<string, unknown>; // Resultado del análisis de contenido
   originalTitle?: string; // Título original de la noticia
+  // NUEVO: Buffer de imagen de referencia (para usar /images/edits)
+  referenceImageBuffer?: Buffer; // Imagen de referencia para inspiración
 }
 
 @Injectable()

@@ -421,7 +421,7 @@ export class AIProviderService {
         strategies.push({
           name: 'openai',
           displayName: 'OpenAI',
-          models: openaiAdapter.supportedModels || ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo'],
+          models: openaiAdapter.supportedModels || ['gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo'], // ⭐ Agregados modelos GPT-5
           capabilities: {
             maxTokens: openaiCapabilities.maxTokens || 128000,
             supportsStreaming: openaiCapabilities.supportsStreaming || true,
@@ -461,7 +461,7 @@ export class AIProviderService {
         {
           name: 'openai',
           displayName: 'OpenAI',
-          models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo'],
+          models: ['gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo'], // ⭐ Agregados modelos GPT-5
           capabilities: {
             maxTokens: 128000,
             supportsStreaming: true,

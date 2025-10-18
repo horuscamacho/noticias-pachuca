@@ -1,10 +1,11 @@
 /**
  * 🎯 Types para sistema de filtrado y ordenamiento de contenido generado
- * Patrón: API namespace (snake_case) ↔ App namespace (camelCase)
+ * Patrón: API namespace (camelCase) ↔ App namespace (camelCase)
+ * El backend usa camelCase en los DTOs
  */
 
 // ============================================================
-// API TYPES (snake_case - Backend Response)
+// API TYPES (camelCase - Backend Request/Response)
 // ============================================================
 
 export namespace API {
@@ -27,23 +28,23 @@ export namespace API {
   export type SortOrder = 'asc' | 'desc'
 
   /**
-   * Query parameters enviados al backend
+   * Query parameters enviados al backend (camelCase porque el backend usa camelCase)
    */
   export interface GeneratedContentFilters {
     status?: GenerationStatus[]
-    agent_id?: string
-    template_id?: string
-    provider_id?: string
-    date_from?: string // ISO string
-    date_to?: string // ISO string
-    min_quality_score?: number
-    has_review?: boolean
-    is_published?: boolean
+    agentId?: string
+    templateId?: string
+    providerId?: string
+    dateFrom?: string // ISO string
+    dateTo?: string // ISO string
+    minQualityScore?: number
+    hasReview?: boolean
+    isPublished?: boolean
     category?: string
     tags?: string[]
     search?: string
-    sort_by?: SortBy
-    sort_order?: SortOrder
+    sortBy?: SortBy
+    sortOrder?: SortOrder
     page?: number
     limit?: number
   }
@@ -56,7 +57,7 @@ export namespace API {
     total: number
     page: number
     limit: number
-    total_pages: number
+    totalPages: number
   }
 
   /**
@@ -64,12 +65,12 @@ export namespace API {
    */
   export interface GeneratedContentResponse {
     id: string
-    original_content: {
+    originalContent: {
       id: string
       title: string
       content: string
-      source_url?: string
-      published_at?: string
+      sourceUrl?: string
+      publishedAt?: string
       images?: string[]
     }
     agent: {
@@ -87,95 +88,95 @@ export namespace API {
       name: string
       model: string
     }
-    generated_title: string
-    generated_content: string
-    generated_keywords: string[]
-    generated_tags: string[]
-    generated_category?: string
-    generated_summary?: string
-    extended_summary?: string
-    social_media_copies?: {
+    generatedTitle: string
+    generatedContent: string
+    generatedKeywords: string[]
+    generatedTags: string[]
+    generatedCategory?: string
+    generatedSummary?: string
+    extendedSummary?: string
+    socialMediaCopies?: {
       facebook?: {
         hook: string
         copy: string
         emojis: string[]
-        hook_type: string
-        estimated_engagement: string
+        hookType: string
+        estimatedEngagement: string
       }
       twitter?: {
         tweet: string
         hook: string
         emojis: string[]
-        hook_type: string
-        thread_ideas: string[]
+        hookType: string
+        threadIdeas: string[]
       }
       instagram?: string
       linkedin?: string
     }
-    seo_data?: {
-      meta_description?: string
-      focus_keyword?: string
-      alt_text?: string
-      canonical_url?: string
-      og_title?: string
-      og_description?: string
+    seoData?: {
+      metaDescription?: string
+      focusKeyword?: string
+      altText?: string
+      canonicalUrl?: string
+      ogTitle?: string
+      ogDescription?: string
     }
     status: GenerationStatus
-    generation_metadata: {
+    generationMetadata: {
       model: string
-      prompt_tokens: number
-      completion_tokens: number
-      total_tokens: number
+      promptTokens: number
+      completionTokens: number
+      totalTokens: number
       cost: number
-      processing_time: number
+      processingTime: number
       temperature: number
-      max_tokens: number
-      finish_reason: string
-      content_quality?: number
+      maxTokens: number
+      finishReason: string
+      contentQuality?: number
     }
-    quality_metrics?: {
-      readability_score?: number
-      sentiment_score?: number
-      coherence_score?: number
-      originality_score?: number
-      seo_score?: number
-      user_rating?: number
-      human_review_score?: number
+    qualityMetrics?: {
+      readabilityScore?: number
+      sentimentScore?: number
+      coherenceScore?: number
+      originalityScore?: number
+      seoScore?: number
+      userRating?: number
+      humanReviewScore?: number
     }
-    comparison_metrics?: {
-      similarity_to_original?: number
-      length_ratio?: number
-      keyword_density?: number
-      reading_level?: string
-      tone_analysis?: string
+    comparisonMetrics?: {
+      similarityToOriginal?: number
+      lengthRatio?: number
+      keywordDensity?: number
+      readingLevel?: string
+      toneAnalysis?: string
     }
     errors: string[]
     warnings: string[]
-    review_info?: {
-      reviewer_id?: string
-      reviewed_at?: string
-      review_notes?: string
-      changes_requested?: string[]
-      approval_level?: 'auto' | 'human' | 'editor'
+    reviewInfo?: {
+      reviewerId?: string
+      reviewedAt?: string
+      reviewNotes?: string
+      changesRequested?: string[]
+      approvalLevel?: 'auto' | 'human' | 'editor'
     }
-    publishing_info?: {
-      published_at?: string
-      published_by?: string
+    publishingInfo?: {
+      publishedAt?: string
+      publishedBy?: string
       platform?: string
       url?: string
-      social_shares?: number
+      socialShares?: number
       views?: number
     }
     versioning?: {
       version: number
-      previous_version_id?: string
-      change_log?: string
-      is_latest: boolean
+      previousVersionId?: string
+      changeLog?: string
+      isLatest: boolean
     }
-    generated_at: string
-    original_published_at?: string // Campo denormalizado para ordenamiento
-    created_at: string
-    updated_at: string
+    generatedAt: string
+    originalPublishedAt?: string // Campo denormalizado para ordenamiento
+    createdAt: string
+    updatedAt: string
   }
 }
 

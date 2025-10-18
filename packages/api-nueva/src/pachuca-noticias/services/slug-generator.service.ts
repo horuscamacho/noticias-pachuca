@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { PublishedNoticia, PublishedNoticiaDocument } from '../schemas/published-noticia.schema';
 
 @Injectable()
@@ -13,10 +13,13 @@ export class SlugGeneratorService {
   /**
    * Genera un slug único basado en el título de la noticia
    * Formato: titulo-de-la-noticia-abc12345
+   *
+   * 🌐 FASE 4: Multi-sitio
    * @param title - Título de la noticia
+   * @param siteIds - Array de IDs de sitios donde se publicará (opcional)
    * @returns Slug único y SEO-friendly
    */
-  async generateUniqueSlug(title: string): Promise<string> {
+  async generateUniqueSlug(title: string, siteIds?: string[]): Promise<string> {
     // 1. Limpiar y formatear título
     let slug = title
       .toLowerCase()
@@ -38,8 +41,8 @@ export class SlugGeneratorService {
     const shortUuid = this.generateShortUuid();
     slug = `${slug}-${shortUuid}`;
 
-    // 3. Verificar que no exista (por seguridad, aunque el UUID debería garantizarlo)
-    const exists = await this.publishedNoticiaModel.findOne({ slug });
+    // 3. Verificar que no exista en los sitios especificados
+    const exists = await this.checkSlugExists(slug, siteIds);
 
     if (exists) {
       // Regenerar con nuevo UUID
@@ -48,6 +51,30 @@ export class SlugGeneratorService {
     }
 
     return slug;
+  }
+
+  /**
+   * 🌐 FASE 4: Verifica si un slug ya existe en los sitios especificados
+   * @param slug - Slug a verificar
+   * @param siteIds - Array de IDs de sitios (opcional)
+   * @returns true si existe, false si no
+   */
+  private async checkSlugExists(slug: string, siteIds?: string[]): Promise<boolean> {
+    if (!siteIds || siteIds.length === 0) {
+      // Sin sitios especificados, verificar globalmente (backward compatible)
+      const exists = await this.publishedNoticiaModel.findOne({ slug });
+      return !!exists;
+    }
+
+    // Con sitios especificados, verificar si existe en alguno de esos sitios
+    const siteObjectIds = siteIds.map(id => new Types.ObjectId(id));
+
+    const exists = await this.publishedNoticiaModel.findOne({
+      slug,
+      sites: { $in: siteObjectIds },
+    });
+
+    return !!exists;
   }
 
   /**

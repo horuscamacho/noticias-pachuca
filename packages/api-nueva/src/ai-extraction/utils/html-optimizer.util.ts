@@ -138,8 +138,8 @@ export function cleanAttributes(html: string): string {
     'onload',
     'onerror',
     'style',
-    'width',
-    'height',
+    // 'width',    // ✅ PRESERVADO: Necesario para que AI identifique dimensiones de imágenes
+    // 'height',   // ✅ PRESERVADO: Necesario para que AI identifique dimensiones de imágenes
     'srcset',
     'sizes',
     'loading',

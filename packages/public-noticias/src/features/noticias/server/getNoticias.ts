@@ -1,14 +1,16 @@
 import { createServerFn } from '@tanstack/react-start';
 import type { NoticiasResponse, GetNoticiasParams } from '../types/noticia.types';
+import { getSiteHeaders } from '../../../lib/site-headers';
 
 // 🔧 Configuración de la API
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
 /**
  * 📋 Server Function: Obtener listado de noticias
  *
  * Esta función se ejecuta en el servidor y hace fetch a la API de NestJS.
  * Soporta paginación, filtrado por categoría, y ordenamiento.
+ * 🌐 FASE 6: Incluye header x-site-domain para multi-sitio
  *
  * @param params - Parámetros de búsqueda (page, limit, category, etc.)
  * @returns NoticiasResponse con array de noticias y metadata de paginación
@@ -50,9 +52,7 @@ export const getNoticias = createServerFn({ method: 'GET' }).handler(
 
       const response = await fetch(url, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getSiteHeaders(), // 🌐 FASE 6: Header con x-site-domain
         // 🔥 Cache strategy: Revalidar cada 2 minutos
         next: { revalidate: 120 },
       });

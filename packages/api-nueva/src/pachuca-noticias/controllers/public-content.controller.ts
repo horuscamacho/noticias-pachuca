@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Query, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, Body, HttpCode, HttpStatus, UseInterceptors } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { PublicContentService } from '../services/public-content.service';
@@ -19,13 +19,19 @@ import {
   NewsletterSubscriptionResponseDto,
   NewsletterContentDto,
 } from '../dto/newsletter.dto';
+import { SiteInterceptor } from '../interceptors/site.interceptor';
+import { Site } from '../decorators/site.decorator';
+import { SiteInfo } from '../services/site-detection.service';
 
 /**
  * 🌐 Public Content Controller
  * Endpoints públicos para categorías y búsqueda
  * Sin autenticación (APIs públicas de solo lectura)
+ *
+ * FASE 2: Multi-sitio activado - filtra contenido por x-site-domain header
  */
 @Controller('public-content')
+@UseInterceptors(SiteInterceptor) // 🌐 FASE 2: Detectar sitio automáticamente
 export class PublicContentController {
   constructor(
     private readonly publicContentService: PublicContentService,
@@ -38,38 +44,48 @@ export class PublicContentController {
   /**
    * GET /api/public-content/categories
    * Lista de categorías activas con contadores
+   *
+   * FASE 2: Filtra categorías por sitio
    */
   @Get('categories')
   @HttpCode(HttpStatus.OK)
-  async getCategories(): Promise<CategoryResponseDto[]> {
-    return this.publicContentService.getCategories();
+  async getCategories(
+    @Site() site: SiteInfo, // 🌐 FASE 2: Sitio detectado desde header
+  ): Promise<CategoryResponseDto[]> {
+    return this.publicContentService.getCategories(site.id);
   }
 
   /**
    * GET /api/public-content/categoria/:slug
    * Noticias por categoría (paginadas)
+   *
+   * FASE 2: Filtra noticias por sitio
    */
   @Get('categoria/:slug')
   @HttpCode(HttpStatus.OK)
   async getNoticiasByCategory(
     @Param('slug') slug: string,
     @Query() query: CategoryQueryDto,
+    @Site() site: SiteInfo, // 🌐 FASE 2: Sitio detectado desde header
   ): Promise<PaginatedResponseDto<PublicNoticiaResponseDto>> {
     const page = query.page || 1;
     const limit = query.limit || 20;
 
-    return this.publicContentService.getNoticiasByCategory(slug, page, limit);
+    return this.publicContentService.getNoticiasByCategory(slug, page, limit, site.id);
   }
 
   /**
    * GET /api/public-content/busqueda/:query
    * Búsqueda full-text de noticias
+   *
+   * FASE 2: Filtra búsqueda por sitio
    */
   @Get('busqueda/:query')
   @HttpCode(HttpStatus.OK)
   async searchNoticias(
     @Param('query') query: string,
     @Query() searchQuery: SearchQueryDto,
+    @Site() site: SiteInfo, // 🌐 FASE 2: Sitio detectado desde header
   ): Promise<PaginatedResponseDto<SearchResultDto>> {
     const page = searchQuery.page || 1;
     const limit = searchQuery.limit || 20;
@@ -82,39 +98,46 @@ export class PublicContentController {
       sortBy,
       page,
       limit,
+      site.id, // 🌐 FASE 2: Pasar siteId
     );
   }
 
   /**
    * GET /api/public-content/tag/:slug
    * Noticias por tag (paginadas)
+   *
+   * FASE 2: Filtra noticias por sitio
    */
   @Get('tag/:slug')
   @HttpCode(HttpStatus.OK)
   async getNoticiasByTag(
     @Param('slug') slug: string,
     @Query() query: CategoryQueryDto,
+    @Site() site: SiteInfo, // 🌐 FASE 2: Sitio detectado desde header
   ): Promise<PaginatedResponseDto<PublicNoticiaResponseDto>> {
     const page = query.page || 1;
     const limit = query.limit || 20;
 
-    return this.publicContentService.getNoticiasByTag(slug, page, limit);
+    return this.publicContentService.getNoticiasByTag(slug, page, limit, site.id);
   }
 
   /**
    * GET /api/public-content/autor/:slug
    * Noticias por autor (paginadas)
+   *
+   * FASE 2: Filtra noticias por sitio
    */
   @Get('autor/:slug')
   @HttpCode(HttpStatus.OK)
   async getNoticiasByAuthor(
     @Param('slug') slug: string,
     @Query() query: CategoryQueryDto,
+    @Site() site: SiteInfo, // 🌐 FASE 2: Sitio detectado desde header
   ): Promise<PaginatedResponseDto<PublicNoticiaResponseDto>> {
     const page = query.page || 1;
     const limit = query.limit || 20;
 
-    return this.publicContentService.getNoticiasByAuthor(slug, page, limit);
+    return this.publicContentService.getNoticiasByAuthor(slug, page, limit, site.id);
   }
 
   /**
@@ -221,21 +244,24 @@ export class PublicContentController {
   /**
    * GET /api/public-content/boletin/:tipo
    * Obtener contenido de boletín (preview)
+   *
+   * FASE 2: Filtra boletín por sitio
    */
   @Get('boletin/:tipo')
   @HttpCode(HttpStatus.OK)
   async getBoletinContent(
     @Param('tipo') tipo: 'manana' | 'tarde' | 'semanal' | 'deportes',
+    @Site() site: SiteInfo, // 🌐 FASE 2: Sitio detectado desde header
   ): Promise<NewsletterContentDto | { message: string }> {
     switch (tipo) {
       case 'manana':
-        return this.newsletterService.generateBoletinManana();
+        return this.newsletterService.generateBoletinManana(site.id);
       case 'tarde':
-        return this.newsletterService.generateBoletinTarde();
+        return this.newsletterService.generateBoletinTarde(site.id);
       case 'semanal':
-        return this.newsletterService.generateBoletinSemanal();
+        return this.newsletterService.generateBoletinSemanal(site.id);
       case 'deportes':
-        const deportes = await this.newsletterService.generateBoletinDeportes();
+        const deportes = await this.newsletterService.generateBoletinDeportes(site.id);
         return deportes || { message: 'No hay noticias de deportes disponibles' };
       default:
         return { message: 'Tipo de boletín no válido' };

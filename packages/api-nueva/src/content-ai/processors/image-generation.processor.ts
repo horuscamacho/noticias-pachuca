@@ -53,17 +53,39 @@ export class ImageGenerationProcessor {
         throw new Error('Provider does not support image generation');
       }
 
-      // Generate image
+      // Generate or Edit image (depending on referenceImageBuffer)
       const startTime = Date.now();
       await job.progress(30);
-      this.emitProgress(job.id as string | number, generationId, userId, 'generating', 30, 'Generando imagen con IA...');
 
-      const result = await provider.generateImage({
-        prompt,
-        quality,
-        size,
-        outputFormat: 'png',
-      });
+      const { referenceImageBuffer } = job.data;
+      let result;
+
+      // CASO 1: Con imagen de referencia → usar /images/edits
+      if (referenceImageBuffer && provider.editImage) {
+        this.logger.log(`🎨 Using /images/edits with reference image (${referenceImageBuffer.length} bytes)`);
+        this.emitProgress(job.id as string | number, generationId, userId, 'generating', 30, 'Generando imagen inspirada en referencia...');
+
+        result = await provider.editImage({
+          imageBuffer: referenceImageBuffer,
+          prompt,
+          size,
+        });
+      }
+      // CASO 2: Sin imagen de referencia → usar /images/generations
+      else {
+        if (referenceImageBuffer) {
+          this.logger.warn(`⚠️ Reference image provided but provider.editImage is not available, falling back to generations`);
+        }
+        this.logger.log(`🎨 Using /images/generations (no reference image)`);
+        this.emitProgress(job.id as string | number, generationId, userId, 'generating', 30, 'Generando imagen con IA...');
+
+        result = await provider.generateImage({
+          prompt,
+          quality,
+          size,
+          outputFormat: 'png',
+        });
+      }
 
       const generationTime = Date.now() - startTime;
 

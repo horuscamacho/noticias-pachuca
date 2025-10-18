@@ -38,8 +38,27 @@ export interface AgentFilters {
   isActive?: boolean;
 }
 
+// API Request types
+export interface CreateContentAgentRequest {
+  name: string;
+  agentType: 'reportero' | 'columnista' | 'trascendido' | 'seo-specialist';
+  description: string;
+  personality: string;
+  specializations: string[];
+  editorialLean: 'conservative' | 'progressive' | 'neutral' | 'humor' | 'critical' | 'analytical';
+  writingStyle: WritingStyle;
+  isActive: boolean;
+}
+
+export type UpdateContentAgentRequest = Partial<CreateContentAgentRequest>;
+
 // API Response types
 export interface ContentAgentListResponse {
   agents: ContentAgent[];
   total?: number;
+}
+
+export interface ContentAgentResponse {
+  agent: ContentAgent;
+  message?: string;
 }

@@ -27,6 +27,7 @@ import { GeneratorProModule } from './generator-pro/generator-pro.module';
 import { PachucaNoticiasModule } from './pachuca-noticias/pachuca-noticias.module';
 import { AiExtractionModule } from './ai-extraction/ai-extraction.module';
 import { ImageBankModule } from './image-bank/image-bank.module';
+import { CommunityManagerModule } from './community-manager/community-manager.module';
 
 // Función para seleccionar .env por ambiente
 function getEnvFilePath() {
@@ -185,6 +186,9 @@ function getEnvFilePath() {
 
     // 🖼️ IMAGE BANK MODULE - PROCESSED IMAGES BANK WITH METADATA REMOVAL
     ImageBankModule,
+
+    // 🤖 COMMUNITY MANAGER MODULE - INTELLIGENT SOCIAL MEDIA MANAGEMENT
+    CommunityManagerModule,
   ],
   controllers: [AppController],
   providers: [AppService, CacheService],

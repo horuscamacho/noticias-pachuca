@@ -15,6 +15,8 @@ import {
 } from '../dto/image-generation.dto';
 import { PaginatedResponse } from '../../common/interfaces/paginated-response.interface';
 import { ExtractedNoticia, ExtractedNoticiaDocument } from '../../noticias/schemas/extracted-noticia.schema';
+import { ImageBank, ImageBankDocument } from '../../image-bank/schemas/image-bank.schema';
+import * as sharp from 'sharp';
 
 /**
  * 🖼️ Servicio para generación de imágenes con IA
@@ -29,6 +31,8 @@ export class ImageGenerationService {
     private imageGenerationModel: Model<ImageGenerationDocument>,
     @InjectModel(ExtractedNoticia.name)
     private extractedNoticiaModel: Model<ExtractedNoticiaDocument>,
+    @InjectModel(ImageBank.name)
+    private imageBankModel: Model<ImageBankDocument>,
     private brandingService: BrandingService,
     private contentAnalyzerService: ContentAnalyzerService,
     private editorialPromptService: EditorialPromptService,
@@ -163,7 +167,29 @@ export class ImageGenerationService {
     });
 
     // ==========================================
-    // STEP 6: Encolar job con fullPrompt
+    // STEP 6: Descargar imagen de referencia (si aplica)
+    // NUEVO: Soporte para usar imagen de inspiración
+    // ==========================================
+    let referenceImageBuffer: Buffer | null = null;
+
+    if (dto.sourceImageId || dto.sourceImageUrl) {
+      this.logger.log(`🖼️ Downloading reference image...`);
+
+      referenceImageBuffer = await this.downloadReferenceImage(
+        dto.sourceImageId,
+        dto.sourceImageUrl,
+      );
+
+      if (referenceImageBuffer) {
+        this.logger.log(
+          `✓ Reference image downloaded: ${referenceImageBuffer.length} bytes, ` +
+          `will use /images/edits endpoint`,
+        );
+      }
+    }
+
+    // ==========================================
+    // STEP 7: Encolar job con fullPrompt (y referenceImageBuffer)
     // El processor usará fullPrompt para OpenAI
     // ==========================================
     const job = await this.imageGenerationQueueService.addGenerationJob({
@@ -178,6 +204,8 @@ export class ImageGenerationService {
       basePrompt: brandingResult.basePrompt,
       contentAnalysis: contentAnalysis as unknown as Record<string, unknown>,
       originalTitle,
+      // NUEVO: Buffer de imagen de referencia
+      referenceImageBuffer: referenceImageBuffer ?? undefined,
     });
 
     this.logger.log(
@@ -446,5 +474,120 @@ export class ImageGenerationService {
     });
 
     return stats;
+  }
+
+  /**
+   * 📥 Descarga imagen de referencia para usar con editImage()
+   * NUEVO: Soporte para generar imágenes inspiradas en una referencia
+   *
+   * @param sourceImageId - ID de imagen en ImageBank (opcional)
+   * @param sourceImageUrl - URL directa de imagen (opcional)
+   * @returns Buffer de imagen en formato PNG con alpha channel
+   * @throws BadRequestException si no se proporciona ni ID ni URL
+   * @throws NotFoundException si el ID no existe en ImageBank
+   */
+  private async downloadReferenceImage(
+    sourceImageId?: string,
+    sourceImageUrl?: string,
+  ): Promise<Buffer | null> {
+    // Si no hay referencia, retornar null
+    if (!sourceImageId && !sourceImageUrl) {
+      return null;
+    }
+
+    try {
+      let imageUrl: string;
+
+      // CASO 1: sourceImageId → Buscar en ImageBank
+      if (sourceImageId) {
+        if (!Types.ObjectId.isValid(sourceImageId)) {
+          throw new BadRequestException(`Invalid sourceImageId: ${sourceImageId}`);
+        }
+
+        this.logger.log(`📥 Fetching reference image from ImageBank: ${sourceImageId}`);
+
+        const imageBank = await this.imageBankModel
+          .findById(sourceImageId)
+          .lean();
+
+        if (!imageBank) {
+          throw new NotFoundException(`Image not found in ImageBank: ${sourceImageId}`);
+        }
+
+        // Usar la imagen original del banco (mejor calidad)
+        imageUrl = imageBank.processedUrls.original;
+        this.logger.log(`✓ Found image in bank: ${imageUrl}`);
+      }
+      // CASO 2: sourceImageUrl → Usar URL directamente
+      else {
+        imageUrl = sourceImageUrl as string;
+        this.logger.log(`📥 Using direct image URL: ${imageUrl.substring(0, 100)}...`);
+      }
+
+      // Descargar imagen
+      this.logger.log(`🌐 Downloading image from: ${imageUrl}`);
+      const response = await fetch(imageUrl, {
+        method: 'GET',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; NoticiaPachuca/1.0)',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      // Convertir a buffer
+      const arrayBuffer = await response.arrayBuffer();
+      let imageBuffer = Buffer.from(arrayBuffer);
+
+      this.logger.log(`✓ Image downloaded: ${imageBuffer.length} bytes`);
+
+      // Validar y convertir a PNG con alpha channel (requerido por OpenAI)
+      const metadata = await sharp(imageBuffer).metadata();
+      this.logger.log(`📊 Image metadata: format=${metadata.format}, size=${metadata.width}x${metadata.height}`);
+
+      // Si NO es PNG o NO tiene alpha channel, convertir
+      if (metadata.format !== 'png' || !metadata.hasAlpha) {
+        this.logger.log(`🔄 Converting image to PNG with alpha channel...`);
+
+        const convertedBuffer = await sharp(imageBuffer)
+          .png({ compressionLevel: 6 }) // Balance entre calidad y tamaño
+          .ensureAlpha() // Asegurar alpha channel
+          .toBuffer();
+
+        imageBuffer = Buffer.from(convertedBuffer);
+        this.logger.log(`✓ Image converted to PNG: ${imageBuffer.length} bytes`);
+      }
+
+      // Validar tamaño (OpenAI tiene límite de 4MB)
+      const maxSize = 4 * 1024 * 1024; // 4MB
+      if (imageBuffer.length > maxSize) {
+        this.logger.warn(`⚠️ Image too large (${(imageBuffer.length / 1024 / 1024).toFixed(2)}MB), resizing...`);
+
+        // Reducir tamaño manteniendo aspect ratio
+        const resizedBuffer = await sharp(imageBuffer)
+          .resize(1024, 1024, {
+            fit: 'inside',
+            withoutEnlargement: true,
+          })
+          .png({ compressionLevel: 9 }) // Mayor compresión
+          .toBuffer();
+
+        imageBuffer = Buffer.from(resizedBuffer);
+        this.logger.log(`✓ Image resized: ${imageBuffer.length} bytes`);
+      }
+
+      this.logger.log(`✅ Reference image ready: ${imageBuffer.length} bytes`);
+      return imageBuffer;
+    } catch (error) {
+      this.logger.error(
+        `❌ Failed to download reference image: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+      throw new BadRequestException(
+        `Failed to download reference image: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
   }
 }

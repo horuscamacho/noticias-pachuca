@@ -20,8 +20,8 @@ export type FacebookPublishingConfigDocument = FacebookPublishingConfig & Docume
  */
 @Schema({ timestamps: true })
 export class FacebookPublishingConfig {
-  @Prop({ required: true, type: Types.ObjectId, ref: 'NewsWebsiteConfig' })
-  websiteConfigId: Types.ObjectId; // Referencia al sitio web de noticias
+  @Prop({ required: true, type: Types.ObjectId, ref: 'Site' })
+  siteId: Types.ObjectId; // Referencia al sitio destino de publicación
 
   @Prop({ required: true, trim: true })
   name: string; // "Publicación El Universal", "Milenio Facebook"
@@ -160,7 +160,7 @@ export class FacebookPublishingConfig {
 export const FacebookPublishingConfigSchema = SchemaFactory.createForClass(FacebookPublishingConfig);
 
 // 🔍 ÍNDICES PARA PERFORMANCE
-FacebookPublishingConfigSchema.index({ websiteConfigId: 1 });
+FacebookPublishingConfigSchema.index({ siteId: 1 });
 FacebookPublishingConfigSchema.index({ isActive: 1 });
 FacebookPublishingConfigSchema.index({ facebookPageId: 1 });
 FacebookPublishingConfigSchema.index({ lastPublishedAt: -1 });

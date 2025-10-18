@@ -1,22 +1,32 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 export type CategoryDocument = Category & Document;
 
 /**
  * 🏷️ Schema para categorías de noticias
  * Gestión dinámica de categorías con metadata SEO
+ *
+ * FASE 0: Agregado soporte multi-sitio
  */
 @Schema({
   timestamps: true,
 })
 export class Category {
   // ========================================
+  // 🌐 MULTI-SITIO (FASE 0)
+  // ========================================
+
+  @Prop({ type: [Types.ObjectId], ref: 'Site', default: [], index: true })
+  sites: Types.ObjectId[]; // Array de sitios donde está disponible esta categoría
+
+  // ========================================
   // 📝 INFORMACIÓN BÁSICA
   // ========================================
 
-  @Prop({ required: true, unique: true, lowercase: true, trim: true })
+  @Prop({ required: true, lowercase: true, trim: true })
   slug: string; // "politica", "deportes", "cultura"
+  // ⚠️ FASE 5: Uniqueness ahora se garantiza con índice compuesto { sites: 1, slug: 1 }
 
   @Prop({ required: true, trim: true })
   name: string; // "Política", "Deportes", "Cultura"
@@ -83,7 +93,13 @@ export const CategorySchema = SchemaFactory.createForClass(Category);
 // 📇 ÍNDICES
 // ========================================
 
-CategorySchema.index({ slug: 1 }, { unique: true });
+// 🌐 FASE 5: Índice único compuesto (misma categoría puede existir en diferentes sitios)
+CategorySchema.index({ sites: 1, slug: 1 }, { unique: true });
+
+// Índices para multi-sitio (FASE 0)
+CategorySchema.index({ sites: 1 });
+CategorySchema.index({ sites: 1, isActive: 1, order: 1 });
+
 CategorySchema.index({ isActive: 1, order: 1 });
 CategorySchema.index({ order: 1 });
 

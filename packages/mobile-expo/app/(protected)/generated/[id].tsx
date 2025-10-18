@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { View, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator, Alert, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { ThemedText } from '@/src/components/ThemedText';
 import { useResponsive } from '@/src/features/responsive';
@@ -7,7 +7,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useGeneratedContentById } from '@/src/hooks/useGeneratedContent';
+import { Button } from '@/components/ui/button';
+import { useGeneratedContentDetail } from '@/src/hooks/useGeneratedContentFilters';
 
 // Mapeo de tipos de agente a emojis
 const AGENT_TYPE_EMOJI: Record<string, string> = {
@@ -31,8 +32,8 @@ export default function GeneratedContentDetailScreen() {
   const router = useRouter();
   const { isTablet } = useResponsive();
 
-  // Obtener contenido generado
-  const { data: content, isLoading, error, refetch } = useGeneratedContentById(id!);
+  // Obtener contenido generado usando el nuevo hook de filtros
+  const { data: content, isLoading, error, refetch } = useGeneratedContentDetail(id!);
 
   // Loading state
   if (isLoading) {
@@ -66,10 +67,16 @@ export default function GeneratedContentDetailScreen() {
     );
   }
 
+  // Determinar si es el tipo nuevo o viejo
+  const isNewType = 'agent' in content;
+
+  // Obtener el nombre del agente según el tipo
+  const agentName = isNewType
+    ? (content as any).agent.name
+    : (content as any).agentName || 'Agente desconocido';
+
   // Determinar emoji del agente
-  const agentEmoji = content.agentName
-    ? AGENT_TYPE_EMOJI[content.agentName.toLowerCase()] || '🤖'
-    : '🤖';
+  const agentEmoji = AGENT_TYPE_EMOJI[agentName.toLowerCase()] || '🤖';
 
   // Fecha de generación formateada
   const generatedDate = new Date(content.createdAt).toLocaleDateString('es-MX', {
@@ -97,7 +104,7 @@ export default function GeneratedContentDetailScreen() {
             <CardDescription>
               <View style={styles.metadata}>
                 <ThemedText variant="body-small" color="secondary">
-                  {agentEmoji} {content.agentName || 'Agente desconocido'}
+                  {agentEmoji} {agentName}
                 </ThemedText>
                 <ThemedText variant="body-small" color="secondary">
                   • {generatedDate}
@@ -142,6 +149,16 @@ export default function GeneratedContentDetailScreen() {
                   </Badge>
                 )}
               </View>
+
+              {/* Botón Publicar */}
+              <Button
+                onPress={() => router.push(`/generated/${id}/publish`)}
+                style={styles.publishButton}
+              >
+                <ThemedText style={styles.publishButtonText}>
+                  📤 Publicar Contenido
+                </ThemedText>
+              </Button>
             </CardContent>
           )}
         </Card>
@@ -421,7 +438,16 @@ const styles = StyleSheet.create({
   badges: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6
+    gap: 6,
+    marginBottom: 16
+  },
+  publishButton: {
+    backgroundColor: '#3B82F6',
+    marginTop: 8
+  },
+  publishButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '600'
   },
   summaryBox: {
     backgroundColor: '#EFF6FF',

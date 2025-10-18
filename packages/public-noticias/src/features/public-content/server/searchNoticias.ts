@@ -1,12 +1,14 @@
 import { createServerFn } from '@tanstack/react-start';
 import type { SearchParams, SearchResponse } from '../types/public-content.types';
+import { getSiteHeaders } from '../../../lib/site-headers';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
 /**
  * 🔍 Server Function: Buscar noticias
  *
  * Full-text search con filtros y ordenamiento
+ * 🌐 FASE 6: Incluye header x-site-domain para multi-sitio
  */
 export const searchNoticias = createServerFn({ method: 'GET' }).handler(
   async ({ data: params }: { data: SearchParams }): Promise<SearchResponse> => {
@@ -28,9 +30,7 @@ export const searchNoticias = createServerFn({ method: 'GET' }).handler(
 
       const response = await fetch(url, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getSiteHeaders(), // 🌐 FASE 6: Header con x-site-domain
         next: { revalidate: 60 }, // Cache por 1 minuto
       });
 

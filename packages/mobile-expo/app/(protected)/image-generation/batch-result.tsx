@@ -25,6 +25,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ThemedText } from '@/src/components/ThemedText';
 import { Ionicons } from '@expo/vector-icons';
 import { useImageGenerationById } from '@/src/hooks/useImageGenerationById';
+import { useImageGenerationSocket } from '@/src/hooks/useImageGenerationSocket';
 import { useStoreInBank } from '@/src/hooks/useStoreInBank';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
@@ -54,6 +55,22 @@ export default function BatchImageGenerationResultScreen() {
 
   // Hook para almacenar en banco
   const { mutate: storeInBank, isPending: isStoring } = useStoreInBank();
+
+  // Socket listeners en tiempo real para todas las generaciones en batch
+  const { processingIds } = useImageGenerationSocket({
+    onGenerationProgress: (data) => {
+      console.log(`📊 Batch Progress: ${data.generationId} at ${data.progress}%`);
+      // React Query auto-invalida y actualiza la UI
+    },
+    onGenerationCompleted: (data) => {
+      console.log(`✅ Batch item completed: ${data.generationId}`);
+      // React Query auto-invalida y actualiza la UI
+    },
+    onGenerationFailed: (data) => {
+      console.error(`❌ Batch item failed: ${data.generationId} - ${data.error}`);
+      // React Query auto-invalida y actualiza la UI
+    },
+  });
 
   // ============================================================================
   // DATA FETCHING - Fetch all jobs in parallel

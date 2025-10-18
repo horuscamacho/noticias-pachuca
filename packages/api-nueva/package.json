@@ -18,7 +18,9 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "script:populate-news-websites": "ts-node -r tsconfig-paths/register src/scripts/populate-news-websites.ts",
+    "script:populate-keywords": "ts-node -r tsconfig-paths/register src/scripts/populate-keywords.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.891.0",
@@ -75,7 +77,9 @@
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
-    "puppeteer": "^24.22.0",
+    "puppeteer": "^24.25.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
     "redis": "^5.8.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",

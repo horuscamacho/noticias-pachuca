@@ -367,24 +367,25 @@ import type { API as FilterAPI, App as FilterApp } from '@/src/types/generated-c
 
 export class GeneratedContentFiltersMapper {
   /**
-   * Transforma filtros App → API (camelCase → snake_case)
+   * Transforma filtros App → API (camelCase → camelCase)
+   * El backend espera camelCase en los query params
    */
   static toAPI(appFilters: FilterApp.GeneratedContentFilters): FilterAPI.GeneratedContentFilters {
     return {
       status: appFilters.status,
-      agent_id: appFilters.agentId,
-      template_id: appFilters.templateId,
-      provider_id: appFilters.providerId,
-      date_from: appFilters.dateFrom?.toISOString(),
-      date_to: appFilters.dateTo?.toISOString(),
-      min_quality_score: appFilters.minQualityScore,
-      has_review: appFilters.hasReview,
-      is_published: appFilters.isPublished,
+      agentId: appFilters.agentId,
+      templateId: appFilters.templateId,
+      providerId: appFilters.providerId,
+      dateFrom: appFilters.dateFrom?.toISOString(),
+      dateTo: appFilters.dateTo?.toISOString(),
+      minQualityScore: appFilters.minQualityScore,
+      hasReview: appFilters.hasReview,
+      isPublished: appFilters.isPublished,
       category: appFilters.category,
       tags: appFilters.tags,
       search: appFilters.search,
-      sort_by: appFilters.sortBy,
-      sort_order: appFilters.sortOrder,
+      sortBy: appFilters.sortBy,
+      sortOrder: appFilters.sortOrder,
       page: appFilters.page,
       limit: appFilters.limit,
     }
@@ -397,13 +398,13 @@ export class GeneratedContentFiltersMapper {
     return {
       id: apiContent.id,
       originalContent: {
-        id: apiContent.original_content.id,
-        title: apiContent.original_content.title,
-        content: apiContent.original_content.content,
-        sourceUrl: apiContent.original_content.source_url,
-        publishedAt: apiContent.original_content.published_at ?
-          new Date(apiContent.original_content.published_at) : undefined,
-        images: apiContent.original_content.images,
+        id: apiContent.originalContent.id,
+        title: apiContent.originalContent.title,
+        content: apiContent.originalContent.content,
+        sourceUrl: apiContent.originalContent.sourceUrl,
+        publishedAt: apiContent.originalContent.publishedAt ?
+          new Date(apiContent.originalContent.publishedAt) : undefined,
+        images: apiContent.originalContent.images,
       },
       agent: {
         id: apiContent.agent.id,
@@ -420,98 +421,98 @@ export class GeneratedContentFiltersMapper {
         name: apiContent.provider.name,
         model: apiContent.provider.model,
       },
-      generatedTitle: apiContent.generated_title,
-      generatedContent: apiContent.generated_content,
-      generatedKeywords: apiContent.generated_keywords,
-      generatedTags: apiContent.generated_tags,
-      generatedCategory: apiContent.generated_category,
-      generatedSummary: apiContent.generated_summary,
-      extendedSummary: apiContent.extended_summary,
-      socialMediaCopies: apiContent.social_media_copies ? {
-        facebook: apiContent.social_media_copies.facebook ? {
-          hook: apiContent.social_media_copies.facebook.hook,
-          copy: apiContent.social_media_copies.facebook.copy,
-          emojis: apiContent.social_media_copies.facebook.emojis,
-          hookType: apiContent.social_media_copies.facebook.hook_type,
-          estimatedEngagement: apiContent.social_media_copies.facebook.estimated_engagement,
+      generatedTitle: apiContent.generatedTitle,
+      generatedContent: apiContent.generatedContent,
+      generatedKeywords: apiContent.generatedKeywords,
+      generatedTags: apiContent.generatedTags,
+      generatedCategory: apiContent.generatedCategory,
+      generatedSummary: apiContent.generatedSummary,
+      extendedSummary: apiContent.extendedSummary,
+      socialMediaCopies: apiContent.socialMediaCopies ? {
+        facebook: apiContent.socialMediaCopies.facebook ? {
+          hook: apiContent.socialMediaCopies.facebook.hook,
+          copy: apiContent.socialMediaCopies.facebook.copy,
+          emojis: apiContent.socialMediaCopies.facebook.emojis,
+          hookType: apiContent.socialMediaCopies.facebook.hookType,
+          estimatedEngagement: apiContent.socialMediaCopies.facebook.estimatedEngagement,
         } : undefined,
-        twitter: apiContent.social_media_copies.twitter ? {
-          tweet: apiContent.social_media_copies.twitter.tweet,
-          hook: apiContent.social_media_copies.twitter.hook,
-          emojis: apiContent.social_media_copies.twitter.emojis,
-          hookType: apiContent.social_media_copies.twitter.hook_type,
-          threadIdeas: apiContent.social_media_copies.twitter.thread_ideas,
+        twitter: apiContent.socialMediaCopies.twitter ? {
+          tweet: apiContent.socialMediaCopies.twitter.tweet,
+          hook: apiContent.socialMediaCopies.twitter.hook,
+          emojis: apiContent.socialMediaCopies.twitter.emojis,
+          hookType: apiContent.socialMediaCopies.twitter.hookType,
+          threadIdeas: apiContent.socialMediaCopies.twitter.threadIdeas,
         } : undefined,
-        instagram: apiContent.social_media_copies.instagram,
-        linkedin: apiContent.social_media_copies.linkedin,
+        instagram: apiContent.socialMediaCopies.instagram,
+        linkedin: apiContent.socialMediaCopies.linkedin,
       } : undefined,
-      seoData: apiContent.seo_data ? {
-        metaDescription: apiContent.seo_data.meta_description,
-        focusKeyword: apiContent.seo_data.focus_keyword,
-        altText: apiContent.seo_data.alt_text,
-        canonicalUrl: apiContent.seo_data.canonical_url,
-        ogTitle: apiContent.seo_data.og_title,
-        ogDescription: apiContent.seo_data.og_description,
+      seoData: apiContent.seoData ? {
+        metaDescription: apiContent.seoData.metaDescription,
+        focusKeyword: apiContent.seoData.focusKeyword,
+        altText: apiContent.seoData.altText,
+        canonicalUrl: apiContent.seoData.canonicalUrl,
+        ogTitle: apiContent.seoData.ogTitle,
+        ogDescription: apiContent.seoData.ogDescription,
       } : undefined,
       status: apiContent.status,
       generationMetadata: {
-        model: apiContent.generation_metadata.model,
-        promptTokens: apiContent.generation_metadata.prompt_tokens,
-        completionTokens: apiContent.generation_metadata.completion_tokens,
-        totalTokens: apiContent.generation_metadata.total_tokens,
-        cost: apiContent.generation_metadata.cost,
-        processingTime: apiContent.generation_metadata.processing_time,
-        temperature: apiContent.generation_metadata.temperature,
-        maxTokens: apiContent.generation_metadata.max_tokens,
-        finishReason: apiContent.generation_metadata.finish_reason,
-        contentQuality: apiContent.generation_metadata.content_quality,
+        model: apiContent.generationMetadata.model,
+        promptTokens: apiContent.generationMetadata.promptTokens,
+        completionTokens: apiContent.generationMetadata.completionTokens,
+        totalTokens: apiContent.generationMetadata.totalTokens,
+        cost: apiContent.generationMetadata.cost,
+        processingTime: apiContent.generationMetadata.processingTime,
+        temperature: apiContent.generationMetadata.temperature,
+        maxTokens: apiContent.generationMetadata.maxTokens,
+        finishReason: apiContent.generationMetadata.finishReason,
+        contentQuality: apiContent.generationMetadata.contentQuality,
       },
-      qualityMetrics: apiContent.quality_metrics ? {
-        readabilityScore: apiContent.quality_metrics.readability_score,
-        sentimentScore: apiContent.quality_metrics.sentiment_score,
-        coherenceScore: apiContent.quality_metrics.coherence_score,
-        originalityScore: apiContent.quality_metrics.originality_score,
-        seoScore: apiContent.quality_metrics.seo_score,
-        userRating: apiContent.quality_metrics.user_rating,
-        humanReviewScore: apiContent.quality_metrics.human_review_score,
+      qualityMetrics: apiContent.qualityMetrics ? {
+        readabilityScore: apiContent.qualityMetrics.readabilityScore,
+        sentimentScore: apiContent.qualityMetrics.sentimentScore,
+        coherenceScore: apiContent.qualityMetrics.coherenceScore,
+        originalityScore: apiContent.qualityMetrics.originalityScore,
+        seoScore: apiContent.qualityMetrics.seoScore,
+        userRating: apiContent.qualityMetrics.userRating,
+        humanReviewScore: apiContent.qualityMetrics.humanReviewScore,
       } : undefined,
-      comparisonMetrics: apiContent.comparison_metrics ? {
-        similarityToOriginal: apiContent.comparison_metrics.similarity_to_original,
-        lengthRatio: apiContent.comparison_metrics.length_ratio,
-        keywordDensity: apiContent.comparison_metrics.keyword_density,
-        readingLevel: apiContent.comparison_metrics.reading_level,
-        toneAnalysis: apiContent.comparison_metrics.tone_analysis,
+      comparisonMetrics: apiContent.comparisonMetrics ? {
+        similarityToOriginal: apiContent.comparisonMetrics.similarityToOriginal,
+        lengthRatio: apiContent.comparisonMetrics.lengthRatio,
+        keywordDensity: apiContent.comparisonMetrics.keywordDensity,
+        readingLevel: apiContent.comparisonMetrics.readingLevel,
+        toneAnalysis: apiContent.comparisonMetrics.toneAnalysis,
       } : undefined,
       errors: apiContent.errors,
       warnings: apiContent.warnings,
-      reviewInfo: apiContent.review_info ? {
-        reviewerId: apiContent.review_info.reviewer_id,
-        reviewedAt: apiContent.review_info.reviewed_at ?
-          new Date(apiContent.review_info.reviewed_at) : undefined,
-        reviewNotes: apiContent.review_info.review_notes,
-        changesRequested: apiContent.review_info.changes_requested,
-        approvalLevel: apiContent.review_info.approval_level,
+      reviewInfo: apiContent.reviewInfo ? {
+        reviewerId: apiContent.reviewInfo.reviewerId,
+        reviewedAt: apiContent.reviewInfo.reviewedAt ?
+          new Date(apiContent.reviewInfo.reviewedAt) : undefined,
+        reviewNotes: apiContent.reviewInfo.reviewNotes,
+        changesRequested: apiContent.reviewInfo.changesRequested,
+        approvalLevel: apiContent.reviewInfo.approvalLevel,
       } : undefined,
-      publishingInfo: apiContent.publishing_info ? {
-        publishedAt: apiContent.publishing_info.published_at ?
-          new Date(apiContent.publishing_info.published_at) : undefined,
-        publishedBy: apiContent.publishing_info.published_by,
-        platform: apiContent.publishing_info.platform,
-        url: apiContent.publishing_info.url,
-        socialShares: apiContent.publishing_info.social_shares,
-        views: apiContent.publishing_info.views,
+      publishingInfo: apiContent.publishingInfo ? {
+        publishedAt: apiContent.publishingInfo.publishedAt ?
+          new Date(apiContent.publishingInfo.publishedAt) : undefined,
+        publishedBy: apiContent.publishingInfo.publishedBy,
+        platform: apiContent.publishingInfo.platform,
+        url: apiContent.publishingInfo.url,
+        socialShares: apiContent.publishingInfo.socialShares,
+        views: apiContent.publishingInfo.views,
       } : undefined,
       versioning: apiContent.versioning ? {
         version: apiContent.versioning.version,
-        previousVersionId: apiContent.versioning.previous_version_id,
-        changeLog: apiContent.versioning.change_log,
-        isLatest: apiContent.versioning.is_latest,
+        previousVersionId: apiContent.versioning.previousVersionId,
+        changeLog: apiContent.versioning.changeLog,
+        isLatest: apiContent.versioning.isLatest,
       } : undefined,
-      generatedAt: new Date(apiContent.generated_at),
-      originalPublishedAt: apiContent.original_published_at ?
-        new Date(apiContent.original_published_at) : undefined,
-      createdAt: new Date(apiContent.created_at),
-      updatedAt: new Date(apiContent.updated_at),
+      generatedAt: new Date(apiContent.generatedAt),
+      originalPublishedAt: apiContent.originalPublishedAt ?
+        new Date(apiContent.originalPublishedAt) : undefined,
+      createdAt: new Date(apiContent.createdAt),
+      updatedAt: new Date(apiContent.updatedAt),
     }
   }
 
@@ -526,7 +527,7 @@ export class GeneratedContentFiltersMapper {
       total: apiResponse.total,
       page: apiResponse.page,
       limit: apiResponse.limit,
-      totalPages: apiResponse.total_pages,
+      totalPages: apiResponse.totalPages,
     }
   }
 }
@@ -628,5 +629,75 @@ export class AiOutletMapper {
       reasoning: apiResponse.reasoning as string,
       optimizationStats: apiResponse.optimizationStats as AiAnalyzeContentResponse['optimizationStats']
     }
+  }
+}
+
+// Site Mappers
+import type {
+  Site,
+  CreateSitePayload,
+  UpdateSitePayload
+} from '@/src/types/site.types'
+
+export class SiteMapper {
+  /**
+   * 🌐 FASE 8: SiteMapper SIMPLIFICADO
+   * Transforma response de API → App (solo campos esenciales)
+   */
+  static toApp(apiSite: Record<string, unknown>): Site {
+    return {
+      id: apiSite.id as string || apiSite._id as string,
+      domain: apiSite.domain as string,
+      slug: apiSite.slug as string,
+      name: apiSite.name as string,
+      description: apiSite.description as string,
+
+      // Social Media (FASE 13)
+      socialMedia: apiSite.socialMedia as Site['socialMedia'],
+
+      // Status
+      isActive: apiSite.isActive as boolean ?? true,
+      isMainSite: apiSite.isMainSite as boolean ?? false,
+
+      // Stats (auto-generadas por backend)
+      totalNoticias: apiSite.totalNoticias as number || 0,
+      totalViews: apiSite.totalViews as number || 0,
+      totalSocialPosts: apiSite.totalSocialPosts as number || 0,
+
+      // Timestamps
+      createdAt: apiSite.createdAt as string || new Date().toISOString(),
+      updatedAt: apiSite.updatedAt as string || new Date().toISOString()
+    }
+  }
+
+  /**
+   * Transforma App → API para CREATE (SIMPLIFICADO - 5 campos con camelCase)
+   */
+  static createToAPI(appSite: CreateSitePayload): Record<string, unknown> {
+    return {
+      domain: appSite.domain,
+      name: appSite.name,
+      description: appSite.description,
+      isMainSite: appSite.isMainSite,
+      isActive: appSite.isActive
+    }
+  }
+
+  /**
+   * Transforma App → API para UPDATE (SIMPLIFICADO - solo campos permitidos con camelCase)
+   */
+  static updateToAPI(appSite: UpdateSitePayload): Record<string, unknown> {
+    const payload: Record<string, unknown> = {}
+
+    if (appSite.domain !== undefined) payload.domain = appSite.domain
+    if (appSite.name !== undefined) payload.name = appSite.name
+    if (appSite.description !== undefined) payload.description = appSite.description
+    if (appSite.isMainSite !== undefined) payload.isMainSite = appSite.isMainSite
+    if (appSite.isActive !== undefined) payload.isActive = appSite.isActive
+
+    // FASE 13: Social Media
+    if (appSite.socialMedia !== undefined) payload.socialMedia = appSite.socialMedia
+
+    return payload
   }
 }

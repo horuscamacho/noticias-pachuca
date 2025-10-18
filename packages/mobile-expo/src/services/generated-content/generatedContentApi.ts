@@ -28,7 +28,7 @@ export const generatedContentApi = {
     // Usar getRawClient() para manejar respuesta manualmente
     const rawClient = ApiClient.getRawClient()
     const response = await rawClient.get<FilterAPI.PaginatedGeneratedContentResponse>(
-      '/content-ai/generated-content',
+      '/content-ai/generated',
       { params: apiFilters }
     )
 
@@ -90,7 +90,7 @@ export const generatedContentApi = {
   getCategories: async (): Promise<string[]> => {
     const rawClient = ApiClient.getRawClient()
     const response = await rawClient.get<{ data: string[] }>(
-      '/content-ai/generated-content/categories'
+      '/content-ai/generated/categories/all'
     )
 
     return response.data.data
@@ -101,7 +101,7 @@ export const generatedContentApi = {
    */
   getTags: async (): Promise<string[]> => {
     const rawClient = ApiClient.getRawClient()
-    const response = await rawClient.get<{ data: string[] }>('/content-ai/generated-content/tags')
+    const response = await rawClient.get<{ data: string[] }>('/content-ai/generated/tags/all')
 
     return response.data.data
   },
@@ -115,7 +115,7 @@ export const generatedContentApi = {
   ): Promise<FilterApp.GeneratedContent> => {
     const rawClient = ApiClient.getRawClient()
     const response = await rawClient.patch<FilterAPI.GeneratedContentResponse>(
-      `/content-ai/generated-content/${id}/status`,
+      `/content-ai/generated/${id}/status`,
       { status }
     )
 
@@ -127,7 +127,7 @@ export const generatedContentApi = {
    */
   deleteContent: async (id: string): Promise<void> => {
     const rawClient = ApiClient.getRawClient()
-    await rawClient.delete(`/content-ai/generated-content/${id}`)
+    await rawClient.delete(`/content-ai/generated/${id}`)
   },
 
   /**
@@ -143,7 +143,7 @@ export const generatedContentApi = {
   ): Promise<FilterApp.GeneratedContent> => {
     const rawClient = ApiClient.getRawClient()
     const response = await rawClient.post<FilterAPI.GeneratedContentResponse>(
-      `/content-ai/generated-content/${id}/regenerate`,
+      `/content-ai/generated/${id}/regenerate`,
       options
     )
 

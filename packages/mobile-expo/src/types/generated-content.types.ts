@@ -38,6 +38,17 @@ export interface GenerationMetadata {
   costEstimate?: number;
 }
 
+export interface PublishingInfo {
+  publishedAt?: string;
+  publishedBy?: string;
+  platform?: string;
+  url?: string;
+  socialShares?: number;
+  views?: number;
+  sitesCount?: number;
+  socialMediaPostsCount?: number;
+}
+
 export interface GeneratedContent {
   id: string;
   extractedNoticiaId: string;
@@ -51,6 +62,7 @@ export interface GeneratedContent {
   generatedCategory?: string;
   socialMediaCopies?: SocialMediaCopies;
   generationMetadata?: GenerationMetadata;
+  publishingInfo?: PublishingInfo;
   createdAt: string;
   status: string;
 }

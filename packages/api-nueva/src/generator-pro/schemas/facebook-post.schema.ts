@@ -29,8 +29,8 @@ export class FacebookPost {
   @Prop({ required: true, type: Types.ObjectId, ref: 'AIContentGeneration' })
   generatedContentId: Types.ObjectId; // Referencia al contenido generado por IA
 
-  @Prop({ required: true, type: Types.ObjectId, ref: 'NewsWebsiteConfig' })
-  websiteConfigId: Types.ObjectId; // Referencia al sitio web de origen
+  @Prop({ required: true, type: Types.ObjectId, ref: 'Site' })
+  siteId: Types.ObjectId; // Referencia al sitio destino de publicación
 
   @Prop({ required: true, type: Types.ObjectId, ref: 'FacebookPublishingConfig' })
   facebookConfigId: Types.ObjectId; // Referencia a la configuración de Facebook
@@ -230,7 +230,7 @@ export const FacebookPostSchema = SchemaFactory.createForClass(FacebookPost);
 // 🔍 ÍNDICES PARA PERFORMANCE
 FacebookPostSchema.index({ facebookPostId: 1 });
 FacebookPostSchema.index({ status: 1, scheduledAt: 1 });
-FacebookPostSchema.index({ websiteConfigId: 1, publishedAt: -1 });
+FacebookPostSchema.index({ siteId: 1, publishedAt: -1 });
 FacebookPostSchema.index({ facebookConfigId: 1, status: 1 });
 FacebookPostSchema.index({ publishedAt: -1 });
 FacebookPostSchema.index({ category: 1, publishedAt: -1 });
@@ -239,7 +239,7 @@ FacebookPostSchema.index({ contentQualityScore: -1 });
 
 // 🔍 ÍNDICES COMPUESTOS
 FacebookPostSchema.index({ status: 1, scheduledAt: 1, facebookConfigId: 1 });
-FacebookPostSchema.index({ websiteConfigId: 1, status: 1, publishedAt: -1 });
+FacebookPostSchema.index({ siteId: 1, status: 1, publishedAt: -1 });
 
 // 🧮 VIRTUAL PARA ENGAGEMENT TOTAL
 FacebookPostSchema.virtual('totalEngagement').get(function () {

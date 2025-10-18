@@ -102,7 +102,7 @@ export class FacebookConfigResponseDto {
   id: string;
 
   @IsString()
-  websiteConfigId: string;
+  siteId: string;
 
   @IsString()
   name: string;

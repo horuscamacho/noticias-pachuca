@@ -117,7 +117,7 @@ export class AdvancedSettingsDto {
 
 export class CreateFacebookConfigDto {
   @IsString()
-  websiteConfigId: string; // ID del sitio web asociado
+  siteId: string; // ID del sitio destino de publicación
 
   @IsString()
   name: string; // Nombre de la configuración

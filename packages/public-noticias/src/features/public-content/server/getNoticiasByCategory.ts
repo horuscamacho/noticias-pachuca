@@ -1,12 +1,14 @@
 import { createServerFn } from '@tanstack/react-start';
 import type { CategoryNoticasParams, CategoryNoticasResponse } from '../types/public-content.types';
+import { getSiteHeaders } from '../../../lib/site-headers';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
 /**
  * 📰 Server Function: Obtener noticias por categoría
  *
  * Fetch de noticias filtradas por categoría con paginación
+ * 🌐 FASE 6: Incluye header x-site-domain para multi-sitio
  */
 export const getNoticiasByCategory = createServerFn({ method: 'GET' }).handler(
   async ({ data: params }: { data: CategoryNoticasParams }): Promise<CategoryNoticasResponse> => {
@@ -23,9 +25,7 @@ export const getNoticiasByCategory = createServerFn({ method: 'GET' }).handler(
 
       const response = await fetch(url, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getSiteHeaders(), // 🌐 FASE 6: Header con x-site-domain
         next: { revalidate: 120 }, // Cache por 2 minutos
       });
 

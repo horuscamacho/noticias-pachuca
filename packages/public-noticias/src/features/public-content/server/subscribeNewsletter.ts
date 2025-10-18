@@ -1,6 +1,7 @@
 import { createServerFn } from '@tanstack/react-start';
+import { getSiteHeaders } from '../../../lib/site-headers';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
 export interface NewsletterSubscribeData {
   email: string;
@@ -18,6 +19,7 @@ export interface NewsletterSubscribeResponse {
 
 /**
  * 📧 Server Function: Suscribirse a boletines
+ * 🌐 FASE 6: Incluye header x-site-domain para multi-sitio
  */
 export const subscribeNewsletter = createServerFn({ method: 'POST' }).handler(
   async ({ data }: { data: NewsletterSubscribeData }): Promise<NewsletterSubscribeResponse> => {
@@ -29,9 +31,7 @@ export const subscribeNewsletter = createServerFn({ method: 'POST' }).handler(
 
       const response = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getSiteHeaders(), // 🌐 FASE 6: Header con x-site-domain
         body: JSON.stringify(data),
       });
 

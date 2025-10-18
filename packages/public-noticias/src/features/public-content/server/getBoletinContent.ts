@@ -1,4 +1,5 @@
 import { createServerFn } from '@tanstack/react-start';
+import { getSiteHeaders } from '../../../lib/site-headers';
 
 /**
  * 📰 Obtiene contenido de boletines desde el backend
@@ -25,12 +26,13 @@ export interface BoletinContent {
   totalNoticias: number;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
 /**
  * 📰 Server Function: Obtener contenido de boletines
  *
  * Fetch del contenido generado para cada tipo de boletín
+ * 🌐 FASE 6: Incluye header x-site-domain para multi-sitio
  */
 export const getBoletinContent = createServerFn({ method: 'GET' }).handler(
   async ({ data }: { data: { tipo: 'manana' | 'tarde' | 'semanal' | 'deportes' } }): Promise<BoletinContent> => {
@@ -43,9 +45,7 @@ export const getBoletinContent = createServerFn({ method: 'GET' }).handler(
 
       const response = await fetch(url, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getSiteHeaders(), // 🌐 FASE 6: Header con x-site-domain
       });
 
       if (!response.ok) {

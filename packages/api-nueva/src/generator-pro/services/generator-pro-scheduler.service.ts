@@ -22,10 +22,25 @@ export class GeneratorProSchedulerService implements OnModuleInit {
   }
 
   /**
-   * Revisar cada 5 minutos qué sitios necesitan extracción de URLs
+   * ⚠️ DEPRECATED: Este método está siendo reemplazado por SmartExtractionSchedulerService
+   *
+   * @deprecated Usar SmartExtractionSchedulerService en su lugar
+   *
+   * Migración:
+   * - SmartExtractionSchedulerService maneja scheduling inteligente con OnModuleInit
+   * - Considera última extracción al calcular próxima ejecución
+   * - Actualiza timestamps solo después de ejecución exitosa
+   * - No necesita cron cada 5 minutos
+   *
+   * Este método será removido en una versión futura.
+   * Por ahora está DESHABILITADO para evitar duplicados.
    */
-  @Cron('*/5 * * * *')
+  // @Cron('*/5 * * * *') // DESHABILITADO - Usar SmartExtractionSchedulerService
   async scheduleExtractionJobs() {
+    this.logger.warn('⚠️ DEPRECATED: scheduleExtractionJobs() está deprecado. Usar SmartExtractionSchedulerService');
+    this.logger.warn('Este método está deshabilitado. El scheduling de extracción ahora se maneja con SmartExtractionSchedulerService');
+    return; // Early return para evitar ejecución
+
     this.logger.debug('Checking websites for URL extraction...');
 
     try {

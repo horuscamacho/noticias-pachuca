@@ -32,6 +32,11 @@ export default function TabsLayout() {
         <Icon sf="sparkles" />
       </NativeTabs.Trigger>
 
+      <NativeTabs.Trigger name="generados">
+        <Label>Generados</Label>
+        <Icon sf="doc.text" />
+      </NativeTabs.Trigger>
+
       <NativeTabs.Trigger name="images">
         <Label>Imágenes</Label>
         <Icon sf="photo.stack" />

@@ -28,6 +28,7 @@ import { ImageGenerationNotifierService } from './services/image-generation-noti
 import { ContentAnalyzerService } from './services/content-analyzer.service';
 import { EditorialPromptService } from './services/editorial-prompt.service';
 import { MetadataBuilderService } from './services/metadata-builder.service';
+import { CopyImproverService } from './services/copy-improver.service';
 
 // Controllers
 import { ContentAIController } from './controllers/content-ai.controller';
@@ -52,6 +53,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 
 // External schemas needed for content generation
 import { ExtractedNoticia, ExtractedNoticiaSchema } from '../noticias/schemas/extracted-noticia.schema';
+import { ImageBank, ImageBankSchema } from '../image-bank/schemas/image-bank.schema';
 
 /**
  * 🤖 Módulo Content AI Generation
@@ -78,6 +80,7 @@ import { ExtractedNoticia, ExtractedNoticiaSchema } from '../noticias/schemas/ex
       { name: ImageGeneration.name, schema: ImageGenerationSchema },
       // External schemas needed for content reference
       { name: ExtractedNoticia.name, schema: ExtractedNoticiaSchema },
+      { name: ImageBank.name, schema: ImageBankSchema },
     ]),
 
     // 🖼️ Image Bank Module (for AI image processing)
@@ -167,6 +170,7 @@ import { ExtractedNoticia, ExtractedNoticiaSchema } from '../noticias/schemas/ex
     ContentAnalyzerService,
     EditorialPromptService,
     MetadataBuilderService,
+    CopyImproverService,
 
     // 🔄 Queue Services
     ContentGenerationQueueService,

@@ -116,6 +116,7 @@ import { CacheModule } from '@nestjs/cache-manager';
     UniversalReportService,
     ReportFactoryService,
     DataRepositoryService,
+    PuppeteerManagerService, // 🎭 Exportar para uso en otros módulos (ej: UrlExtractionService)
   ],
 })
 export class ReportsModule {

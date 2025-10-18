@@ -21,6 +21,8 @@ export default function CreateOutletScreen() {
     baseUrl: '',
     listingUrl: '',
     testUrl: '',
+    extractionFrequency: 60, // Default: cada hora
+    useJavaScript: false, // Default: no requiere Puppeteer
     listingSelectors: {
       articleLinks: 'a[href]',
     },
@@ -224,6 +226,62 @@ export default function CreateOutletScreen() {
                   autoCapitalize="none"
                   keyboardType="url"
                 />
+              </View>
+            </CardContent>
+          </Card>
+
+          {/* Sección: Configuración de Extracción Automática */}
+          <Card style={styles.sectionCard}>
+            <CardHeader>
+              <CardTitle>Configuración de Extracción Automática</CardTitle>
+            </CardHeader>
+            <CardContent style={styles.inputContainer}>
+              <View>
+                <Label>Frecuencia de Extracción (minutos)</Label>
+                <Input
+                  placeholder="60"
+                  value={formData.extractionFrequency?.toString()}
+                  onChangeText={(value) => {
+                    const num = parseInt(value) || 60;
+                    setFormData(prev => ({ ...prev, extractionFrequency: num }));
+                  }}
+                  keyboardType="numeric"
+                />
+                <Text style={styles.helperText}>
+                  Cada cuántos minutos extraer URLs nuevas del listado (1-1440)
+                </Text>
+              </View>
+
+              <View style={{ marginTop: 12 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <View style={{ flex: 1 }}>
+                    <Label>¿Requiere JavaScript? (Puppeteer)</Label>
+                    <Text style={[styles.helperText, { marginTop: 4 }]}>
+                      Activar si el sitio carga contenido dinámicamente
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => setFormData(prev => ({ ...prev, useJavaScript: !prev.useJavaScript }))}
+                    style={{
+                      width: 51,
+                      height: 31,
+                      borderRadius: 16,
+                      backgroundColor: formData.useJavaScript ? '#f1ef47' : '#E5E7EB',
+                      padding: 2,
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: 27,
+                        height: 27,
+                        borderRadius: 13.5,
+                        backgroundColor: '#FFFFFF',
+                        transform: [{ translateX: formData.useJavaScript ? 20 : 0 }],
+                      }}
+                    />
+                  </TouchableOpacity>
+                </View>
               </View>
             </CardContent>
           </Card>

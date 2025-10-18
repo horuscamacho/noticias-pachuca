@@ -143,14 +143,14 @@ export default registerAs('config', () => ({
   aws: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-    region: process.env.AWS_REGION || 'us-east-1',
+    region: process.env.AWS_REGION || 'mx-central-1',
   },
 
   // 📦 CONFIGURACIÓN DE S3
   s3: {
     bucket: process.env.AWS_S3_BUCKET || '',
     customUrl: process.env.AWS_S3_CUSTOM_URL || '',
-    region: process.env.AWS_REGION || 'us-east-1',
+    region: process.env.AWS_REGION || 'mx-central-1',
   },
 
   // 🌐 CONFIGURACIÓN DE CLOUDFRONT

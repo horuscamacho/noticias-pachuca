@@ -70,6 +70,7 @@ import { GeneratorProJob, GeneratorProJobDocument } from '../schemas/generator-p
 import { ExtractedNoticia, ExtractedNoticiaDocument } from '../../noticias/schemas/extracted-noticia.schema';
 import { AIContentGeneration, AIContentGenerationDocument } from '../../content-ai/schemas/ai-content-generation.schema';
 import { ContentAgent, ContentAgentDocument } from '../schemas/content-agent.schema';
+import { Site, SiteDocument } from '../../pachuca-noticias/schemas/site.schema';
 
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -103,6 +104,8 @@ export class GeneratorProController {
     private readonly aiContentGenerationModel: Model<AIContentGenerationDocument>,
     @InjectModel(ContentAgent.name)
     private readonly contentAgentModel: Model<ContentAgentDocument>,
+    @InjectModel(Site.name)
+    private readonly siteModel: Model<SiteDocument>,
     private readonly orchestratorService: GeneratorProOrchestratorService,
     private readonly websiteService: NewsWebsiteService,
     private readonly facebookService: FacebookPublishingService,
@@ -774,7 +777,7 @@ export class GeneratorProController {
 
       const responseConfigs: FacebookConfigResponseDto[] = configs.map(config => ({
         id: config._id.toString(),
-        websiteConfigId: config.websiteConfigId.toString(),
+        siteId: config.siteId.toString(),
         name: config.name,
         facebookPageId: config.facebookPageId,
         facebookPageName: config.facebookPageName,
@@ -810,16 +813,16 @@ export class GeneratorProController {
     this.logger.log(`📱 Creating Facebook config: ${createDto.name}`);
 
     try {
-      // Validar que existe el website config
-      const websiteConfig = await this.websiteConfigModel.findById(createDto.websiteConfigId);
-      if (!websiteConfig) {
-        throw new HttpException('Website configuration not found', HttpStatus.NOT_FOUND);
+      // Validar que existe el sitio destino
+      const site = await this.siteModel.findById(createDto.siteId);
+      if (!site) {
+        throw new HttpException('Site not found', HttpStatus.NOT_FOUND);
       }
 
       // Crear nueva configuración Facebook
       const facebookConfig = new this.facebookConfigModel({
         ...createDto,
-        websiteConfigId: new Types.ObjectId(createDto.websiteConfigId),
+        siteId: new Types.ObjectId(createDto.siteId),
         templateId: new Types.ObjectId(createDto.templateId),
         isActive: createDto.isActive ?? true,
         publishingFrequency: createDto.publishingFrequency ?? 30,
@@ -849,13 +852,13 @@ export class GeneratorProController {
       this.eventEmitter.emit('generator-pro.facebook.created', {
         configId: savedConfig._id,
         name: savedConfig.name,
-        websiteId: savedConfig.websiteConfigId,
+        siteId: savedConfig.siteId,
         timestamp: new Date(),
       });
 
       const responseDto: FacebookConfigResponseDto = {
         id: (savedConfig._id as Types.ObjectId).toString(),
-        websiteConfigId: savedConfig.websiteConfigId.toString(),
+        siteId: savedConfig.siteId.toString(),
         name: savedConfig.name,
         facebookPageId: savedConfig.facebookPageId,
         facebookPageName: savedConfig.facebookPageName,

@@ -42,30 +42,17 @@ export default function OutletDetailScreen() {
   const resumeOutlet = useResumeOutlet();
 
   const [extractionFreq, setExtractionFreq] = useState('');
-  const [contentGenFreq, setContentGenFreq] = useState('');
-  const [publishingFreq, setPublishingFreq] = useState('');
 
   useEffect(() => {
     if (outlet) {
       setExtractionFreq(outlet.extractionFrequency.toString());
-      setContentGenFreq(outlet.contentGenerationFrequency.toString());
-      setPublishingFreq(outlet.publishingFrequency.toString());
     }
   }, [outlet]);
 
   const handleSaveFrequencies = () => {
     const extractionVal = parseInt(extractionFreq);
-    const contentGenVal = parseInt(contentGenFreq);
-    const publishingVal = parseInt(publishingFreq);
 
-    if (
-      extractionVal < 1 ||
-      extractionVal > 1440 ||
-      contentGenVal < 1 ||
-      contentGenVal > 1440 ||
-      publishingVal < 1 ||
-      publishingVal > 1440
-    ) {
+    if (extractionVal < 1 || extractionVal > 1440) {
       return;
     }
 
@@ -73,8 +60,6 @@ export default function OutletDetailScreen() {
       id: id!,
       dto: {
         extractionFrequency: extractionVal,
-        contentGenerationFrequency: contentGenVal,
-        publishingFrequency: publishingVal,
       },
     });
   };
@@ -426,7 +411,7 @@ export default function OutletDetailScreen() {
           </CardHeader>
           <CardContent className="gap-4">
             <View>
-              <Label nativeID="extractionFreq">Extraccion de URLs</Label>
+              <Label nativeID="extractionFreq">Frecuencia de Extracción (minutos)</Label>
               <Input
                 aria-labelledby="extractionFreq"
                 keyboardType="numeric"
@@ -434,26 +419,9 @@ export default function OutletDetailScreen() {
                 onChangeText={setExtractionFreq}
                 placeholder="Ej: 60"
               />
-            </View>
-            <View>
-              <Label nativeID="contentGenFreq">Generacion de Contenido</Label>
-              <Input
-                aria-labelledby="contentGenFreq"
-                keyboardType="numeric"
-                value={contentGenFreq}
-                onChangeText={setContentGenFreq}
-                placeholder="Ej: 120"
-              />
-            </View>
-            <View>
-              <Label nativeID="publishingFreq">Publicacion</Label>
-              <Input
-                aria-labelledby="publishingFreq"
-                keyboardType="numeric"
-                value={publishingFreq}
-                onChangeText={setPublishingFreq}
-                placeholder="Ej: 30"
-              />
+              <Text className="text-xs text-muted-foreground mt-2">
+                Cada cuántos minutos extraer URLs nuevas del listado (1-1440)
+              </Text>
             </View>
           </CardContent>
           <CardFooter>

@@ -1,14 +1,16 @@
 import { createServerFn } from '@tanstack/react-start';
 import type { NoticiaResponse } from '../types/noticia.types';
+import { getSiteHeaders } from '../../../lib/site-headers';
 
 // 🔧 Configuración de la API
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
 /**
  * 🔍 Server Function: Obtener noticia por slug
  *
  * Esta función se ejecuta en el servidor y hace fetch a la API de NestJS.
  * Se usa en el loader de la ruta /noticia/$slug
+ * 🌐 FASE 6: Incluye header x-site-domain para multi-sitio
  *
  * @param slug - Slug único de la noticia (ej: "titulo-de-noticia-abc12345")
  * @returns NoticiaResponse con la noticia o null si no existe
@@ -22,9 +24,7 @@ export const getNoticiaBySlug = createServerFn({ method: 'GET' }).handler(
 
       const response = await fetch(url, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getSiteHeaders(), // 🌐 FASE 6: Header con x-site-domain
         // 🔥 Cache strategy: Revalidar cada 5 minutos
         next: { revalidate: 300 },
       });

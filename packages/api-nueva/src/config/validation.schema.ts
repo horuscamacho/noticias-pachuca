@@ -61,7 +61,7 @@ export const validationSchema = Joi.object({
   // AWS Configuration
   AWS_ACCESS_KEY_ID: Joi.string().required(),
   AWS_SECRET_ACCESS_KEY: Joi.string().required(),
-  AWS_REGION: Joi.string().default('us-east-1'),
+  AWS_REGION: Joi.string().default('mx-central-1'),
 
   // S3 Configuration
   AWS_S3_BUCKET: Joi.string().required(),

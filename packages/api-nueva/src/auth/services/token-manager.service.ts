@@ -88,6 +88,17 @@ export class TokenManagerService {
     tokenFamily?: string,
   ): Promise<string> {
     const family = tokenFamily || this.generateTokenFamily();
+    const version = await this.getNextTokenVersion(userId, family);
+
+    this.logger.log('🎫 [TokenManager] Generating refresh token:', {
+      userId,
+      username,
+      platform: platform.type,
+      deviceId: platform.deviceInfo?.model,
+      tokenFamily: family,
+      version,
+      isNewFamily: !tokenFamily,
+    });
 
     const payload: RefreshTokenPayload = {
       sub: userId,
@@ -95,7 +106,7 @@ export class TokenManagerService {
       platform: platform.type,
       deviceId: platform.deviceInfo?.model,
       tokenFamily: family,
-      version: await this.getNextTokenVersion(userId, family),
+      version,
     };
 
     const token = await this.jwtService.signAsync(payload, {
@@ -103,12 +114,21 @@ export class TokenManagerService {
       expiresIn: this.configService.get('config.auth.jwtRefreshExpires'),
     });
 
+    const tokenPreview = token ? token.substring(0, 30) + '...' : 'null';
+
     // Guardar en Redis con metadata
     await this.redisAuth.storeRefreshToken(userId, token, {
       family,
       platform: platform.type,
       deviceId: platform.deviceInfo?.model,
       createdAt: new Date(),
+    });
+
+    this.logger.log('✅ [TokenManager] Refresh token generated:', {
+      userId,
+      tokenFamily: family,
+      version,
+      tokenPreview,
     });
 
     return token;
@@ -144,13 +164,31 @@ export class TokenManagerService {
   }
 
   async rotateRefreshToken(oldToken: string): Promise<string> {
+    const oldTokenPreview = oldToken ? oldToken.substring(0, 30) + '...' : 'null';
+
+    this.logger.log('🔄 [TokenManager] Starting token rotation:', {
+      oldTokenPreview,
+    });
+
     const validation = await this.validateRefreshToken(oldToken);
     if (!validation.isValid || !validation.payload) {
+      this.logger.error('❌ [TokenManager] Cannot rotate invalid token:', {
+        oldTokenPreview,
+        validationError: validation.error,
+      });
       throw new Error('Cannot rotate invalid token');
     }
 
     const refreshPayload = validation.payload as RefreshTokenPayload;
     const { sub, username, platform, tokenFamily } = refreshPayload;
+
+    this.logger.log('🔄 [TokenManager] Token validated, rotating:', {
+      userId: sub,
+      username,
+      platform,
+      tokenFamily,
+      oldVersion: refreshPayload.version,
+    });
 
     // Invalidar token anterior
     await this.redisAuth.invalidateRefreshToken(sub, oldToken);
@@ -162,7 +200,17 @@ export class TokenManagerService {
       isNative: platform === 'mobile',
     };
 
-    return this.generateRefreshToken(sub, username, platformInfo, tokenFamily);
+    const newToken = await this.generateRefreshToken(sub, username, platformInfo, tokenFamily);
+    const newTokenPreview = newToken ? newToken.substring(0, 30) + '...' : 'null';
+
+    this.logger.log('✅ [TokenManager] Token rotation complete:', {
+      userId: sub,
+      tokenFamily,
+      oldTokenPreview,
+      newTokenPreview,
+    });
+
+    return newToken;
   }
 
   // 🔐 PASSWORD RESET TOKENS

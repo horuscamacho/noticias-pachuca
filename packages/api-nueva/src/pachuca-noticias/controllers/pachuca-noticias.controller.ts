@@ -289,6 +289,37 @@ export class PachucaNoticiasController {
   }
 
   // ========================================
+  // 🗺️ SEO & FEEDS ENDPOINTS
+  // ========================================
+  // IMPORTANTE: Estas rutas específicas deben ir ANTES de las rutas parametrizadas (:id)
+
+  /**
+   * GET /pachuca-noticias/sitemap.xml
+   * Genera sitemap dinámico con todas las noticias publicadas
+   * Cache: 24 horas
+   */
+  @Get('sitemap.xml')
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(86400) // 24 horas
+  async getSitemap() {
+    const xml = await this.seoFeedsService.generateSitemap();
+    return xml;
+  }
+
+  /**
+   * GET /pachuca-noticias/rss.xml
+   * Genera RSS feed con las últimas 50 noticias
+   * Cache: 1 hora
+   */
+  @Get('rss.xml')
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(3600) // 1 hora
+  async getRssFeed() {
+    const xml = await this.seoFeedsService.generateRssFeed();
+    return xml;
+  }
+
+  // ========================================
   // 🔍 RUTAS PARAMETRIZADAS (DEBEN IR AL FINAL)
   // ========================================
 
@@ -330,35 +361,5 @@ export class PachucaNoticiasController {
       message: 'Noticia actualizada exitosamente',
       data: noticia,
     };
-  }
-
-  // ========================================
-  // 🗺️ SEO & FEEDS ENDPOINTS
-  // ========================================
-
-  /**
-   * GET /pachuca-noticias/sitemap.xml
-   * Genera sitemap dinámico con todas las noticias publicadas
-   * Cache: 24 horas
-   */
-  @Get('sitemap.xml')
-  @UseInterceptors(CacheInterceptor)
-  @CacheTTL(86400) // 24 horas
-  async getSitemap() {
-    const xml = await this.seoFeedsService.generateSitemap();
-    return xml;
-  }
-
-  /**
-   * GET /pachuca-noticias/rss.xml
-   * Genera RSS feed con las últimas 50 noticias
-   * Cache: 1 hora
-   */
-  @Get('rss.xml')
-  @UseInterceptors(CacheInterceptor)
-  @CacheTTL(3600) // 1 hora
-  async getRssFeed() {
-    const xml = await this.seoFeedsService.generateRssFeed();
-    return xml;
   }
 }

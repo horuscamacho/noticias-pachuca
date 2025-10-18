@@ -1,8 +1,9 @@
 import { createServerFn } from '@tanstack/react-start';
 import type { NoticiasResponse } from '../types/noticia.types';
+import { getSiteHeaders } from '../../../lib/site-headers';
 
 // 🔧 Configuración de la API
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
 export interface GetRelatedNoticiasParams {
   category: string;
@@ -15,6 +16,7 @@ export interface GetRelatedNoticiasParams {
  *
  * Obtiene noticias de la misma categoría, excluyendo la noticia actual.
  * Se usa para mostrar sugerencias al final de cada artículo.
+ * 🌐 FASE 6: Incluye header x-site-domain para multi-sitio
  *
  * @param params - category, slug de la noticia actual, y limit (default: 5)
  * @returns Array con noticias relacionadas
@@ -31,9 +33,7 @@ export const getRelatedNoticias = createServerFn({ method: 'GET' }).handler(
 
       const response = await fetch(url, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getSiteHeaders(), // 🌐 FASE 6: Header con x-site-domain
         // 🔥 Cache strategy: Revalidar cada 5 minutos
         next: { revalidate: 300 },
       });

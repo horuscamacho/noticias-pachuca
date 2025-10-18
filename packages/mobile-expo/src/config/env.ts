@@ -27,14 +27,14 @@ const getApiBaseUrl = (): string => {
     if (isPhysicalDevice) {
       // Dispositivo físico - usar IP de red local
       console.log('📱 Using PHYSICAL DEVICE URL')
-      return 'http://192.168.100.47:3000/api'
+      return 'http://192.168.100:4000/api'
     } else {
       // Simulador - usar localhost
       console.log('🖥️ Using SIMULATOR URL')
       if (Platform.OS === 'android') {
-        return 'http://10.0.2.2:3000/api'  // Android emulator localhost
+        return 'http://10.0.2.2:4000/api'  // Android emulator localhost
       } else {
-        return 'http://localhost:3000/api'  // iOS simulator
+        return 'http://localhost:4000/api'  // iOS simulator
       }
     }
   }
