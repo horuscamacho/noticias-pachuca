@@ -58,15 +58,18 @@ jobs:
         run: |
           tar -czf frontend-deploy.tar.gz .output package.json
 
-      - name: Copy to EC2
-        uses: appleboy/scp-action@v1
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "packages/public-noticias/frontend-deploy.tar.gz"
-          target: "/tmp/"
-          strip_components: 2
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Copy to EC2 via SCP
+        run: |
+          scp -i ~/.ssh/deploy_key \
+            packages/public-noticias/frontend-deploy.tar.gz \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/tmp/frontend-deploy.tar.gz
 
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v1.0.3
