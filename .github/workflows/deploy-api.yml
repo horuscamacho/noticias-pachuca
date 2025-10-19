@@ -57,17 +57,37 @@ jobs:
           cp package.json deploy-pkg/
           cp yarn.lock deploy-pkg/
           tar -czf api-deploy.tar.gz -C deploy-pkg .
-          # Move to root for easier SCP
-          mv api-deploy.tar.gz ../../
+
+      - name: Verify deployment package
+        working-directory: packages/api-nueva
+        run: |
+          echo "Deployment package created:"
+          ls -lh api-deploy.tar.gz
+          echo "Current directory: $(pwd)"
 
       - name: Copy to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "api-deploy.tar.gz"
-          target: "/tmp/"
+        working-directory: packages/api-nueva
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > /tmp/ec2_key.pem
+          chmod 600 /tmp/ec2_key.pem
+
+          # Test SSH connection first
+          ssh -i /tmp/ec2_key.pem \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
+            "echo 'SSH connection successful' && mkdir -p /tmp"
+
+          # Copy file with verbose output
+          scp -i /tmp/ec2_key.pem \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            -v \
+            api-deploy.tar.gz \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/tmp/api-deploy.tar.gz
+
+          # Cleanup key
+          rm -f /tmp/ec2_key.pem
 
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v1.0.3
