@@ -176,8 +176,41 @@ jobs:
             # Install production dependencies (skip Puppeteer Chrome download)
             PUPPETEER_SKIP_DOWNLOAD=true yarn install --frozen-lockfile --production
 
-            # Update .env
-            echo "${{ secrets.API_ENV }}" > .env
+            # Update .env using heredoc for reliable multiline handling
+            cat > .env << 'ENV_EOF'
+            ${{ secrets.API_ENV }}
+            ENV_EOF
+
+            # Verify .env file was created and has content
+            echo "Verifying .env file creation..."
+            if [ ! -s .env ]; then
+              echo "❌ .env file is empty or does not exist"
+              ls -lh .env 2>/dev/null || echo "File does not exist"
+              exit 1
+            fi
+
+            echo "✅ .env file created ($(wc -l < .env) lines, $(stat -f%z .env 2>/dev/null || stat -c%s .env) bytes)"
+
+            # Verify critical environment variables exist
+            MISSING_VARS=()
+            for var in MONGODB_URL PORT NODE_ENV; do
+              if ! grep -q "^${var}=" .env; then
+                MISSING_VARS+=("$var")
+              fi
+            done
+
+            if [ ${#MISSING_VARS[@]} -ne 0 ]; then
+              echo "❌ Missing required environment variables: ${MISSING_VARS[*]}"
+              echo ""
+              echo "First 10 lines of .env (for debugging):"
+              head -10 .env | sed 's/=.*/=***/' # Mask values for security
+              echo ""
+              echo "Variables found in .env:"
+              grep -E "^[A-Z_]+=" .env | cut -d= -f1 || echo "No variables found"
+              exit 1
+            fi
+
+            echo "✅ All critical environment variables verified"
 
             # Reload with PM2 (zero-downtime)
             echo "Reloading application with PM2..."
