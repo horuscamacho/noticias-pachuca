@@ -180,11 +180,66 @@ jobs:
             echo "${{ secrets.API_ENV }}" > .env
 
             # Reload with PM2 (zero-downtime)
+            echo "Reloading application with PM2..."
             pm2 reload /var/www/noticias-pachuca/ecosystem.config.js --only api-nueva || pm2 start /var/www/noticias-pachuca/ecosystem.config.js --only api-nueva
 
-            # Health check
-            sleep 5
-            curl -f http://localhost:4000/health || exit 1
+            # Wait for NestJS application to start (15 seconds)
+            echo "Waiting for application to start..."
+            sleep 15
+
+            # Check PM2 process status first
+            echo "Checking PM2 process status..."
+            pm2 describe api-nueva || {
+              echo "❌ PM2 process not found"
+              pm2 list
+              exit 1
+            }
+
+            # Verify app is online in PM2
+            PM2_STATUS=$(pm2 jlist | jq -r '.[] | select(.name=="api-nueva") | .pm2_env.status')
+            echo "PM2 Status: $PM2_STATUS"
+
+            if [ "$PM2_STATUS" != "online" ]; then
+              echo "❌ PM2 status is not 'online'. Showing logs..."
+              pm2 logs api-nueva --lines 50 --nostream
+              exit 1
+            fi
+
+            # HTTP Health check with retries (3 attempts, 5 seconds apart)
+            echo "Running HTTP health check..."
+            HEALTH_CHECK_PASSED=false
+            for i in {1..3}; do
+              echo "Health check attempt $i/3..."
+              if curl -f -s --max-time 5 http://localhost:4000/health > /dev/null 2>&1; then
+                echo "✅ Health check passed on attempt $i"
+                HEALTH_CHECK_PASSED=true
+                break
+              else
+                echo "⚠️  Health check attempt $i failed"
+                if [ $i -lt 3 ]; then
+                  echo "Waiting 5 seconds before retry..."
+                  sleep 5
+                fi
+              fi
+            done
+
+            # If health check failed, show diagnostics
+            if [ "$HEALTH_CHECK_PASSED" = false ]; then
+              echo "❌ Health check failed after 3 attempts. Running diagnostics..."
+              echo ""
+              echo "=== PM2 Process Info ==="
+              pm2 describe api-nueva
+              echo ""
+              echo "=== PM2 Logs (last 100 lines) ==="
+              pm2 logs api-nueva --lines 100 --nostream
+              echo ""
+              echo "=== Network Check ==="
+              netstat -tlnp | grep :4000 || echo "No process listening on port 4000"
+              echo ""
+              echo "=== Process List ==="
+              pm2 list
+              exit 1
+            fi
 
             echo "✅ API deployment successful"
 
