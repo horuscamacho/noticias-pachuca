@@ -58,18 +58,15 @@ jobs:
           cp yarn.lock deploy-pkg/
           tar -czf api-deploy.tar.gz -C deploy-pkg .
 
-      - name: Setup SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
-
-      - name: Copy to EC2 via SCP
-        run: |
-          scp -i ~/.ssh/deploy_key \
-            packages/api-nueva/api-deploy.tar.gz \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/tmp/api-deploy.tar.gz
+      - name: Copy to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "packages/api-nueva/api-deploy.tar.gz"
+          target: "/tmp/"
+          strip_components: 2
 
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v1.0.3
