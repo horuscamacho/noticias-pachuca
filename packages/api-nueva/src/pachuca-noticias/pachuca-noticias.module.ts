@@ -16,6 +16,7 @@ import { AIContentGeneration, AIContentGenerationSchema } from '../content-ai/sc
 import { ExtractedNoticia, ExtractedNoticiaSchema } from '../noticias/schemas/extracted-noticia.schema';
 import { ContentAgent, ContentAgentSchema } from '../content-ai/schemas/content-agent.schema';
 import { NewsWebsiteConfig, NewsWebsiteConfigSchema } from '../generator-pro/schemas/news-website-config.schema';
+import { ImageBank, ImageBankSchema } from '../image-bank/schemas/image-bank.schema';
 
 // Services
 import { SiteDetectionService } from './services/site-detection.service';
@@ -66,6 +67,7 @@ import { SitesController } from './controllers/sites.controller'; // 🌐 FASE 7
       { name: ExtractedNoticia.name, schema: ExtractedNoticiaSchema },
       { name: ContentAgent.name, schema: ContentAgentSchema }, // 🌐 FASE 7: Para stats de Sites
       { name: NewsWebsiteConfig.name, schema: NewsWebsiteConfigSchema }, // 🌐 FASE 7: Para stats de Sites
+      { name: ImageBank.name, schema: ImageBankSchema }, // 🖼️ FASE 8: Image Bank para publicación
     ]),
 
     // Mail module para envío de emails de contacto

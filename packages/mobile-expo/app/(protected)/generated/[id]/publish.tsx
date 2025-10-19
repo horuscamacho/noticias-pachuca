@@ -6,6 +6,8 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Image,
+  Pressable,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { ThemedText } from '@/src/components/ThemedText';
@@ -21,6 +23,9 @@ import { useGeneratedContentDetail } from '@/src/hooks/useGeneratedContentFilter
 import { useSites } from '@/src/hooks/useSites';
 import { usePublishContent, useImproveCopy } from '@/src/hooks';
 import type { PublishContentRequest } from '@/src/types/publish.types';
+import { ImageBankSelector } from '@/src/components/image-bank/ImageBankSelector';
+import type { ImageBankDocument } from '@/src/types/image-bank.types';
+import { ImageIcon, X } from 'lucide-react-native';
 
 export default function PublishContentScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -45,8 +50,15 @@ export default function PublishContentScreen() {
   ]);
   const [improveCopy, setImproveCopy] = useState(true);
   const [useOriginalImage, setUseOriginalImage] = useState(true);
+  const [selectedBankImage, setSelectedBankImage] = useState<ImageBankDocument | null>(null);
+  const [showImageBankSelector, setShowImageBankSelector] = useState(false);
 
   const handlePublish = async () => {
+    // Prevenir doble-submit
+    if (publishMutation.isPending || improveCopyMutation.isPending) {
+      return;
+    }
+
     try {
       // Validaciones
       if (selectedSiteIds.length === 0) {
@@ -80,6 +92,7 @@ export default function PublishContentScreen() {
         socialMediaPlatforms: selectedPlatforms,
         improveCopy,
         useOriginalImage,
+        imageBankId: selectedBankImage?._id,
       };
 
       // Publicar
@@ -303,22 +316,125 @@ export default function PublishContentScreen() {
           </CardContent>
         </Card>
 
-        {/* Secci�n 4: Imagen */}
+        {/* Sección 4: Imagen */}
         <Card style={styles.section}>
           <CardHeader>
             <CardTitle>
-              <ThemedText variant="title-medium">Imagen destacada</ThemedText>
+              <ThemedText variant="title-medium">🖼️ Imagen destacada</ThemedText>
             </CardTitle>
+            <CardDescription>
+              <ThemedText variant="body-small" color="secondary">
+                Elige la imagen que se mostrará en la noticia
+              </ThemedText>
+            </CardDescription>
           </CardHeader>
           <CardContent>
+            {/* Opción 1: Usar imagen original */}
             <View style={styles.checkboxRow}>
-              <Checkbox checked={useOriginalImage} onCheckedChange={setUseOriginalImage} />
+              <Checkbox
+                checked={useOriginalImage && !selectedBankImage}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    setUseOriginalImage(true);
+                    setSelectedBankImage(null);
+                  }
+                }}
+              />
               <ThemedText variant="body-medium" style={styles.checkboxLabel}>
                 Usar imagen original de la noticia
               </ThemedText>
             </View>
+
+            <View style={styles.divider} />
+
+            {/* Opción 2: Seleccionar del banco */}
+            <View style={styles.imageBankSection}>
+              <View style={styles.checkboxRow}>
+                <Checkbox
+                  checked={!!selectedBankImage}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setShowImageBankSelector(true);
+                    } else {
+                      setSelectedBankImage(null);
+                      setUseOriginalImage(true);
+                    }
+                  }}
+                />
+                <ThemedText variant="body-medium" style={styles.checkboxLabel}>
+                  Seleccionar del Banco de Imágenes
+                </ThemedText>
+              </View>
+
+              {/* Preview de imagen seleccionada */}
+              {selectedBankImage && (
+                <View style={styles.selectedImagePreview}>
+                  <Image
+                    source={{ uri: selectedBankImage.processedUrls.medium }}
+                    style={styles.previewImage}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.previewInfo}>
+                    <ThemedText variant="label-medium" style={styles.previewTitle} numberOfLines={2}>
+                      {selectedBankImage.altText || selectedBankImage.caption || 'Imagen del banco'}
+                    </ThemedText>
+                    {selectedBankImage.keywords && selectedBankImage.keywords.length > 0 && (
+                      <View style={styles.previewKeywords}>
+                        {selectedBankImage.keywords.slice(0, 3).map((keyword, index) => (
+                          <Badge key={index} variant="secondary" style={styles.keywordBadge}>
+                            <ThemedText variant="label-small">{keyword}</ThemedText>
+                          </Badge>
+                        ))}
+                      </View>
+                    )}
+                    <Pressable
+                      style={styles.changeImageButton}
+                      onPress={() => setShowImageBankSelector(true)}
+                    >
+                      <ImageIcon size={16} color="#3B82F6" />
+                      <ThemedText variant="body-small" style={styles.changeImageText}>
+                        Cambiar imagen
+                      </ThemedText>
+                    </Pressable>
+                  </View>
+                  <Pressable
+                    style={styles.removeImageButton}
+                    onPress={() => {
+                      setSelectedBankImage(null);
+                      setUseOriginalImage(true);
+                    }}
+                  >
+                    <X size={20} color="#DC2626" />
+                  </Pressable>
+                </View>
+              )}
+
+              {/* Botón para abrir selector si no hay imagen seleccionada */}
+              {!selectedBankImage && (
+                <Pressable
+                  style={styles.selectImageButton}
+                  onPress={() => setShowImageBankSelector(true)}
+                >
+                  <ImageIcon size={20} color="#6B7280" />
+                  <ThemedText variant="body-medium" style={styles.selectImageText}>
+                    Explorar banco de imágenes
+                  </ThemedText>
+                </Pressable>
+              )}
+            </View>
           </CardContent>
         </Card>
+
+        {/* Modal Selector de Imágenes */}
+        <ImageBankSelector
+          visible={showImageBankSelector}
+          onClose={() => setShowImageBankSelector(false)}
+          onSelect={(image) => {
+            setSelectedBankImage(image);
+            setUseOriginalImage(false);
+          }}
+          selectedImageId={selectedBankImage?._id}
+        />
 
         {/* Botones de Acci�n */}
         <View style={styles.actions}>
@@ -441,5 +557,76 @@ const styles = StyleSheet.create({
   errorTitle: {
     color: '#111827',
     textAlign: 'center',
+  },
+  imageBankSection: {
+    gap: 12,
+  },
+  selectedImagePreview: {
+    flexDirection: 'row',
+    gap: 12,
+    backgroundColor: '#F9FAFB',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    marginTop: 8,
+  },
+  previewImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#f1ef47',
+  },
+  previewInfo: {
+    flex: 1,
+    gap: 6,
+  },
+  previewTitle: {
+    color: '#111827',
+  },
+  previewKeywords: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+  },
+  keywordBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  changeImageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+  },
+  changeImageText: {
+    color: '#3B82F6',
+    fontWeight: '600',
+  },
+  removeImageButton: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FEE2E2',
+    borderRadius: 16,
+  },
+  selectImageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#F3F4F6',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    marginTop: 8,
+  },
+  selectImageText: {
+    color: '#6B7280',
+    fontWeight: '600',
   },
 });

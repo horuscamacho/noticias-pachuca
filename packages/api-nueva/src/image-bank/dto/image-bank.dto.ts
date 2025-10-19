@@ -452,4 +452,20 @@ export class ImageBankFiltersDto {
   @Type(() => Boolean)
   @IsBoolean()
   isActive?: boolean = true;
+
+  @ApiPropertyOptional({
+    description: 'Filtrar por autor/fuente',
+    example: 'Juan Pérez / Wikimedia Commons',
+  })
+  @IsOptional()
+  @IsString()
+  author?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filtrar por tipo de captura',
+    enum: ['wikipedia', 'unsplash', 'pexels', 'video_screenshot', 'social_screenshot', 'staff_photo', 'news_agency', 'other'],
+  })
+  @IsOptional()
+  @IsEnum(['wikipedia', 'unsplash', 'pexels', 'video_screenshot', 'social_screenshot', 'staff_photo', 'news_agency', 'other'])
+  captureType?: string;
 }

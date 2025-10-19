@@ -27,7 +27,7 @@ const getApiBaseUrl = (): string => {
     if (isPhysicalDevice) {
       // Dispositivo físico - usar IP de red local
       console.log('📱 Using PHYSICAL DEVICE URL')
-      return 'http://192.168.100:4000/api'
+      return 'http://192.168.100.57:4000/api'
     } else {
       // Simulador - usar localhost
       console.log('🖥️ Using SIMULATOR URL')

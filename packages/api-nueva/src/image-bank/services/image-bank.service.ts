@@ -287,6 +287,16 @@ export class ImageBankService {
       filter.categories = { $in: categoriesArray };
     }
 
+    // Filtro por author
+    if (filtersDto.author) {
+      filter.author = { $regex: filtersDto.author, $options: 'i' };
+    }
+
+    // Filtro por captureType
+    if (filtersDto.captureType) {
+      filter.captureType = filtersDto.captureType;
+    }
+
     // Búsqueda de texto (usando text index)
     if (filtersDto.searchText) {
       filter.$text = { $search: filtersDto.searchText };

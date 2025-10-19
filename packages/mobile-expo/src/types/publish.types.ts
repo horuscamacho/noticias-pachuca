@@ -11,6 +11,7 @@ export interface PublishContentRequest {
   improveCopy: boolean;
   useOriginalImage: boolean;
   customImageUrl?: string;
+  imageBankId?: string; // ID de imagen del banco (alternativa a customImageUrl)
 }
 
 export interface PublishContentResponse {

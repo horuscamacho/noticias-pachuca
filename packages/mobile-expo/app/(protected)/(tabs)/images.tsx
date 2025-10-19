@@ -12,6 +12,7 @@ import {
   TextInput,
   ScrollView,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { ThemedText } from '@/src/components/ThemedText';
@@ -100,6 +101,7 @@ export default function ImagesScreen() {
     isLoading,
     isError,
     refetch,
+    isRefetching,
   } = useInfiniteQuery({
     queryKey: ['extracted-news', 'images', selectedKeywords, sortBy, sortOrder],
     queryFn: async ({ pageParam = 1 }) => {
@@ -423,31 +425,45 @@ export default function ImagesScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
+      {/* Header mejorado */}
       {!selectionMode ? (
         <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <ThemedText variant="title-large" style={styles.title}>
-              Banco de Imágenes
-            </ThemedText>
-            <ThemedText variant="body-medium" color="secondary">
-              {allImages.length} imágenes disponibles
-            </ThemedText>
+          <View style={styles.headerTop}>
+            <View style={styles.headerLeft}>
+              <ThemedText variant="headline-medium" style={styles.title}>
+                Banco de Imágenes
+              </ThemedText>
+              <ThemedText variant="body-medium" color="secondary" style={styles.subtitle}>
+                {allImages.length} imágenes extraídas de noticias
+              </ThemedText>
+            </View>
+
+            <View style={styles.headerActions}>
+              {/* Botón Upload */}
+              <Pressable
+                onPress={() => router.push('/image-bank/upload')}
+                style={styles.uploadButton}
+              >
+                <Ionicons name="cloud-upload" size={20} color="#000000" />
+              </Pressable>
+
+              {/* Botón Filtros */}
+              <Pressable onPress={() => setShowFilters(true)} style={styles.filterButton}>
+                <Ionicons
+                  name="funnel"
+                  size={20}
+                  color="#6B7280"
+                />
+                {selectedKeywords.length > 0 && (
+                  <View style={styles.filterBadge}>
+                    <ThemedText variant="body-small" style={styles.filterBadgeText}>
+                      {selectedKeywords.length}
+                    </ThemedText>
+                  </View>
+                )}
+              </Pressable>
+            </View>
           </View>
-          <Pressable onPress={() => setShowFilters(true)} style={styles.filterButton}>
-            <Ionicons
-              name={selectedKeywords.length > 0 ? 'funnel' : 'funnel-outline'}
-              size={24}
-              color={selectedKeywords.length > 0 ? '#f1ef47' : '#000000'}
-            />
-            {selectedKeywords.length > 0 && (
-              <View style={styles.filterBadge}>
-                <ThemedText variant="body-small" style={styles.filterBadgeText}>
-                  {selectedKeywords.length}
-                </ThemedText>
-              </View>
-            )}
-          </Pressable>
         </View>
       ) : (
         <View style={styles.selectionHeader}>
@@ -527,6 +543,14 @@ export default function ImagesScreen() {
         ListFooterComponent={renderFooter}
         ListEmptyComponent={renderEmpty}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={refetch}
+            tintColor="#f1ef47"
+            colors={['#f1ef47']}
+          />
+        }
       />
 
       {/* Modal de Filtros */}
@@ -734,28 +758,57 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 16,
+    paddingTop: 12,
     paddingBottom: 12,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
+  },
+  headerTop: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
   },
   headerLeft: {
     flex: 1,
+    paddingRight: 12,
   },
   title: {
+    color: '#111827',
     marginBottom: 4,
   },
+  subtitle: {
+    color: '#6B7280',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  uploadButton: {
+    width: 40,
+    height: 40,
+    backgroundColor: '#f1ef47',
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#000000',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   filterButton: {
-    padding: 8,
+    width: 40,
+    height: 40,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    alignItems: 'center',
+    justifyContent: 'center',
     position: 'relative',
   },
   filterBadge: {
     position: 'absolute',
-    top: 4,
-    right: 4,
+    top: -4,
+    right: -4,
     backgroundColor: '#f1ef47',
     borderRadius: 10,
     minWidth: 20,
@@ -763,10 +816,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
   filterBadgeText: {
     color: '#000000',
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
   },
   gridContent: {

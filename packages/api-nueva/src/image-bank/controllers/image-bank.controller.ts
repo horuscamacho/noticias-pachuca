@@ -13,7 +13,10 @@ import {
   UsePipes,
   ValidationPipe,
   BadRequestException,
+  UseInterceptors,
+  UploadedFiles,
 } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import {
   ApiTags,
   ApiOperation,
@@ -21,8 +24,11 @@ import {
   ApiQuery,
   ApiParam,
   ApiBearerAuth,
+  ApiConsumes,
+  ApiBody,
 } from '@nestjs/swagger';
 import { ImageBankService } from '../services/image-bank.service';
+import { ImageBankUploadService } from '../services/image-bank-upload.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { PaginatedResponse } from '../../common/interfaces/paginated-response.interface';
 import { ImageBankDocument } from '../schemas/image-bank.schema';
@@ -32,6 +38,11 @@ import {
   ImageBankFiltersDto,
   ProcessImageDto,
 } from '../dto/image-bank.dto';
+import {
+  UploadImageMetadataDto,
+  UploadImageResponseDto,
+} from '../dto/upload-image.dto';
+import { TransformJsonArraysInterceptor } from '../interceptors/transform-json-arrays.interceptor';
 
 /**
  * 🖼️ Image Bank Controller
@@ -55,7 +66,10 @@ import {
 @UseGuards(JwtAuthGuard)
 @UsePipes(new ValidationPipe({ transform: true }))
 export class ImageBankController {
-  constructor(private readonly imageBankService: ImageBankService) {}
+  constructor(
+    private readonly imageBankService: ImageBankService,
+    private readonly uploadService: ImageBankUploadService,
+  ) {}
 
   // ============================================================================
   // 📋 CRUD PRINCIPAL
@@ -124,6 +138,18 @@ export class ImageBankController {
     required: false,
     enum: ['asc', 'desc'],
     description: 'Orden ascendente o descendente',
+  })
+  @ApiQuery({
+    name: 'author',
+    required: false,
+    type: String,
+    description: 'Filtrar por autor/fuente',
+  })
+  @ApiQuery({
+    name: 'captureType',
+    required: false,
+    enum: ['wikipedia', 'unsplash', 'pexels', 'video_screenshot', 'social_screenshot', 'staff_photo', 'news_agency', 'other'],
+    description: 'Filtrar por tipo de captura',
   })
   @ApiResponse({
     status: 200,
@@ -198,6 +224,139 @@ export class ImageBankController {
     @Body() processDto: ProcessImageDto,
   ): Promise<ImageBankDocument> {
     return await this.imageBankService.processAndStore(processDto);
+  }
+
+  /**
+   * POST /image-bank/upload
+   * Upload manual de imágenes desde mobile app
+   */
+  @Post('upload')
+  @HttpCode(HttpStatus.OK)
+  @UseInterceptors(
+    FilesInterceptor('files', 10), // Max 10 archivos
+    TransformJsonArraysInterceptor, // Transform JSON strings to arrays
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary: 'Upload manual de imágenes',
+    description:
+      'Sube 1 o más imágenes desde galería del celular con metadata manual. ' +
+      'Procesa, remueve EXIF, sube a S3 y almacena en banco.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['files', 'outlet'],
+      properties: {
+        files: {
+          type: 'array',
+          items: {
+            type: 'string',
+            format: 'binary',
+          },
+          description: 'Archivos de imagen (jpeg, png, webp) - Max 10MB c/u',
+        },
+        outlet: {
+          type: 'string',
+          description: 'Outlet/dominio de origen (REQUERIDO)',
+          example: 'noticiaspachuca.com',
+        },
+        author: {
+          type: 'string',
+          description: 'Autor/fuente de la imagen (OPCIONAL)',
+          example: 'Juan Pérez / Wikimedia Commons',
+        },
+        license: {
+          type: 'string',
+          description: 'Licencia de la imagen (OPCIONAL)',
+          example: 'CC BY-SA 4.0',
+        },
+        attribution: {
+          type: 'string',
+          description: 'Texto completo de atribución (OPCIONAL)',
+          example: 'Juan Pérez. (2025). Palacio de Gobierno [Digital image]. Wikimedia Commons.',
+        },
+        captureType: {
+          type: 'string',
+          enum: ['wikipedia', 'unsplash', 'pexels', 'video_screenshot', 'social_screenshot', 'staff_photo', 'news_agency', 'other'],
+          description: 'Tipo de captura/fuente (OPCIONAL)',
+        },
+        photographerName: {
+          type: 'string',
+          description: 'Nombre del fotógrafo (OPCIONAL)',
+          example: 'Juan Pérez',
+        },
+        keywords: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Keywords para búsqueda (OPCIONAL)',
+          example: ['hidalgo', 'política', 'gobierno'],
+        },
+        tags: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Tags adicionales (OPCIONAL)',
+          example: ['elecciones', 'municipio'],
+        },
+        categories: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Categorías (OPCIONAL)',
+          example: ['Política', 'Gobierno'],
+        },
+        altText: {
+          type: 'string',
+          description: 'Texto alternativo para accesibilidad (OPCIONAL)',
+          example: 'Palacio de Gobierno de Hidalgo',
+        },
+        caption: {
+          type: 'string',
+          description: 'Caption o descripción (OPCIONAL)',
+          example: 'Vista frontal del Palacio de Gobierno del estado de Hidalgo',
+        },
+        quality: {
+          type: 'string',
+          enum: ['high', 'medium', 'low'],
+          description: 'Calidad de la imagen (OPCIONAL - se evalúa automáticamente si no se provee)',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Imágenes subidas exitosamente',
+    type: UploadImageResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Archivos inválidos o metadata incorrecta',
+  })
+  async uploadImages(
+    @UploadedFiles() files: Express.Multer.File[],
+    @Body() metadata: UploadImageMetadataDto,
+  ): Promise<UploadImageResponseDto> {
+    // Validar que se hayan subido archivos
+    if (!files || files.length === 0) {
+      throw new BadRequestException('No se han subido archivos');
+    }
+
+    // Convertir archivos de Multer al formato esperado por el servicio
+    const uploadedFiles = files.map((file) => ({
+      fieldname: file.fieldname,
+      originalname: file.originalname,
+      encoding: file.encoding,
+      mimetype: file.mimetype,
+      buffer: file.buffer,
+      size: file.size,
+    }));
+
+    // Llamar al servicio de upload
+    const result = await this.uploadService.uploadMultiple(
+      uploadedFiles,
+      metadata,
+    );
+
+    return result;
   }
 
   /**

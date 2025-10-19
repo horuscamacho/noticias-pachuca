@@ -290,13 +290,13 @@ export class OutletMapper {
     const dto: Record<string, unknown> = {}
 
     if (frequencies.extractionFrequency !== undefined) {
-      dto.extraction_frequency = frequencies.extractionFrequency
+      dto.extractionFrequency = frequencies.extractionFrequency
     }
     if (frequencies.contentGenerationFrequency !== undefined) {
-      dto.content_generation_frequency = frequencies.contentGenerationFrequency
+      dto.generationFrequency = frequencies.contentGenerationFrequency
     }
     if (frequencies.publishingFrequency !== undefined) {
-      dto.publishing_frequency = frequencies.publishingFrequency
+      dto.publishingFrequency = frequencies.publishingFrequency
     }
 
     return dto

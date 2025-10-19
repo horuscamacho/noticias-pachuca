@@ -84,6 +84,28 @@ export class ImageBank {
   tags: string[]; // Tags adicionales
 
   // ========================================
+  // 📸 AUTHOR Y ATTRIBUTION (CITADO DE FUENTES)
+  // ========================================
+
+  @Prop({ trim: true })
+  author?: string; // Autor/fuente (ej: "Juan Pérez / Wikimedia Commons", "María López / Unsplash")
+
+  @Prop({ trim: true })
+  license?: string; // Licencia (ej: "CC BY-SA 4.0", "Unsplash License", "Fair Use", "Copyright © Noticias Pachuca")
+
+  @Prop({ trim: true })
+  attribution?: string; // Texto completo de atribución formateado para citado
+
+  @Prop({
+    enum: ['wikipedia', 'unsplash', 'pexels', 'video_screenshot', 'social_screenshot', 'staff_photo', 'news_agency', 'other'],
+    default: 'other'
+  })
+  captureType?: string; // Tipo de captura/fuente de la imagen
+
+  @Prop({ trim: true })
+  photographerName?: string; // Nombre del fotógrafo (si aplica)
+
+  // ========================================
   // 🔗 RELACIONES Y ORIGEN
   // ========================================
 
@@ -197,6 +219,12 @@ ImageBankSchema.index({ isActive: 1 });
 // Filtrar por calidad de imagen
 ImageBankSchema.index({ quality: 1 });
 
+// Buscar por author/fuente
+ImageBankSchema.index({ author: 1 });
+
+// Buscar por tipo de captura
+ImageBankSchema.index({ captureType: 1 });
+
 // ========================================
 // 🚀 COMPOUND INDEXES (ESR Rule: Equality, Sort, Range)
 // ========================================
@@ -225,10 +253,12 @@ ImageBankSchema.index({ aiGenerated: 1, c2paIncluded: 1, createdAt: -1 });
 // 📝 TEXT INDEX (Full-text search)
 // ========================================
 
-// Búsqueda de texto completo en altText, caption y keywords
+// Búsqueda de texto completo en altText, caption, keywords, author y attribution
 // Uso: Barra de búsqueda global del image bank
 ImageBankSchema.index({
   altText: 'text',
   caption: 'text',
   keywords: 'text',
+  author: 'text',
+  attribution: 'text',
 });

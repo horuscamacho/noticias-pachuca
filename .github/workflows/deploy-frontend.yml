@@ -59,7 +59,7 @@ jobs:
           tar -czf frontend-deploy.tar.gz .output package.json
 
       - name: Copy to EC2
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@v1
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}

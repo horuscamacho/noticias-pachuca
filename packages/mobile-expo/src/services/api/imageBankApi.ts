@@ -60,6 +60,16 @@ export interface BatchProcessResponse {
   message: string;
 }
 
+/**
+ * Respuesta de upload manual de imágenes
+ */
+export interface UploadImageResponse {
+  success: boolean;
+  uploadedImages: ImageBankResponse[];
+  totalUploaded: number;
+  errors: Array<{ filename: string; error: string }>;
+}
+
 export const imageBankApi = {
   /**
    * Procesar y almacenar una imagen individual
@@ -124,6 +134,38 @@ export const imageBankApi = {
       return response.data;
     } catch (error) {
       console.error('[imageBankApi] Error fetching stats:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * 📤 Upload manual de imágenes desde galería
+   * POST /image-bank/upload
+   *
+   * Sube 1 o más imágenes con metadata manual
+   * Requiere FormData con files + metadata
+   */
+  uploadImages: async (formData: FormData): Promise<UploadImageResponse> => {
+    try {
+      const rawClient = ApiClient.getRawClient();
+
+      const response = await rawClient.post<UploadImageResponse>(
+        `${BASE_PATH}/upload`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          // Timeout más largo para uploads
+          timeout: 120000, // 2 minutos
+        }
+      );
+
+      console.log('[imageBankApi] Images uploaded successfully:', response.data.totalUploaded);
+
+      return response.data;
+    } catch (error) {
+      console.error('[imageBankApi] Error uploading images:', error);
       throw error;
     }
   },

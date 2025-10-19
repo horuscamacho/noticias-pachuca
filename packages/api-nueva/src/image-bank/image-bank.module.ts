@@ -4,6 +4,7 @@ import { BullModule } from '@nestjs/bull';
 import { ImageBank, ImageBankSchema } from './schemas/image-bank.schema';
 import { ImageBankService } from './services/image-bank.service';
 import { ImageBankProcessorService } from './services/image-bank-processor.service';
+import { ImageBankUploadService } from './services/image-bank-upload.service';
 import { ImageBankEventsService } from './services/image-bank-events.service';
 import { ImageBankController } from './controllers/image-bank.controller';
 import { ImageBankQueueProcessor } from './processors/image-bank-queue.processor';
@@ -49,11 +50,12 @@ import { PaginationService } from '../common/services/pagination.service';
   providers: [
     ImageBankService,
     ImageBankProcessorService,
+    ImageBankUploadService,
     ImageBankEventsService,
     ImageBankQueueProcessor,
     AwsS3CoreService,
     PaginationService,
   ],
-  exports: [ImageBankService, ImageBankProcessorService],
+  exports: [ImageBankService, ImageBankProcessorService, ImageBankUploadService],
 })
 export class ImageBankModule {}

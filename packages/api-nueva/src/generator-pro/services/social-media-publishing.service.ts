@@ -347,15 +347,38 @@ export class SocialMediaPublishingService {
       // Publicar en cada cuenta de Twitter
       for (const account of twitterAccounts) {
         try {
-          // ✅ FIX: Usar socialMediaCopy mejorado + URL canónica
-          let tweetContent = `${aiContent.socialMediaCopies.twitter.tweet}\n\n${canonicalUrl}`;
+          // ✅ ESTRATEGIA VIRAL 2025-2026: Hook emocional + contexto breve + URL
+          // Si el tweet original es muy largo, usar solo el hook + URL
+          const originalTweet = aiContent.socialMediaCopies.twitter.tweet;
+          const hook = aiContent.socialMediaCopies.twitter.hook;
 
-          // Validar longitud del tweet
-          if (tweetContent.length > 280) {
+          let tweetContent: string;
+
+          // Intentar primero con tweet completo
+          const fullTweet = `${originalTweet}\n\n${canonicalUrl}`;
+
+          if (fullTweet.length <= 280) {
+            // ✅ Cabe completo - usar tweet original
+            tweetContent = fullTweet;
+          } else if (hook) {
+            // ✅ No cabe completo - usar solo hook + URL (más viral)
+            const hookTweet = `${hook}\n\n${canonicalUrl}`;
+
+            if (hookTweet.length <= 280) {
+              tweetContent = hookTweet;
+              this.logger.log(`📱 Using hook-only format for Twitter (more viral)`);
+            } else {
+              // Hook también es muy largo - truncar hook
+              const maxHookLength = 280 - canonicalUrl.length - 5; // -5 para "\n\n" y "..."
+              const truncatedHook = hook.substring(0, maxHookLength) + '...';
+              tweetContent = `${truncatedHook}\n\n${canonicalUrl}`;
+              this.logger.warn(`⚠️ Hook too long, truncating...`);
+            }
+          } else {
+            // No hay hook - truncar tweet original
             this.logger.warn(`⚠️ Tweet content exceeds 280 characters, truncating...`);
-            // ✅ FIX: Recortar preservando la URL
-            const maxCopyLength = 280 - canonicalUrl.length - 5; // -5 para "\n\n" y "..."
-            const truncatedCopy = aiContent.socialMediaCopies.twitter.tweet.substring(0, maxCopyLength) + '...';
+            const maxCopyLength = 280 - canonicalUrl.length - 5;
+            const truncatedCopy = originalTweet.substring(0, maxCopyLength) + '...';
             tweetContent = `${truncatedCopy}\n\n${canonicalUrl}`;
           }
 

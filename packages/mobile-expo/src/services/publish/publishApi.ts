@@ -29,6 +29,7 @@ export const publishApi = {
         socialMediaPlatforms: request.socialMediaPlatforms,
         useOriginalImage: request.useOriginalImage,
         customImageUrl: request.customImageUrl,
+        imageBankId: request.imageBankId,
       });
       return response.data;
     } else {
@@ -38,6 +39,7 @@ export const publishApi = {
         publicationType: request.publicationType,
         useOriginalImage: request.useOriginalImage,
         customImageUrl: request.customImageUrl,
+        imageBankId: request.imageBankId,
       });
       return response.data;
     }

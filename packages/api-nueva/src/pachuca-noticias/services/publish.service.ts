@@ -11,6 +11,7 @@ import {
 } from '../../content-ai/schemas/ai-content-generation.schema';
 import { ExtractedNoticia } from '../../noticias/schemas/extracted-noticia.schema';
 import { ContentAgent } from '../../generator-pro/schemas/content-agent.schema';
+import { ImageBank, ImageBankDocument } from '../../image-bank/schemas/image-bank.schema';
 import { ImageProcessorService, ProcessedImage } from './image-processor.service';
 import { SlugGeneratorService } from './slug-generator.service';
 import { SiteDetectionService } from './site-detection.service';
@@ -29,6 +30,8 @@ export class PublishService {
     private publishedNoticiaModel: Model<PublishedNoticiaDocument>,
     @InjectModel(AIContentGeneration.name)
     private aiContentModel: Model<AIContentGenerationDocument>,
+    @InjectModel(ImageBank.name)
+    private imageBankModel: Model<ImageBankDocument>,
     private readonly imageProcessor: ImageProcessorService,
     private readonly slugGenerator: SlugGeneratorService,
     private readonly siteDetectionService: SiteDetectionService,
@@ -101,8 +104,29 @@ export class PublishService {
       // 4️⃣ Procesar imágenes (opcional)
       let featuredImage: ProcessedImage | null = null;
 
-      if (dto.useOriginalImage) {
-        // Usar imagen del contenido original
+      if (dto.imageBankId) {
+        // 🏦 Opción 1: Usar imagen del banco
+        const bankImage = await this.imageBankModel.findById(dto.imageBankId);
+
+        if (!bankImage) {
+          throw new BadRequestException('Imagen del banco no encontrada');
+        }
+
+        // Convertir formato del banco al formato ProcessedImage
+        featuredImage = {
+          original: bankImage.processedUrls.original,
+          thumbnail: bankImage.processedUrls.thumbnail,
+          medium: bankImage.processedUrls.medium,
+          large: bankImage.processedUrls.large,
+          alt: bankImage.altText || generatedContent.seoData?.altText || generatedContent.generatedTitle,
+          width: bankImage.originalMetadata.width,
+          height: bankImage.originalMetadata.height,
+          s3Key: bankImage.processedUrls.s3BaseKey,
+        };
+
+        this.logger.log(`🖼️ Usando imagen del banco: ${bankImage._id}`);
+      } else if (dto.useOriginalImage) {
+        // 📰 Opción 2: Usar imagen del contenido original
         const originalContent = generatedContent.originalContentId as unknown as ExtractedNoticia;
         const imageUrl = originalContent?.images?.[0];
 
@@ -116,7 +140,7 @@ export class PublishService {
         }
         // Si no hay imagen original, continuar sin imagen
       } else if (dto.customImageUrl) {
-        // Usar imagen personalizada
+        // 🔗 Opción 3: Usar imagen personalizada desde URL
         featuredImage = await this.imageProcessor.processAndUploadImage(
           dto.customImageUrl,
           slug,
@@ -194,7 +218,7 @@ export class PublishService {
         publishingMetadata: {
           publishedBy: undefined, // TODO: Fase 2 con auth
           publishedFrom: 'dashboard',
-          imageSource: dto.useOriginalImage ? 'original' : 'uploaded',
+          imageSource: dto.imageBankId ? 'image-bank' : dto.useOriginalImage ? 'original' : 'uploaded',
           processingTime: 0,
           version: 1,
         },

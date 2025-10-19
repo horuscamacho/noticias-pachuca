@@ -104,10 +104,46 @@ export function usePauseOutlet() {
 
   return useMutation({
     mutationFn: (id: string) => outletApi.pauseOutlet(id),
+    onMutate: async (id) => {
+      // Cancelar todas las queries relacionadas
+      await queryClient.cancelQueries({ queryKey: outletKeys.detail(id) });
+      await queryClient.cancelQueries({ queryKey: outletKeys.lists() });
+
+      // Snapshot del valor anterior
+      const previousOutlet = queryClient.getQueryData(outletKeys.detail(id));
+      const previousLists = queryClient.getQueriesData({ queryKey: outletKeys.lists() });
+
+      // Actualizar optimísticamente el detail
+      queryClient.setQueryData(outletKeys.detail(id), (old: any) => {
+        if (!old) return old;
+        return { ...old, isActive: false };
+      });
+
+      // Actualizar optimísticamente todas las listas
+      queryClient.setQueriesData({ queryKey: outletKeys.lists() }, (oldData: any) => {
+        if (!oldData) return oldData;
+        return oldData.map((outlet: any) =>
+          outlet.id === id ? { ...outlet, isActive: false } : outlet
+        );
+      });
+
+      return { previousOutlet, previousLists };
+    },
+    onError: (err, id, context) => {
+      // Revertir en caso de error
+      if (context?.previousOutlet) {
+        queryClient.setQueryData(outletKeys.detail(id), context.previousOutlet);
+      }
+      if (context?.previousLists) {
+        context.previousLists.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+    },
     onSuccess: (_, id) => {
-      // Invalidar listas y detalle
-      queryClient.invalidateQueries({ queryKey: outletKeys.lists() });
+      // Refetch inmediato para confirmar
       queryClient.invalidateQueries({ queryKey: outletKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: outletKeys.lists() });
     },
   });
 }
@@ -120,10 +156,46 @@ export function useResumeOutlet() {
 
   return useMutation({
     mutationFn: (id: string) => outletApi.resumeOutlet(id),
+    onMutate: async (id) => {
+      // Cancelar todas las queries relacionadas
+      await queryClient.cancelQueries({ queryKey: outletKeys.detail(id) });
+      await queryClient.cancelQueries({ queryKey: outletKeys.lists() });
+
+      // Snapshot del valor anterior
+      const previousOutlet = queryClient.getQueryData(outletKeys.detail(id));
+      const previousLists = queryClient.getQueriesData({ queryKey: outletKeys.lists() });
+
+      // Actualizar optimísticamente el detail
+      queryClient.setQueryData(outletKeys.detail(id), (old: any) => {
+        if (!old) return old;
+        return { ...old, isActive: true };
+      });
+
+      // Actualizar optimísticamente todas las listas
+      queryClient.setQueriesData({ queryKey: outletKeys.lists() }, (oldData: any) => {
+        if (!oldData) return oldData;
+        return oldData.map((outlet: any) =>
+          outlet.id === id ? { ...outlet, isActive: true } : outlet
+        );
+      });
+
+      return { previousOutlet, previousLists };
+    },
+    onError: (err, id, context) => {
+      // Revertir en caso de error
+      if (context?.previousOutlet) {
+        queryClient.setQueryData(outletKeys.detail(id), context.previousOutlet);
+      }
+      if (context?.previousLists) {
+        context.previousLists.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+    },
     onSuccess: (_, id) => {
-      // Invalidar listas y detalle
-      queryClient.invalidateQueries({ queryKey: outletKeys.lists() });
+      // Refetch inmediato para confirmar
       queryClient.invalidateQueries({ queryKey: outletKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: outletKeys.lists() });
     },
   });
 }

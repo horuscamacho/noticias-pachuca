@@ -525,7 +525,7 @@ export default function GenerateScreen() {
           <RefreshControl
             refreshing={isRefetching && !isFetchingNextPage}
             onRefresh={refetch}
-            tintColor="#3B82F6"
+            tintColor="#f1ef47"
           />
         }
         onScrollBeginDrag={() => {
@@ -573,7 +573,7 @@ export default function GenerateScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F3F4F6',
   },
   listContainer: {
     flexGrow: 1,
@@ -595,7 +595,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     gap: 12,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F3F4F6',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
   },

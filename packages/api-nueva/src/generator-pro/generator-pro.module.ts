@@ -44,16 +44,13 @@ import { ContentAIModule } from '../content-ai/content-ai.module';
 import { ReportsModule } from '../modules/reports/reports.module'; // 🎭 Import para PuppeteerManagerService
 
 // Processors
-// import { ExtractionProcessor } from './processors/extraction.processor';
-// import { GenerationProcessor } from './processors/generation.processor';
-// import { PublishingProcessor } from './processors/publishing.processor';
+import { ExtractionProcessor } from './processors/extraction.processor';
 
 // External schemas - Solo schemas, EventEmitter2 para comunicación con otros módulos
 import { ExtractedNoticia, ExtractedNoticiaSchema } from '../noticias/schemas/extracted-noticia.schema';
 import { AIContentGeneration, AIContentGenerationSchema } from '../content-ai/schemas/ai-content-generation.schema';
 import { Site, SiteSchema } from '../pachuca-noticias/schemas/site.schema';
-// Temporalmente deshabilitado para testing manual workflow
-// import { PromptTemplate, PromptTemplateSchema } from '../content-ai/schemas/prompt-template.schema';
+import { PromptTemplate, PromptTemplateSchema } from '../content-ai/schemas/prompt-template.schema';
 
 /**
  * 🤖 Módulo Generator Pro - Sistema automatizado completo
@@ -91,8 +88,7 @@ import { Site, SiteSchema } from '../pachuca-noticias/schemas/site.schema';
       { name: ExtractedNoticia.name, schema: ExtractedNoticiaSchema },
       { name: AIContentGeneration.name, schema: AIContentGenerationSchema },
       { name: Site.name, schema: SiteSchema }, // 🌐 FASE 9: Agregar Site schema
-      // Temporalmente deshabilitado para testing manual workflow
-      // { name: PromptTemplate.name, schema: PromptTemplateSchema },
+      { name: PromptTemplate.name, schema: PromptTemplateSchema },
     ]),
 
     // 🔄 CONFIGURACIÓN DE COLAS BULL QUEUE
@@ -166,10 +162,8 @@ import { Site, SiteSchema } from '../pachuca-noticias/schemas/site.schema';
     UrlExtractionService,
     SmartExtractionSchedulerService,
 
-    // 🔄 PROCESSORS DE COLAS - Temporalmente deshabilitados para testing
-    // ExtractionProcessor,
-    // GenerationProcessor,
-    // PublishingProcessor,
+    // 🔄 PROCESSOR - Solo extracción de contenido
+    ExtractionProcessor,
   ],
 
   exports: [

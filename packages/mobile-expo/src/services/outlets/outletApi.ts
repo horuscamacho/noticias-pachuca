@@ -57,7 +57,7 @@ export const outletApi = {
 
   /**
    * Actualizar frecuencias de un outlet
-   * PATCH /generator-pro/websites/:id/frequencies
+   * PUT /generator-pro/websites/:id
    */
   updateFrequencies: async (
     id: string,
@@ -67,8 +67,8 @@ export const outletApi = {
       const rawClient = ApiClient.getRawClient();
       const payload = OutletMapper.toUpdateDto(dto);
 
-      const response = await rawClient.patch<{ website: Record<string, unknown> }>(
-        `/generator-pro/websites/${id}/frequencies`,
+      const response = await rawClient.put<{ website: Record<string, unknown> }>(
+        `/generator-pro/websites/${id}`,
         payload
       );
 
@@ -104,14 +104,14 @@ export const outletApi = {
 
   /**
    * Pausar outlet (set isActive = false)
-   * PATCH /generator-pro/websites/:id
+   * PUT /generator-pro/websites/:id
    */
   pauseOutlet: async (id: string): Promise<void> => {
     try {
       const rawClient = ApiClient.getRawClient();
 
-      await rawClient.patch(`/generator-pro/websites/${id}`, {
-        is_active: false,
+      await rawClient.put(`/generator-pro/websites/${id}`, {
+        isActive: false,
       });
     } catch (error) {
       console.error(`Error pausing outlet ${id}:`, error);
@@ -121,14 +121,14 @@ export const outletApi = {
 
   /**
    * Reanudar outlet (set isActive = true)
-   * PATCH /generator-pro/websites/:id
+   * PUT /generator-pro/websites/:id
    */
   resumeOutlet: async (id: string): Promise<void> => {
     try {
       const rawClient = ApiClient.getRawClient();
 
-      await rawClient.patch(`/generator-pro/websites/${id}`, {
-        is_active: true,
+      await rawClient.put(`/generator-pro/websites/${id}`, {
+        isActive: true,
       });
     } catch (error) {
       console.error(`Error resuming outlet ${id}:`, error);

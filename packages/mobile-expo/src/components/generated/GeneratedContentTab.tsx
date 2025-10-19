@@ -6,11 +6,13 @@ import {
   ActivityIndicator,
   RefreshControl,
   Pressable,
+  SafeAreaView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ThemedText } from '@/src/components/ThemedText';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { GeneratedContentCard } from '@/src/components/content/GeneratedContentCard';
 import { GeneratedContentFilters } from '@/src/components/generated/GeneratedContentFilters';
 import {
@@ -19,7 +21,7 @@ import {
   getTotalItems,
 } from '@/src/hooks/useGeneratedContentFilters';
 import type { App as FilterApp } from '@/src/types/generated-content-filters.types';
-import { AlertCircle, FileX, Filter, X } from 'lucide-react-native';
+import { AlertCircle, FileX, Filter, X, Sparkles, Plus } from 'lucide-react-native';
 
 /**
  * 📝 Tab de Contenidos Generados
@@ -156,55 +158,73 @@ export function GeneratedContentTab() {
     );
   };
 
-  // Render del header (contador y botón de filtros)
+  // Render del header mejorado
   const renderHeader = () => (
     <>
+      {/* Header mejorado */}
       <View style={styles.header}>
-        <View>
-          <ThemedText variant="title-medium" style={styles.headerTitle}>
-            Contenidos Generados
-          </ThemedText>
-          <ThemedText variant="body-small" color="secondary">
-            {total} contenido{total !== 1 ? 's' : ''} encontrado{total !== 1 ? 's' : ''}
-          </ThemedText>
+        <View style={styles.headerTop}>
+          <View style={styles.headerLeft}>
+            <ThemedText variant="headline-medium" style={styles.title}>
+              Contenidos Generados
+            </ThemedText>
+            <ThemedText variant="body-medium" color="secondary" style={styles.subtitle}>
+              {total} contenido{total !== 1 ? 's' : ''} generado{total !== 1 ? 's' : ''} por tus agentes
+            </ThemedText>
+          </View>
+
+          <View style={styles.headerActions}>
+            {/* Botón de filtros */}
+            <Pressable
+              onPress={() => setShowFilters(!showFilters)}
+              style={[styles.filterButton, showFilters && styles.filterButtonActive]}
+            >
+              {showFilters ? (
+                <X size={20} color="#000" />
+              ) : (
+                <Filter size={20} color={showFilters ? '#000' : '#6B7280'} />
+              )}
+            </Pressable>
+
+            {/* Botón crear contenido */}
+            <Pressable
+              onPress={() => router.push('/generate')}
+              style={styles.createButton}
+            >
+              <Plus size={20} color="#000" strokeWidth={2.5} />
+            </Pressable>
+          </View>
         </View>
 
-        {/* Botón de filtros */}
-        <Pressable
-          onPress={() => setShowFilters(!showFilters)}
-          style={[styles.filterButton, showFilters && styles.filterButtonActive]}
-        >
-          {showFilters ? (
-            <X size={20} color={showFilters ? '#000' : '#6B7280'} />
-          ) : (
-            <Filter size={20} color="#6B7280" />
-          )}
-          <ThemedText
-            variant="label-medium"
-            style={[
-              styles.filterButtonText,
-              showFilters && styles.filterButtonTextActive
-            ]}
-          >
-            Filtros
-          </ThemedText>
-        </Pressable>
+        {/* Badge de filtros activos */}
+        {!showFilters && (activeFilters.agentType || activeFilters.editorialLean || activeFilters.keywords?.length) && (
+          <View style={styles.activeFiltlersBadge}>
+            <Badge variant="default" style={styles.filtersBadge}>
+              <Filter size={12} color="#000" />
+              <ThemedText variant="label-small" style={styles.filtersBadgeText}>
+                Filtros activos
+              </ThemedText>
+            </Badge>
+          </View>
+        )}
       </View>
 
       {/* Componente de filtros (condicional) */}
       {showFilters && (
-        <GeneratedContentFilters
-          filters={pendingFilters}
-          onFiltersChange={setPendingFilters}
-          onApply={handleApplyFilters}
-          onClear={handleClearFilters}
-        />
+        <View style={styles.filtersContainer}>
+          <GeneratedContentFilters
+            filters={pendingFilters}
+            onFiltersChange={setPendingFilters}
+            onApply={handleApplyFilters}
+            onClear={handleClearFilters}
+          />
+        </View>
       )}
     </>
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <FlatList
         data={items}
         renderItem={({ item }) => (
@@ -229,7 +249,7 @@ export function GeneratedContentTab() {
         }
         showsVerticalScrollIndicator={false}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -289,37 +309,70 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   header: {
-    marginBottom: 16,
+    marginBottom: 20,
     paddingHorizontal: 4,
+  },
+  headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+    marginBottom: 8,
   },
-  headerTitle: {
+  headerLeft: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  title: {
     color: '#111827',
     marginBottom: 4,
   },
-  filterButton: {
+  subtitle: {
+    color: '#6B7280',
+  },
+  headerActions: {
     flexDirection: 'row',
+    gap: 8,
+  },
+  filterButton: {
+    width: 40,
+    height: 40,
     alignItems: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    justifyContent: 'center',
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
     backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   filterButtonActive: {
     backgroundColor: '#f1ef47',
     borderColor: '#f1ef47',
   },
-  filterButtonText: {
-    color: '#6B7280',
+  createButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+    backgroundColor: '#f1ef47',
+    borderWidth: 2,
+    borderColor: '#000000',
   },
-  filterButtonTextActive: {
+  activeFiltlersBadge: {
+    marginTop: 8,
+  },
+  filtersBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#FEF3C7',
+    borderColor: '#f1ef47',
+  },
+  filtersBadgeText: {
     color: '#000',
     fontWeight: '600',
+  },
+  filtersContainer: {
+    marginTop: 8,
   },
   footerLoader: {
     paddingVertical: 20,

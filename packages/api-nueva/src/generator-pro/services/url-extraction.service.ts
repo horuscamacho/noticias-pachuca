@@ -9,6 +9,7 @@ import { NewsWebsiteConfig, NewsWebsiteConfigDocument } from '../schemas/news-we
 import { ExtractedUrlTracking, ExtractedUrlTrackingDocument } from '../schemas/extracted-url-tracking.schema';
 import { UrlExtractionLog, UrlExtractionLogDocument } from '../schemas/url-extraction-log.schema';
 import { PuppeteerManagerService } from '../../modules/reports/services/puppeteer-manager.service';
+import { GeneratorProQueueService } from './generator-pro-queue.service';
 
 /**
  * 🔍 URL Extraction Service
@@ -44,6 +45,7 @@ export class UrlExtractionService {
     @InjectModel(UrlExtractionLog.name)
     private urlLogModel: Model<UrlExtractionLogDocument>,
     private puppeteerService: PuppeteerManagerService,
+    private queueService: GeneratorProQueueService,
   ) {}
 
   /**
@@ -297,8 +299,27 @@ export class UrlExtractionService {
           this.logger.debug(`🆕 URL nueva: ${url}`);
 
           // Encolar para extracción de contenido
-          // TODO FASE 2: Integrar con GeneratorProQueueService
-          queuedUrls++;
+          try {
+            await this.queueService.addExtractionJob({
+              type: 'extract_content',
+              websiteConfigId: (website._id as any).toString(),
+              data: {
+                urls: [url],
+              },
+              priority: 5,
+            });
+
+            // Actualizar status a 'queued'
+            tracking.status = 'queued';
+            tracking.queuedAt = new Date();
+            await tracking.save();
+
+            queuedUrls++;
+            this.logger.debug(`📤 URL encolada: ${url}`);
+          } catch (queueError) {
+            this.logger.error(`❌ Error encolando URL ${url}: ${queueError.message}`);
+            // Mantener status como 'discovered' si falla el encolado
+          }
         }
       } catch (error) {
         this.logger.error(`❌ Error procesando URL ${url}: ${error.message}`);

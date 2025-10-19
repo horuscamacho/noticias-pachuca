@@ -12,31 +12,32 @@ import type { API, App } from '@/src/types/extracted-content-filters.types'
 
 /**
  * Map API extracted content to App extracted content
+ * ✅ FIX: Backend devuelve camelCase (MongoDB docs), no snake_case
  */
 export function mapExtractedContentFromAPI(
   apiContent: API.ExtractedContent
 ): App.ExtractedContent {
   return {
     id: apiContent._id,
-    sourceUrl: apiContent.source_url,
+    sourceUrl: apiContent.sourceUrl,
     domain: apiContent.domain,
-    facebookPostId: apiContent.facebook_post_id,
+    facebookPostId: apiContent.facebookPostId,
     title: apiContent.title,
     content: apiContent.content,
     images: apiContent.images,
-    publishedAt: apiContent.published_at ? new Date(apiContent.published_at) : undefined,
+    publishedAt: apiContent.publishedAt ? new Date(apiContent.publishedAt) : undefined,
     author: apiContent.author,
     category: apiContent.category,
     categories: apiContent.categories,
     excerpt: apiContent.excerpt,
     tags: apiContent.tags,
     keywords: apiContent.keywords,
-    extractedAt: new Date(apiContent.extracted_at),
+    extractedAt: new Date(apiContent.extractedAt),
     status: apiContent.status,
-    isProcessed: apiContent.is_processed,
-    processedAt: apiContent.processed_at ? new Date(apiContent.processed_at) : undefined,
-    createdAt: new Date(apiContent.created_at),
-    updatedAt: new Date(apiContent.updated_at),
+    isProcessed: apiContent.isProcessed,
+    processedAt: apiContent.processedAt ? new Date(apiContent.processedAt) : undefined,
+    createdAt: new Date(apiContent.createdAt),
+    updatedAt: new Date(apiContent.updatedAt),
   }
 }
 

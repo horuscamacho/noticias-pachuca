@@ -62,3 +62,6 @@ export {
 // Hooks de Publicación de Contenido Generado
 export { usePublishContent } from './usePublishContent'
 export { useImproveCopy } from './useImproveCopy'
+
+// Hooks de Image Bank
+export { useUploadImages } from './useUploadImages'

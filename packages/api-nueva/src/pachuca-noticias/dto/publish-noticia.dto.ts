@@ -17,6 +17,10 @@ export class PublishNoticiaDto {
   customImageUrl?: string; // URL de imagen personalizada (si useOriginalImage = false)
 
   @IsOptional()
+  @IsMongoId({ message: 'imageBankId debe ser un ObjectId válido' })
+  imageBankId?: string; // ID de imagen del banco (alternativa a customImageUrl)
+
+  @IsOptional()
   @IsDateString({}, { message: 'scheduledPublishAt debe ser una fecha válida' })
   scheduledPublishAt?: Date; // Para publicación programada (Fase 2)
 

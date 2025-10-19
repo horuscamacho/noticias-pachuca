@@ -13,28 +13,29 @@
 export namespace API {
   /**
    * Extracted content item from backend
+   * ⚠️ IMPORTANTE: El backend devuelve camelCase (no snake_case) porque son documentos de MongoDB
    */
   export interface ExtractedContent {
     _id: string
-    source_url: string
+    sourceUrl: string
     domain?: string
-    facebook_post_id?: string
+    facebookPostId?: string
     title?: string
     content?: string
     images: string[]
-    published_at?: string
+    publishedAt?: string
     author?: string
     category?: string
     categories: string[]
     excerpt?: string
     tags: string[]
     keywords: string[]
-    extracted_at: string
+    extractedAt: string
     status: 'pending' | 'extracted' | 'failed' | 'processing'
-    is_processed?: boolean
-    processed_at?: string
-    created_at: string
-    updated_at: string
+    isProcessed?: boolean
+    processedAt?: string
+    createdAt: string
+    updatedAt: string
   }
 
   /**
