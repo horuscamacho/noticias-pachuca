@@ -173,8 +173,8 @@ jobs:
             cd /var/www/noticias-pachuca/packages/api-nueva
             tar -xzf /tmp/api-deploy.tar.gz
 
-            # Install production dependencies
-            yarn install --frozen-lockfile --production
+            # Install production dependencies (skip Puppeteer Chrome download)
+            PUPPETEER_SKIP_DOWNLOAD=true yarn install --frozen-lockfile --production
 
             # Update .env
             echo "${{ secrets.API_ENV }}" > .env
