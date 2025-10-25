@@ -12,6 +12,11 @@ import { Logo } from '@/components/Logo';
 
 interface CompactHeaderProps {
   /**
+   * Whether to show the subscription banner
+   * @default true
+   */
+  showSubscriptionBanner?: boolean;
+  /**
    * Optional test ID for testing
    */
   testID?: string;
@@ -31,7 +36,10 @@ interface CompactHeaderProps {
  *   <CompactHeader />
  * </Animated.View>
  */
-export const CompactHeader: React.FC<CompactHeaderProps> = ({ testID }) => {
+export const CompactHeader: React.FC<CompactHeaderProps> = ({
+  showSubscriptionBanner = true,
+  testID
+}) => {
   const insets = useSafeAreaInsets();
 
   return (
@@ -64,13 +72,15 @@ export const CompactHeader: React.FC<CompactHeaderProps> = ({ testID }) => {
       </View>
 
       {/* Subscription Banner (compact version) */}
-      <View style={styles.bannerContainer}>
-        <View style={styles.banner}>
-          <ThemedText variant="caption" style={styles.bannerText} numberOfLines={1}>
-            SUSCRÍBETE PARA VIVIR LA NUEVA EXPERIENCIA
-          </ThemedText>
+      {showSubscriptionBanner && (
+        <View style={styles.bannerContainer}>
+          <View style={styles.banner}>
+            <ThemedText variant="caption" style={styles.bannerText} numberOfLines={1}>
+              SUSCRÍBETE PARA VIVIR LA NUEVA EXPERIENCIA
+            </ThemedText>
+          </View>
         </View>
-      </View>
+      )}
     </View>
   );
 };

@@ -64,3 +64,10 @@ export type {
   EditionDropdownProps,
   HomeHeaderProps,
 } from './home';
+
+// Related News Components
+export { RelatedNewsCard } from './RelatedNewsCard';
+export type { RelatedNewsArticle, RelatedNewsCardProps } from './RelatedNewsCard';
+
+export { RelatedNewsSection } from './RelatedNewsSection';
+export type { RelatedNewsSectionProps } from './RelatedNewsSection';

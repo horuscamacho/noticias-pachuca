@@ -1,0 +1,453 @@
+╔════════════════════════════════════════════════════════════════════════════════════════╗
+║                     ROTATING DOT INDICATOR - VISUAL DIAGRAM                             ║
+║                          Quick Read Feature Animation                                   ║
+╚════════════════════════════════════════════════════════════════════════════════════════╝
+
+
+┌──────────────────────────────────────────────────────────────────────────────────────┐
+│                         CONCEPT: INFINITE ROTATING WHEEL                              │
+└──────────────────────────────────────────────────────────────────────────────────────┘
+
+Think of a wheel with infinite dots. You can only see 5 at a time through a window.
+The center dot is always the active article. Swipe to rotate the wheel.
+
+                                    ○₁₀
+                              ○₉         ○₁₁
+                         ○₈                   ○₁₂
+                    ○₇                             ○₁₃
+                ○₆            INVISIBLE                ○₁₄
+                                WHEEL
+            ○₅                                            ○₁₅
+                                  ●
+        ○₄                     (you are                     ○₁₆
+                                 here)
+            ○₃                                            ○₁
+                ○₂                                    ○₀
+                    ○₁        ┌─────────────┐
+                         ○₀   │ Visible     │
+                              │ Window      │
+                              │ (5 dots)    │
+                              └─────────────┘
+
+Your view through the window:
+┌─────────────────────────────────┐
+│     ○₄   ○₅   ●₆   ○₇   ○₈      │  ← This is what user sees
+└─────────────────────────────────┘
+
+
+┌──────────────────────────────────────────────────────────────────────────────────────┐
+│                              CONTAINER ANATOMY                                        │
+└──────────────────────────────────────────────────────────────────────────────────────┘
+
+                          120px total width
+        ├───────────────────────────────────────────────┤
+
+        ┌───────────────────────────────────────────────┐
+        │ ◄─12px─►                         ◄─12px─►    │  ─┐
+        │                                               │   │
+        │   ○      ○      ●      ○      ○               │   │ 40px
+        │  8px   10px   12px   10px    8px              │   │
+        │   ▲      ▲      ▲      ▲      ▲               │   │
+        │   │      │      │      │      │               │  ─┘
+        │ ◄─┼──────┼──────┼──────┼──────┼─►             │
+        │   └─12px─┴─12px─┴─12px─┴─12px─┘              │
+        └───────────────────────────────────────────────┘
+         ▲                                             ▲
+         │                                             │
+         Background: rgba(0,0,0,0.4)                  │
+         Border-radius: 20px (pill shape)             │
+         Backdrop-blur: 8px (iOS only)        Padding: 12px
+
+
+
+┌──────────────────────────────────────────────────────────────────────────────────────┐
+│                           DOT STATE SPECIFICATIONS                                    │
+└──────────────────────────────────────────────────────────────────────────────────────┘
+
+EDGE DOT (Position 1 & 5)          APPROACHING DOT (Position 2 & 4)
+┌───────────┐                      ┌─────────────┐
+│           │                      │             │
+│    ○      │  Diameter: 8px       │     ○       │  Diameter: 10px
+│           │  Color: #D1D5DB      │             │  Color: #D1D5DB
+│           │  Opacity: 0.6        │             │  Opacity: 0.8
+└───────────┘  Border: None        └─────────────┘  Border: None
+
+
+ACTIVE DOT (Position 3 - Center)
+┌───────────────────┐
+│    ┌─────────┐    │
+│    │  ┏━━━┓  │    │  Diameter: 12px
+│    │  ┃ ● ┃  │    │  Color: #854836 (brown)
+│    │  ┗━━━┛  │    │  Opacity: 1.0
+│    └─────────┘    │  Border: 2px white (#FFFFFF)
+│      ░░░░░        │  Shadow: 0px 2px 4px rgba(133,72,54,0.3)
+└───────────────────┘
+
+
+
+┌──────────────────────────────────────────────────────────────────────────────────────┐
+│                        ANIMATION TIMELINE (400ms total)                               │
+└──────────────────────────────────────────────────────────────────────────────────────┘
+
+SWIPE LEFT (Counter-clockwise rotation) ↺
+
+╔═══════════════════════════════════════════════════════════════════════════════════╗
+║  t = 0ms (INITIAL STATE)                                                          ║
+╟───────────────────────────────────────────────────────────────────────────────────╢
+║                                                                                   ║
+║           ┌─────────────────────────────────────────┐                            ║
+║           │   ○     ○     ●     ○     ○             │                            ║
+║           │   3     4     5     6     7   (indices) │                            ║
+║           └─────────────────────────────────────────┘                            ║
+║                                                                                   ║
+║  Active article: 5                                                                ║
+╚═══════════════════════════════════════════════════════════════════════════════════╝
+
+         ▼▼▼ User swipes LEFT ▼▼▼
+
+╔═══════════════════════════════════════════════════════════════════════════════════╗
+║  t = 100ms (SLIDE INITIATED)                                                      ║
+╟───────────────────────────────────────────────────────────────────────────────────╢
+║                                                                                   ║
+║      ○    ┌─────────────────────────────────────────┐    ○                       ║
+║    fade   │  ○     ○     ●     ○     ○              │  new                       ║
+║     out   │  3     4     5     6     7              │  dot                       ║
+║           └─────────────────────────────────────────┘  appearing                 ║
+║                      ◄── sliding left ──                                          ║
+║                                                                                   ║
+║  Translation: -6px                                                                ║
+║  Dot 3 opacity: 0.6 → 0.4                                                         ║
+║  Dot 8 opacity: 0 → 0.2                                                           ║
+╚═══════════════════════════════════════════════════════════════════════════════════╝
+
+         ▼▼▼ Animation continues ▼▼▼
+
+╔═══════════════════════════════════════════════════════════════════════════════════╗
+║  t = 200ms (MID-ANIMATION)                                                        ║
+╟───────────────────────────────────────────────────────────────────────────────────╢
+║                                                                                   ║
+║         ┌─────────────────────────────────────────┐     ○                         ║
+║         │   ○     ○     ○     ●     ○             │   visible                     ║
+║         │   3     4     5     6     7             │                               ║
+║         └─────────────────────────────────────────┘                               ║
+║                      ◄── sliding left ──                                          ║
+║                                                                                   ║
+║  Translation: -12px                                                               ║
+║  Sizes morphing:                                                                  ║
+║    Dot 3: 8px → 6px (shrinking out)                                               ║
+║    Dot 4: 10px → 8px                                                              ║
+║    Dot 5: 12px → 10px (leaving center)     ▲                                      ║
+║    Dot 6: 10px → 12px (becoming center) ───┘ ACTIVE SHIFTING                      ║
+║    Dot 7: 8px → 10px                                                              ║
+║    Dot 8: 6px → 8px                                                               ║
+║                                                                                   ║
+║  Active styling transfers: Dot 5 → Dot 6                                          ║
+║  Color transition: #D1D5DB (gray) → #854836 (brown)                               ║
+╚═══════════════════════════════════════════════════════════════════════════════════╝
+
+         ▼▼▼ Almost complete ▼▼▼
+
+╔═══════════════════════════════════════════════════════════════════════════════════╗
+║  t = 300ms (NEAR COMPLETE)                                                        ║
+╟───────────────────────────────────────────────────────────────────────────────────╢
+║                                                                                   ║
+║            ┌─────────────────────────────────────────┐   ○                        ║
+║            │    ○     ○     ●     ○     ○            │  fully                     ║
+║            │    4     5     6     7     8            │  visible                   ║
+║            └─────────────────────────────────────────┘                            ║
+║                      ◄── sliding left ──                                          ║
+║                                                                                   ║
+║  Translation: -18px                                                               ║
+║  Dot 3 opacity: 0.1 (almost gone)                                                 ║
+║  Dot 8 opacity: 0.5 (almost visible)                                              ║
+╚═══════════════════════════════════════════════════════════════════════════════════╝
+
+         ▼▼▼ Animation settles ▼▼▼
+
+╔═══════════════════════════════════════════════════════════════════════════════════╗
+║  t = 400ms (FINAL STATE)                                                          ║
+╟───────────────────────────────────────────────────────────────────────────────────╢
+║                                                                                   ║
+║           ┌─────────────────────────────────────────┐                            ║
+║           │   ○     ○     ●     ○     ○             │                            ║
+║           │   4     5     6     7     8   (indices) │                            ║
+║           └─────────────────────────────────────────┘                            ║
+║                                                                                   ║
+║  Active article: 6 (advanced by 1)                                                ║
+║  Translation reset: 0px                                                           ║
+║  All sizes and opacities at final values                                          ║
+║  Ready for next swipe                                                             ║
+╚═══════════════════════════════════════════════════════════════════════════════════╝
+
+RESULT: Wheel appears to have rotated counter-clockwise by 1 position
+
+
+
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                         SIZE MORPHING DURING ANIMATION                            │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+BEFORE SWIPE:
+    ○         ○         ●         ○         ○
+   8px       10px      12px      10px       8px
+  pos1       pos2      pos3      pos4      pos5
+opacity:    opacity:  opacity:  opacity:  opacity:
+  0.6        0.8       1.0        0.8       0.6
+
+              ▼ SWIPE LEFT ▼
+
+DURING (t=200ms):  [Smooth transition]
+ ○       ○         ○         ●         ○         ○
+6px     8px       10px      12px      10px       8px
+fade    pos1      pos2      pos4      pos5     new
+out                         ↑
+                      New active
+
+              ▼ CONTINUE ▼
+
+AFTER SWIPE:
+                ○         ○         ●         ○         ○
+               8px       10px      12px      10px       8px
+              pos1       pos2      pos3      pos4      pos5
+
+Visually identical to start, but indices have shifted!
+
+
+
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                           EASING CURVE VISUALIZATIONS                             │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+SLIDE EASING: cubic-bezier(0.25, 0.1, 0.25, 1.0) - ease-out
+Characteristic: Fast start, smooth slow-down
+
+100% ┤                                            ╭──────
+     │                                       ╭────╯
+ 75% ┤                                  ╭────╯
+     │                             ╭────╯
+ 50% ┤                        ╭────╯
+     │                   ╭────╯
+ 25% ┤              ╭────╯
+     │         ╭────╯
+  0% └─────────┴────────┴────────┴────────┴────────┴──────
+     0       100      200      300      400 (ms)
+
+
+SCALE EASING: cubic-bezier(0.34, 1.56, 0.64, 1) - back-out
+Characteristic: Slight overshoot (bounce)
+
+120% ┤                                    ╭╮     ← Overshoot!
+     │                                   ╱ ╰╮
+100% ┤                              ╭───╯   ╰────
+     │                         ╭────╯
+ 75% ┤                    ╭────╯
+     │               ╭────╯
+ 50% ┤          ╭────╯
+     │     ╭────╯
+  0% └─────┴────────┴────────┴────────┴────────┴──────
+     0       100      200      300      400 (ms)
+
+
+FADE EASING: linear
+Characteristic: Constant rate
+
+100% ┤                                        ╭─────
+     │                                    ╭───╯
+ 75% ┤                                ╱───╯
+     │                            ╱───╯
+ 50% ┤                        ╱───╯
+     │                    ╱───╯
+ 25% ┤                ╱───╯
+     │            ╱───╯
+  0% └────────────┴────────┴────────┴────────┴──────
+     0       100      200      300      400 (ms)
+
+
+
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                        RESPONSIVE LAYOUT POSITIONS                                │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+PORTRAIT MODE (Default):                LANDSCAPE MODE:
+┌─────────────────────┐                 ┌──────────────────────────────────┐
+│                     │                 │                              ○   │
+│                     │                 │                              ○   │
+│                     │                 │                              ●   │
+│   Article Content   │                 │    Article Content           ○   │
+│                     │                 │                              ○   │
+│                     │                 │                                  │
+│                     │                 └──────────────────────────────────┘
+│                     │                         ▲
+│  ┌───────────────┐  │                         │
+│  │  ○  ○  ●  ○  ○ │ │ ◄─ Dots                 └─ Dots vertical on right
+│  └───────────────┘  │    bottom center           side (40px from edge)
+│                     │
+└─────────────────────┘
+
+
+
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                           ACCESSIBILITY STATES                                    │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+NORMAL MOTION (Default):
+Frame 0:    [○ ○ ● ○ ○]
+Frame 100:  ←[○ ○ ● ○ ○]  (sliding)
+Frame 200:   ←[○ ○ ○ ● ○]  (mid-slide)
+Frame 300:    ←[○ ○ ○ ● ○] (almost done)
+Frame 400:     [○ ○ ● ○ ○] (settled)
+
+REDUCED MOTION (Accessibility):
+Frame 0:  [○ ○ ● ○ ○]  Article 5
+          ▼ No animation
+Frame 1:  [○ ○ ● ○ ○]  Article 6
+
+No sliding, scaling, or complex animations
+Simple opacity fade (0-150ms max)
+Same functionality, simplified visuals
+
+
+
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                              COLOR SPECIFICATIONS                                 │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+ACTIVE DOT:               INACTIVE DOTS:           CONTAINER:
+Color: #854836            Color: #D1D5DB           Background: rgba(0,0,0,0.4)
+(Brown - Brand)           (Gray 300)               (40% black)
+
+      ███                       ███
+      ███                       ███                ▓▓▓▓▓▓▓▓▓▓▓▓▓
+      ███                       ███                ▓▓▓▓▓▓▓▓▓▓▓▓▓
+                                                   ▓▓▓▓▓▓▓▓▓▓▓▓▓
+
+Border: #FFFFFF           Border: None             Blur: 8px (iOS)
+(White)
+
+CONTRAST RATIOS:
+Active on background: 4.8:1 (WCAG AA ✓)
+Inactive on background: 3.2:1 (Decorative element exemption)
+
+
+
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                          EDGE CASE: SINGLE ARTICLE                                │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+When only 1 article exists:
+
+┌──────────────┐
+│              │
+│      ●       │  ← Single centered dot only
+│              │     No animation on swipe
+└──────────────┘     Shows "No more articles" message
+
+
+
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                          EDGE CASE: TWO ARTICLES                                  │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+When only 2 articles exist:
+
+At Article A:                    At Article B:
+┌──────────────────┐            ┌──────────────────┐
+│   ○    ●    ○    │            │   ○    ●    ○    │
+│ (virt) A    B    │            │   A    B  (virt) │
+└──────────────────┘            └──────────────────┘
+
+Shows 3 dots with virtual padding
+
+
+
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                         PERFORMANCE OPTIMIZATION                                  │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+GPU-ACCELERATED PROPERTIES (use these):
+✓ transform: translateX()
+✓ transform: scale()
+✓ opacity
+
+NON-ACCELERATED (avoid during animation):
+✗ width / height
+✗ margin / padding
+✗ backgroundColor (use overlay instead)
+
+MEMORY MANAGEMENT (large lists):
+Total articles: 1000
+Loaded in memory: 15 (window)
+Visible dots: 5
+Preload buffer: ±5 from center
+
+[...] ○ ○ ● ○ ○ [...] ← Only these 5 rendered + 10 buffered
+
+
+
+╔════════════════════════════════════════════════════════════════════════════════════╗
+║                            IMPLEMENTATION CHECKLIST                                 ║
+╠════════════════════════════════════════════════════════════════════════════════════╣
+║                                                                                    ║
+║  VISUAL DESIGN:                                                                    ║
+║  [ ] Container is 120px × 40px with 20px border radius                             ║
+║  [ ] 5 dots always visible                                                         ║
+║  [ ] Center dot is 12px, edge dots are 8px, approaching dots are 10px              ║
+║  [ ] 12px spacing between all dots                                                 ║
+║  [ ] Active dot has 2px white border and shadow                                    ║
+║  [ ] Semi-transparent background (rgba(0,0,0,0.4))                                 ║
+║  [ ] Backdrop blur on iOS (8px)                                                    ║
+║                                                                                    ║
+║  ANIMATION:                                                                        ║
+║  [ ] Total duration is 400ms                                                       ║
+║  [ ] Smooth easing curves applied (ease-out for slide, back-out for scale)         ║
+║  [ ] Dots slide smoothly without overlap                                           ║
+║  [ ] Entering/exiting dots fade in/out                                             ║
+║  [ ] Active state shifts smoothly from old to new center                           ║
+║  [ ] Runs at 60fps on mid-range devices                                            ║
+║  [ ] Uses GPU-accelerated transforms                                               ║
+║                                                                                    ║
+║  LAYOUT & POSITIONING:                                                             ║
+║  [ ] Positioned 40px from bottom                                                   ║
+║  [ ] Horizontally centered on screen                                               ║
+║  [ ] Safe area insets respected                                                    ║
+║  [ ] Works in portrait and landscape orientations                                  ║
+║                                                                                    ║
+║  ACCESSIBILITY:                                                                    ║
+║  [ ] Reduced motion mode functional                                                ║
+║  [ ] Screen reader announces "Article X of Y"                                      ║
+║  [ ] Container has progressbar role                                                ║
+║  [ ] Color contrast meets WCAG AA (4.5:1)                                          ║
+║  [ ] Keyboard navigation supported (if applicable)                                 ║
+║                                                                                    ║
+║  EDGE CASES:                                                                       ║
+║  [ ] Single article handled                                                        ║
+║  [ ] Two articles handled                                                          ║
+║  [ ] Rapid swipes queued properly                                                  ║
+║  [ ] Network errors shown with indicators                                          ║
+║  [ ] Memory efficient for large lists (1000+)                                      ║
+║                                                                                    ║
+╚════════════════════════════════════════════════════════════════════════════════════╝
+
+
+
+╔════════════════════════════════════════════════════════════════════════════════════╗
+║                                 QUICK REFERENCE                                     ║
+╠════════════════════════════════════════════════════════════════════════════════════╣
+║                                                                                    ║
+║  Container:     120px × 40px, border-radius 20px, rgba(0,0,0,0.4)                  ║
+║  Dots:          5 visible (8px, 10px, 12px, 10px, 8px)                             ║
+║  Spacing:       12px between dots, 12px padding                                    ║
+║  Colors:        Active #854836, Inactive #D1D5DB                                   ║
+║  Animation:     400ms, ease-out slide, back-out scale                              ║
+║  Position:      Bottom 40px, centered                                              ║
+║  Accessibility: Screen reader support, reduced motion mode                         ║
+║                                                                                    ║
+╚════════════════════════════════════════════════════════════════════════════════════╝
+
+
+═══════════════════════════════════════════════════════════════════════════════════════
+Created: 2025-10-25
+Version: 1.0.0
+Status: Ready for Implementation
+Design: Noticias Pachuca UX Team
+═══════════════════════════════════════════════════════════════════════════════════════
