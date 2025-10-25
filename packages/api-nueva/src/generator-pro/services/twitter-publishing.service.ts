@@ -80,12 +80,14 @@ export class TwitterPublishingService {
    * @param accountId - ID de la cuenta de Twitter en GetLate
    * @param username - Username de Twitter (@noticiaspachuca)
    * @param getLateApiKey - API Key de GetLate
+   * @param canonicalUrl - URL canónica del artículo (opcional, va en platformSpecificData.url)
    */
   async publishTweet(
     tweet: TwitterPostDocument,
     accountId: string,
     username: string,
-    getLateApiKey: string
+    getLateApiKey: string,
+    canonicalUrl?: string
   ): Promise<PublishResult> {
     this.logger.log(`🐦 Publishing tweet to Twitter account ${username}: ${tweet._id}`);
 
@@ -103,6 +105,13 @@ export class TwitterPublishingService {
         platforms: [{
           platform: 'twitter',
           accountId: accountId, // ✅ NUEVO: Usar accountId directamente
+          // 🆕 CRÍTICO: URL en platformSpecificData para que NO consuma caracteres del tweet
+          // Según docs de GetLate: la URL aparecerá como link card preview sin contar en el límite de 280 chars
+          ...(canonicalUrl && {
+            platformSpecificData: {
+              url: canonicalUrl
+            }
+          })
         }],
         ...(tweet.mediaUrls.length > 0 && {
           mediaItems: tweet.mediaUrls.map(url => ({
@@ -135,10 +144,27 @@ export class TwitterPublishingService {
 
       const result = response.data;
 
-      // Extraer información de respuesta
-      const twitterResult = result.platforms?.find((p: any) => p.platform === 'twitter');
+      // 🔍 DEBUG: Log completo de respuesta de GetLate
+      this.logger.debug(`🔍 [GetLate API] RESPUESTA COMPLETA:
+${JSON.stringify(result, null, 2)}`);
 
-      if (!twitterResult || twitterResult.status !== 'success') {
+      // Extraer información de respuesta - FIXED: GetLate retorna result.post.platforms
+      const twitterResult = result.post?.platforms?.find((p: any) => p.platform === 'twitter');
+
+      // 🔍 DEBUG: Log del objeto específico de Twitter
+      this.logger.debug(`🔍 [GetLate API] Twitter Result Object:
+${JSON.stringify(twitterResult, null, 2)}`);
+
+      // 🔍 DEBUG: Log de validación
+      this.logger.debug(`🔍 [GetLate API] Validación:
+  - twitterResult existe: ${!!twitterResult}
+  - twitterResult.status: "${twitterResult?.status}"
+  - platformPostId: ${twitterResult?.platformPostId}
+  - platformPostUrl: ${twitterResult?.platformPostUrl}
+  - ¿Publicación exitosa?: ${!!twitterResult?.platformPostId}`);
+
+      // Validar que la publicación fue exitosa verificando que exista platformPostId
+      if (!twitterResult || !twitterResult.platformPostId) {
         throw new Error(twitterResult?.error || 'Failed to publish to Twitter');
       }
 
@@ -152,7 +178,7 @@ export class TwitterPublishingService {
         success: true,
         tweetId: twitterResult.platformPostId,
         tweetUrl: twitterResult.platformPostUrl,
-        getLateTweetUrl: result.postUrl,
+        getLateTweetUrl: result.post?.postUrl || result.postUrl,
         engagement: {
           initialImpressions: 0, // Se actualizará después con sync
           estimatedEngagement: 500, // ✅ NUEVO: Estimación fija (sin config)

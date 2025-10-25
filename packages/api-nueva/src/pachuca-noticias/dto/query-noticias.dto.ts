@@ -37,6 +37,11 @@ export class QueryNoticiasDto {
   isBreaking?: boolean;
 
   @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  isUrgent?: boolean;
+
+  @IsOptional()
   @IsString()
   search?: string; // Búsqueda por título o contenido
 

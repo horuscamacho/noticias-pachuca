@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsNumber, Min, IsArray } from 'class-validator';
+import { IsString, IsOptional, IsNumber, Min, IsArray, IsBoolean } from 'class-validator';
 import { Type } from 'class-transformer';
 
 /**
@@ -76,6 +76,9 @@ export class PublicNoticiaResponseDto {
   @IsOptional()
   @IsNumber()
   readTime?: number; // Tiempo de lectura en minutos
+
+  @IsOptional()
+  isUrgent?: boolean; // CRITICAL: Flag para contenido urgente (breaking news de última hora)
 }
 
 /**
@@ -139,6 +142,9 @@ export class SearchResultDto {
   @IsOptional()
   @IsString()
   highlight?: string; // Fragmento de texto con el término resaltado
+
+  @IsOptional()
+  isUrgent?: boolean; // CRITICAL: Flag para contenido urgente (breaking news de última hora)
 }
 
 /**

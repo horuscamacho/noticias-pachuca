@@ -130,10 +130,27 @@ export class FacebookPublishingService {
 
       const result = response.data;
 
-      // Extraer información de respuesta
-      const facebookResult = result.platforms?.find((p: any) => p.platform === 'facebook');
+      // 🔍 DEBUG: Log completo de respuesta de GetLate
+      this.logger.debug(`🔍 [GetLate API] RESPUESTA COMPLETA:
+${JSON.stringify(result, null, 2)}`);
 
-      if (!facebookResult || facebookResult.status !== 'success') {
+      // Extraer información de respuesta - FIXED: GetLate retorna result.post.platforms
+      const facebookResult = result.post?.platforms?.find((p: any) => p.platform === 'facebook');
+
+      // 🔍 DEBUG: Log del objeto específico de Facebook
+      this.logger.debug(`🔍 [GetLate API] Facebook Result Object:
+${JSON.stringify(facebookResult, null, 2)}`);
+
+      // 🔍 DEBUG: Log de validación
+      this.logger.debug(`🔍 [GetLate API] Validación:
+  - facebookResult existe: ${!!facebookResult}
+  - facebookResult.status: "${facebookResult?.status}"
+  - platformPostId: ${facebookResult?.platformPostId}
+  - platformPostUrl: ${facebookResult?.platformPostUrl}
+  - ¿Publicación exitosa?: ${!!facebookResult?.platformPostId}`);
+
+      // Validar que la publicación fue exitosa verificando que exista platformPostId
+      if (!facebookResult || !facebookResult.platformPostId) {
         throw new Error(facebookResult?.error || 'Failed to publish to Facebook');
       }
 
@@ -147,7 +164,7 @@ export class FacebookPublishingService {
         success: true,
         facebookPostId: facebookResult.platformPostId,
         facebookPostUrl: facebookResult.platformPostUrl,
-        getLatePostUrl: result.postUrl,
+        getLatePostUrl: result.post?.postUrl || result.postUrl,
         engagement: {
           initialReach: 0, // Se actualizará después con sync
           estimatedImpressions: 1000, // ✅ NUEVO: Estimación fija (sin config)

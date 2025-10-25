@@ -54,18 +54,28 @@ export class PublicContentService {
       }
     }
 
-    // Construir filtros
-    const categoryFilters: Record<string, unknown> = { isActive: true };
+    // Construir filtros para el pipeline de aggregation
+    const matchStage: Record<string, unknown> = { isActive: true };
     if (siteId) {
-      categoryFilters.sites = new Types.ObjectId(siteId);
+      matchStage.sites = new Types.ObjectId(siteId);
     }
 
-    // Intentar primero desde colección Category
-    const categories = await this.categoryModel
-      .find(categoryFilters)
-      .sort({ order: 1, name: 1 })
-      .lean()
-      .exec();
+    // 🔧 FIX: Usar aggregation para eliminar duplicados por slug
+    // Agrupa por slug y toma el primer documento de cada grupo
+    const categories = await this.categoryModel.aggregate([
+      { $match: matchStage },
+      { $sort: { order: 1, name: 1 } },
+      {
+        $group: {
+          _id: '$slug', // Agrupar por slug para eliminar duplicados
+          doc: { $first: '$$ROOT' }, // Tomar el primer documento de cada grupo
+        }
+      },
+      {
+        $replaceRoot: { newRoot: '$doc' } // Reemplazar root con el documento agrupado
+      },
+      { $sort: { order: 1, name: 1 } } // Re-ordenar después del group
+    ]);
 
     let categoriesWithCount: CategoryResponseDto[];
 
@@ -141,12 +151,17 @@ export class PublicContentService {
         .sort((a, b) => a.name.localeCompare(b.name));
     }
 
+    // 🔧 FIX FINAL: Eliminar duplicados por slug usando Map (por si el aggregation falla)
+    const uniqueCategories = Array.from(
+      new Map(categoriesWithCount.map(cat => [cat.slug, cat])).values()
+    );
+
     // Guardar en caché
-    this.categoriesCache = categoriesWithCount;
+    this.categoriesCache = uniqueCategories;
     this.cacheTimestamp = Date.now();
 
-    this.logger.log(`Retornando ${categoriesWithCount.length} categorías activas`);
-    return categoriesWithCount;
+    this.logger.log(`Retornando ${uniqueCategories.length} categorías activas (${categoriesWithCount.length - uniqueCategories.length} duplicados eliminados)`);
+    return uniqueCategories;
   }
 
   /**
@@ -386,6 +401,15 @@ export class PublicContentService {
       }
     }
 
+    // ========================================
+    // 🔍 CRITICAL DEBUG LOGGING
+    // ========================================
+    this.logger.log(`[searchNoticias] ===== SEARCH DEBUG START =====`);
+    this.logger.log(`[searchNoticias] Query: "${query}"`);
+    this.logger.log(`[searchNoticias] Category Slug: ${categorySlug || 'none'}`);
+    this.logger.log(`[searchNoticias] Site ID: ${siteId || 'none'}`);
+    this.logger.log(`[searchNoticias] Filters being used: ${JSON.stringify(filters)}`);
+
     // Buscar con full-text search
     let searchQuery = this.publishedNoticiaModel
       .find(filters, sortBy === 'relevance' ? { score: { $meta: 'textScore' } } : {});
@@ -410,6 +434,28 @@ export class PublicContentService {
         .exec(),
       this.publishedNoticiaModel.countDocuments(filters),
     ]);
+
+    // ========================================
+    // 🔍 CRITICAL DEBUG LOGGING - RESULTS
+    // ========================================
+    this.logger.log(`[searchNoticias] Total results: ${total}`);
+    this.logger.log(`[searchNoticias] Results on current page: ${noticias.length}`);
+
+    if (noticias.length > 0) {
+      const urgentValues = noticias.map(n => ({
+        id: (n._id as Types.ObjectId).toString().substring(0, 8),
+        title: (n.title as string).substring(0, 50),
+        isUrgent: n.isUrgent,
+      }));
+      this.logger.log(`[searchNoticias] Sample of isUrgent values:`);
+      this.logger.log(JSON.stringify(urgentValues, null, 2));
+
+      const urgentCount = noticias.filter(n => n.isUrgent === true).length;
+      this.logger.log(`[searchNoticias] Urgent news in results: ${urgentCount}/${noticias.length}`);
+    } else {
+      this.logger.warn(`[searchNoticias] NO RESULTS FOUND!`);
+    }
+    this.logger.log(`[searchNoticias] ===== SEARCH DEBUG END =====`);
 
     const data = noticias.map((noticia) => this.mapToSearchResultDto(noticia, query));
 
@@ -467,6 +513,7 @@ export class PublicContentService {
       publishedAt: (noticia.publishedAt as Date).toISOString(),
       author: noticia.author as string | undefined,
       readTime: this.calculateReadTime(noticia.content as string),
+      isUrgent: noticia.isUrgent as boolean | undefined, // CRITICAL: Include urgent flag
     };
   }
 
@@ -505,6 +552,7 @@ export class PublicContentService {
       publishedAt: (noticia.publishedAt as Date).toISOString(),
       score: (noticia as Record<string, unknown>).score as number | undefined,
       highlight: this.extractHighlight(content, query),
+      isUrgent: noticia.isUrgent as boolean | undefined, // CRITICAL: Include urgent flag
     };
   }
 
@@ -552,7 +600,7 @@ export class PublicContentService {
   /**
    * Invalidar caché de categorías
    */
-  private invalidateCache(): void {
+  invalidateCache(): void {
     this.logger.log('Invalidando caché de categorías');
     this.categoriesCache = null;
     this.cacheTimestamp = null;

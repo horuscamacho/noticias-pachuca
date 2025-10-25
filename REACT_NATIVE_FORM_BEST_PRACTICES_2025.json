@@ -1,0 +1,667 @@
+{
+  "search_summary": {
+    "platforms_searched": [
+      "github",
+      "npm",
+      "medium",
+      "dev.to",
+      "logrocket",
+      "stackoverflow",
+      "technical_blogs"
+    ],
+    "repositories_analyzed": 5,
+    "docs_reviewed": 15,
+    "search_date": "2025-10-24",
+    "focus_period": "2025-2026"
+  },
+  "repositories": [
+    {
+      "citation": "Tarikfp. 'rn-zod-react-hook-form - React Native Form Validation Example.' GitHub, 2024. https://github.com/tarikfp/rn-zod-react-hook-form",
+      "platform": "github",
+      "stats": {
+        "stars": "Not specified",
+        "forks": "Not specified",
+        "contributors": 1,
+        "last_updated": "2024"
+      },
+      "key_features": [
+        "Complete React Native form validation example",
+        "React Hook Form + Zod + TypeScript integration",
+        "Expo framework implementation",
+        "Type-safe form handling"
+      ],
+      "architecture": "Uses React Hook Form with Zod resolver for schema validation, Controller component for React Native TextInput integration, and TypeScript generics for type safety",
+      "code_quality": {
+        "testing": "not_specified",
+        "documentation": "good",
+        "maintenance": "active"
+      },
+      "usage_example": "Demonstrates complete form setup with zodResolver, Controller components, and error handling for React Native applications",
+      "limitations": [
+        "Example repository - not a production library",
+        "Limited to specific use cases shown"
+      ],
+      "alternatives": []
+    },
+    {
+      "citation": "Henninghall. 'react-native-date-picker.' GitHub, 2024. https://github.com/henninghall/react-native-date-picker",
+      "platform": "github",
+      "stats": {
+        "stars": 2418,
+        "forks": "Not specified",
+        "contributors": "Multiple",
+        "last_updated": "2024"
+      },
+      "key_features": [
+        "3 modes: Date, Time, DateTime",
+        "Modal and inline implementations",
+        "Native code for authentic platform feel",
+        "Multi-language support",
+        "Supports new React Native architecture (Fabric + Turbo Modules)",
+        "Unified look across iOS/Android"
+      ],
+      "architecture": "Written with native code to achieve best possible look, feel and performance. Supports React Native >= 0.57 and new architecture from RN 0.71+",
+      "code_quality": {
+        "testing": "adequate",
+        "documentation": "excellent",
+        "maintenance": "active"
+      },
+      "usage_example": "Modal: <DatePicker modal open={open} date={date} onConfirm={handleConfirm} onCancel={handleCancel} />; Inline: <DatePicker date={date} onDateChange={setDate} />",
+      "limitations": [
+        "Requires pod install for iOS",
+        "Needs Expo SDK 42+ for Expo projects"
+      ],
+      "alternatives": [
+        "@react-native-community/datetimepicker",
+        "react-native-modal-datetime-picker"
+      ]
+    },
+    {
+      "citation": "React Native Community. '@react-native-community/datetimepicker.' GitHub/npm, 2024. https://github.com/react-native-datetimepicker/datetimepicker",
+      "platform": "github",
+      "stats": {
+        "stars": 2722,
+        "forks": "Not specified",
+        "contributors": "Multiple (community-maintained)",
+        "last_updated": "2024-02-15"
+      },
+      "key_features": [
+        "Native system components (iOS, Android, Windows)",
+        "Follows platform design guidelines",
+        "Community-maintained",
+        "Supports new React Native architecture (Fabric + TurboModules)",
+        "Platform-specific native UI"
+      ],
+      "architecture": "Implemented in accordance with iOS and Android development guidelines, uses native system components under the hood. Requires React Native 0.71.4+ for new architecture",
+      "code_quality": {
+        "testing": "adequate",
+        "documentation": "good",
+        "maintenance": "active"
+      },
+      "usage_example": "Provides native date/time pickers with platform-specific UIs - inline components without built-in modal support",
+      "limitations": [
+        "Windows support not actively maintained",
+        "No built-in modal (use react-native-modal-datetime-picker wrapper for modal support)",
+        "Different UIs on iOS vs Android"
+      ],
+      "alternatives": [
+        "react-native-date-picker",
+        "react-native-modal-datetime-picker (wrapper around this library)"
+      ]
+    }
+  ],
+  "libraries_comparison": {
+    "form_management": {
+      "react_hook_form": {
+        "recommendation_level": "HIGHLY RECOMMENDED",
+        "version": "Latest (2025)",
+        "bundle_size": "8.6 KB minified + gzipped",
+        "dependencies": "Zero dependencies",
+        "typescript_support": "Excellent - first-class TypeScript support",
+        "react_native_compatibility": "Excellent - works seamlessly with React Native",
+        "performance": {
+          "re_renders": "Minimal - uses uncontrolled components with subscription-based updates",
+          "mount_time": "Fast - significantly faster than Formik",
+          "large_forms": "Excellent - isolates input components to prevent cascade re-renders"
+        },
+        "pros": [
+          "Best performance (6x smaller than Formik)",
+          "Zero dependencies",
+          "Minimal re-renders",
+          "Uncontrolled components approach",
+          "Excellent TypeScript support",
+          "Works identically in React and React Native",
+          "Superior for large/complex forms",
+          "8.6KB bundle size"
+        ],
+        "cons": [
+          "Slightly steeper learning curve than Formik",
+          "Requires Controller component for React Native inputs"
+        ],
+        "best_for": [
+          "Performance-sensitive applications",
+          "Large forms with many inputs",
+          "TypeScript projects",
+          "Cross-platform React/React Native projects",
+          "Production applications in 2025-2026"
+        ]
+      },
+      "formik": {
+        "recommendation_level": "LEGACY - Not recommended for new projects in 2025",
+        "bundle_size": "~50KB (6x larger than React Hook Form)",
+        "typescript_support": "Good but not as integrated as RHF",
+        "react_native_compatibility": "Good",
+        "performance": {
+          "re_renders": "High - controlled components cause full form re-renders",
+          "mount_time": "Slower than React Hook Form",
+          "large_forms": "Poor - performance degrades with form size"
+        },
+        "pros": [
+          "Simpler API for basic forms",
+          "Built-in field-level validation",
+          "Good for multi-step forms",
+          "Mature ecosystem"
+        ],
+        "cons": [
+          "6x larger bundle size",
+          "Many more re-renders",
+          "Slower performance",
+          "Uses controlled components (expensive in React Native)",
+          "Declining community adoption"
+        ],
+        "best_for": [
+          "Legacy projects already using Formik",
+          "Very simple forms where performance doesn't matter",
+          "Teams already familiar with Formik"
+        ]
+      }
+    },
+    "validation_libraries": {
+      "zod": {
+        "recommendation_level": "HIGHLY RECOMMENDED for TypeScript projects",
+        "version": "Latest (2025)",
+        "bundle_size": "Small - zero dependencies",
+        "dependencies": "Zero",
+        "typescript_support": "EXCELLENT - TypeScript-first design with automatic type inference",
+        "react_native_compatibility": "Excellent",
+        "performance": "Fastest among validation libraries",
+        "pros": [
+          "TypeScript-first with superior type inference",
+          "Zero dependencies (best security)",
+          "Smallest bundle size",
+          "Runtime validation + compile-time types always in sync",
+          "z.infer<> automatically generates TypeScript types",
+          "Fast performance",
+          "No dependency vulnerabilities",
+          "Growing rapidly in Next.js/Remix communities",
+          "First-class integration with React Hook Form via @hookform/resolvers"
+        ],
+        "cons": [
+          "Smaller community than Yup (but growing rapidly)",
+          "Fewer third-party integrations (improving)"
+        ],
+        "best_for": [
+          "All TypeScript projects",
+          "Security-sensitive applications",
+          "Performance-critical applications",
+          "Modern React Native apps (2025-2026)",
+          "Projects requiring end-to-end type safety"
+        ],
+        "integration_example": "zodResolver from @hookform/resolvers seamlessly integrates Zod schemas with React Hook Form"
+      },
+      "yup": {
+        "recommendation_level": "GOOD for JavaScript projects or Formik legacy",
+        "typescript_support": "Good but lacks Zod's type inference capabilities",
+        "react_native_compatibility": "Excellent",
+        "performance": "Good but slower than Zod",
+        "pros": [
+          "Mature ecosystem",
+          "Large community",
+          "Simple API",
+          "Excellent Formik integration",
+          "Many resources available",
+          "Good React Hook Form integration"
+        ],
+        "cons": [
+          "Has dependencies (security/bundle concerns)",
+          "Weaker TypeScript type inference",
+          "Runtime types and compile-time types can drift out of sync",
+          "Slower than Zod",
+          "Larger bundle size"
+        ],
+        "best_for": [
+          "JavaScript projects (non-TypeScript)",
+          "Projects already using Formik",
+          "Teams familiar with Yup",
+          "Simple validation needs"
+        ]
+      },
+      "joi": {
+        "recommendation_level": "NOT RECOMMENDED for React Native",
+        "note": "Designed for server-side validation, too heavy for frontend use"
+      }
+    },
+    "date_pickers": {
+      "react_native_date_picker": {
+        "recommendation_level": "RECOMMENDED for unified cross-platform UI",
+        "package": "react-native-date-picker",
+        "npm_downloads": "180,474 weekly",
+        "github_stars": 2418,
+        "pros": [
+          "Unified look across iOS and Android",
+          "Uses iOS native picker, emulates for Android",
+          "Supports new architecture (Fabric + Turbo Modules) from RN 0.71+",
+          "Modal and inline modes",
+          "Extensive customization",
+          "Multi-language support",
+          "3 modes: date, time, datetime",
+          "minimumDate/maximumDate support for age validation"
+        ],
+        "cons": [
+          "Requires pod install for iOS",
+          "Needs Expo SDK 42+ for Expo"
+        ],
+        "best_for": [
+          "Apps needing consistent UI across platforms",
+          "Projects requiring modal date pickers",
+          "Age validation requirements (e.g., 18+ verification)"
+        ]
+      },
+      "react_native_community_datetimepicker": {
+        "recommendation_level": "RECOMMENDED for native platform feel",
+        "package": "@react-native-community/datetimepicker",
+        "npm_downloads": "756,704 weekly (4x more popular)",
+        "github_stars": 2722,
+        "pros": [
+          "Most popular (4x downloads)",
+          "Uses native system components",
+          "Follows platform design guidelines",
+          "Community-maintained",
+          "Supports new architecture (Fabric + TurboModules)",
+          "Authentic native feel"
+        ],
+        "cons": [
+          "Different UIs on iOS vs Android",
+          "No built-in modal (need wrapper library)",
+          "Windows support not actively maintained"
+        ],
+        "best_for": [
+          "Apps prioritizing native platform UX",
+          "Projects requiring inline date pickers",
+          "Community-backed stability needs"
+        ]
+      },
+      "react_native_modal_datetime_picker": {
+        "recommendation_level": "RECOMMENDED for modal-only needs",
+        "note": "Wraps @react-native-community/datetimepicker with modal functionality",
+        "pros": [
+          "Built-in modal support",
+          "Native components underneath",
+          "Easy to use"
+        ],
+        "best_for": [
+          "Projects needing native components in modals",
+          "Simple modal date picking"
+        ]
+      }
+    }
+  },
+  "technical_insights": {
+    "common_patterns": [
+      "Separation of form logic from UI using Controller component pattern",
+      "Custom hooks for extracting reusable form logic (useFormInput pattern)",
+      "Container/Presentational pattern for form components (smart/dumb components)",
+      "Generic TypeScript types for reusable input components (Path<T> for type-safe field names)",
+      "Uncontrolled components approach for better performance",
+      "Schema-first validation with automatic TypeScript type inference",
+      "Field-level validation vs form-level validation",
+      "Custom resolvers for integrating validation libraries (@hookform/resolvers)",
+      "useFieldArray for dynamic form fields",
+      "Transform and refine patterns for complex validation logic"
+    ],
+    "best_practices": [
+      "Use React Hook Form over Formik for new projects (2025-2026)",
+      "Choose Zod over Yup for TypeScript projects",
+      "Separate form logic from presentation components",
+      "Create reusable input components with TypeScript generics",
+      "Use Controller component for React Native inputs",
+      "Define styles outside components to prevent recreation on re-renders",
+      "Use z.infer<> to generate TypeScript types from schemas automatically",
+      "Implement both client-side and server-side validation (never trust client alone)",
+      "Use uncontrolled components for better performance",
+      "Leverage subscription-based state management to minimize re-renders",
+      "Use design tokens for consistent styling",
+      "Keep validation schemas in separate files for reusability",
+      "Use superRefine for complex multi-field validations",
+      "Set maximumDate on date pickers for age validation (18+ years)",
+      "Use custom hooks to extract stateful logic into reusable functions",
+      "Avoid using controlled components in React Native when possible"
+    ],
+    "pitfalls": [
+      "Controlled components in React Native cause expensive re-renders",
+      "Not validating on backend (client-side validation can be bypassed)",
+      "Large bundle sizes from heavy validation libraries",
+      "Type drift between runtime validation and compile-time types (Yup issue)",
+      "Security vulnerabilities from dependencies (Zod has zero)",
+      "Using Formik in new projects (legacy approach in 2025)",
+      "Not using TypeScript in modern React Native projects",
+      "Recreating styles on every render",
+      "Not using generic types for reusable components",
+      "Mixing form logic with UI components (tight coupling)",
+      "Not leveraging type inference from validation schemas",
+      "Using date pickers without min/max date constraints for age validation",
+      "Relying on frontend validation alone"
+    ],
+    "emerging_trends": [
+      "React Hook Form becoming the de facto standard over Formik",
+      "Zod overtaking Yup for TypeScript projects",
+      "TypeScript-first approaches with automatic type inference",
+      "Zero-dependency libraries for better security and smaller bundles",
+      "New React Native architecture (Fabric + Turbo Modules) support",
+      "Uncontrolled components pattern gaining adoption",
+      "Custom hooks pattern for reusable logic",
+      "Schema-driven development with validation and types from single source",
+      "End-to-end type safety (client to server)",
+      "Performance-focused form libraries",
+      "React 19 not replacing React Hook Form despite new form features"
+    ]
+  },
+  "implementation_recommendations": [
+    {
+      "scenario": "New React Native TypeScript project with forms",
+      "recommended_solution": "React Hook Form + Zod + @hookform/resolvers",
+      "rationale": "Best performance (8.6KB), zero dependencies (best security), superior TypeScript support with automatic type inference, minimal re-renders, production-ready for 2025-2026"
+    },
+    {
+      "scenario": "Age verification form with date picker (18+ validation)",
+      "recommended_solution": "React Hook Form + Zod + react-native-date-picker with maximumDate",
+      "rationale": "Unified UI across platforms, modal support, easy age validation with maximumDate set to 18 years ago, Zod schema can validate age calculation"
+    },
+    {
+      "scenario": "Form requiring native platform feel",
+      "recommended_solution": "React Hook Form + Zod + @react-native-community/datetimepicker",
+      "rationale": "Most popular (4x downloads), native system components, community-maintained, authentic platform feel"
+    },
+    {
+      "scenario": "Large complex form with many inputs",
+      "recommended_solution": "React Hook Form + Zod + reusable Controller-based input components",
+      "rationale": "React Hook Form excels with large forms (isolated re-renders), Zod provides fast validation, reusable components reduce code duplication"
+    },
+    {
+      "scenario": "Dynamic form with arrays of inputs",
+      "recommended_solution": "React Hook Form useFieldArray + Zod array schemas",
+      "rationale": "useFieldArray optimized for dynamic fields, Zod supports complex array validations with refine/superRefine"
+    },
+    {
+      "scenario": "Multi-step form with complex validation",
+      "recommended_solution": "React Hook Form + Zod schemas per step + custom state management",
+      "rationale": "Can validate individual steps with separate schemas, combine with final schema, better performance than Formik for multi-step"
+    },
+    {
+      "scenario": "Reusable input components across app",
+      "recommended_solution": "Generic TypeScript components with Controller + Path<T> type safety",
+      "rationale": "Type-safe field names, prevents typos, reusable across all forms, separates logic from presentation"
+    },
+    {
+      "scenario": "Legacy project already using Formik",
+      "recommended_solution": "Keep Formik short-term, plan gradual migration to React Hook Form",
+      "rationale": "Migration can be done incrementally, new forms can use RHF while old ones remain on Formik"
+    },
+    {
+      "scenario": "JavaScript project without TypeScript",
+      "recommended_solution": "React Hook Form + Yup",
+      "rationale": "While Zod is TypeScript-first, Yup works well with plain JavaScript, still better performance than Formik"
+    },
+    {
+      "scenario": "Server-side validation needs",
+      "recommended_solution": "Share Zod schemas between frontend and backend",
+      "rationale": "Single source of truth for validation, ensures client and server validation match, type safety end-to-end"
+    }
+  ],
+  "community_insights": {
+    "popular_solutions": [
+      "React Hook Form is now the preferred choice over Formik in 2025",
+      "Zod is rapidly gaining adoption in TypeScript React Native projects",
+      "@react-native-community/datetimepicker is most popular (4x downloads)",
+      "react-native-date-picker popular for unified cross-platform UI",
+      "Controller component pattern is standard for React Native forms",
+      "Custom hooks for form logic extraction is best practice",
+      "Zero-dependency libraries preferred for security",
+      "Schema-first validation approach is mainstream"
+    ],
+    "controversial_topics": [
+      "Controlled vs Uncontrolled components (uncontrolled winning for performance)",
+      "Formik vs React Hook Form (RHF clearly winning in 2025)",
+      "Yup vs Zod (Zod winning for TypeScript, Yup holding for JavaScript)",
+      "Native vs unified date picker UI (depends on project needs)",
+      "Whether React 19 replaces React Hook Form (it doesn't)",
+      "TypeScript necessity in React Native (increasingly considered essential)"
+    ],
+    "expert_opinions": [
+      "React Hook Form offers significantly better performance than Formik, especially for large forms",
+      "Zod's TypeScript-first approach with automatic type inference is game-changing",
+      "Zero dependencies in libraries like Zod and RHF provide security benefits",
+      "Separation of concerns (logic vs presentation) is critical for maintainable forms",
+      "Generic TypeScript types for reusable components prevent runtime errors",
+      "Always validate on backend - never trust frontend validation alone",
+      "Uncontrolled components are preferable in React Native for performance",
+      "Custom hooks are powerful for extracting and reusing stateful logic",
+      "Schema-driven development reduces duplication and keeps types in sync",
+      "New React Native architecture support is important for future-proofing"
+    ]
+  },
+  "code_examples": {
+    "installation": {
+      "packages": [
+        "npm install react-hook-form @hookform/resolvers zod",
+        "npm install react-native-date-picker",
+        "npm install @react-native-community/datetimepicker"
+      ],
+      "expo_setup": "npx create-expo-app my-app --template blank-typescript"
+    },
+    "zod_schema_with_age_validation": {
+      "description": "Zod schema with age validation for 18+ requirement",
+      "code": "import { z } from 'zod';\n\nconst userSchema = z.object({\n  username: z.string()\n    .min(5, { message: 'Username must be at least 5 characters.' })\n    .max(30, { message: 'Username must be at most 30 characters.' }),\n  email: z.string()\n    .email({ message: 'Please enter a valid email address.' }),\n  dateOfBirth: z.date()\n    .refine(\n      (date) => {\n        const today = new Date();\n        const age = today.getFullYear() - date.getFullYear();\n        const monthDiff = today.getMonth() - date.getMonth();\n        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < date.getDate())) {\n          age--;\n        }\n        return age >= 18;\n      },\n      { message: 'You must be at least 18 years old.' }\n    ),\n  phone: z.string()\n    .regex(/^\\d{10}$/, { message: 'Phone must be 10 digits.' })\n});\n\ntype UserFormData = z.infer<typeof userSchema>;"
+    },
+    "react_hook_form_setup": {
+      "description": "Setting up React Hook Form with Zod resolver",
+      "code": "import { useForm, Controller } from 'react-hook-form';\nimport { zodResolver } from '@hookform/resolvers/zod';\n\nconst MyForm = () => {\n  const {\n    control,\n    handleSubmit,\n    formState: { errors },\n  } = useForm<UserFormData>({\n    resolver: zodResolver(userSchema),\n    defaultValues: {\n      username: '',\n      email: '',\n      phone: '',\n    },\n  });\n\n  const onSubmit = (data: UserFormData) => {\n    console.log('Valid form data:', data);\n    // Process form submission\n  };\n\n  return (\n    <View>\n      {/* Form fields */}\n      <Button title=\"Submit\" onPress={handleSubmit(onSubmit)} />\n    </View>\n  );\n};"
+    },
+    "reusable_input_component": {
+      "description": "Reusable TypeScript input component with React Hook Form",
+      "code": "import React, { ReactNode } from 'react';\nimport { StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native';\nimport { Control, Controller, FieldValues, Path } from 'react-hook-form';\n\nexport interface RHFInputProps<T extends FieldValues> extends TextInputProps {\n  control: Control<T, any>;\n  name: Path<T>;\n  label?: string;\n  left?: ReactNode;\n  right?: ReactNode;\n}\n\nconst RHFInput = <T extends FieldValues>({\n  control,\n  name,\n  label,\n  left,\n  right,\n  ...rest\n}: RHFInputProps<T>) => {\n  return (\n    <Controller\n      control={control}\n      name={name}\n      render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (\n        <View style={styles.container}>\n          {label && <Text style={styles.label}>{label}</Text>}\n          <View style={[styles.inputContainer, error && styles.inputError]}>\n            {left}\n            <TextInput\n              style={styles.input}\n              onBlur={onBlur}\n              onChangeText={onChange}\n              value={value}\n              placeholderTextColor=\"#999\"\n              {...rest}\n            />\n            {right}\n          </View>\n          {error && <Text style={styles.errorText}>{error.message}</Text>}\n        </View>\n      )}\n    />\n  );\n};\n\nconst styles = StyleSheet.create({\n  container: { marginBottom: 16 },\n  label: { fontSize: 14, fontWeight: '600', marginBottom: 8 },\n  inputContainer: {\n    flexDirection: 'row',\n    alignItems: 'center',\n    borderWidth: 1,\n    borderColor: '#ddd',\n    borderRadius: 8,\n    height: 50,\n    paddingHorizontal: 12,\n    gap: 12,\n  },\n  inputError: { borderColor: '#ff4444' },\n  input: { flex: 1, fontSize: 16, height: 50 },\n  errorText: { color: '#ff4444', fontSize: 12, marginTop: 4 },\n});\n\nexport default RHFInput;"
+    },
+    "date_picker_with_age_validation": {
+      "description": "Date picker with 18+ age validation using react-native-date-picker",
+      "code": "import React, { useState } from 'react';\nimport { View, Button, Text } from 'react-native';\nimport DatePicker from 'react-native-date-picker';\nimport { Controller } from 'react-hook-form';\n\nconst DateOfBirthInput = ({ control, name }) => {\n  const [open, setOpen] = useState(false);\n  \n  // Calculate date 18 years ago\n  const get18YearsAgo = () => {\n    const date = new Date();\n    date.setFullYear(date.getFullYear() - 18);\n    return date;\n  };\n  \n  // Calculate date 100 years ago (minimum)\n  const get100YearsAgo = () => {\n    const date = new Date();\n    date.setFullYear(date.getFullYear() - 100);\n    return date;\n  };\n\n  return (\n    <Controller\n      control={control}\n      name={name}\n      render={({ field: { onChange, value }, fieldState: { error } }) => (\n        <View>\n          <Button title=\"Select Date of Birth\" onPress={() => setOpen(true)} />\n          {value && <Text>Selected: {value.toLocaleDateString()}</Text>}\n          {error && <Text style={{ color: 'red' }}>{error.message}</Text>}\n          \n          <DatePicker\n            modal\n            open={open}\n            date={value || get18YearsAgo()}\n            mode=\"date\"\n            minimumDate={get100YearsAgo()}\n            maximumDate={get18YearsAgo()}\n            onConfirm={(selectedDate) => {\n              setOpen(false);\n              onChange(selectedDate);\n            }}\n            onCancel={() => setOpen(false)}\n            title=\"Select Date of Birth\"\n          />\n        </View>\n      )}\n    />\n  );\n};"
+    },
+    "usage_example": {
+      "description": "Complete form with reusable components",
+      "code": "import React from 'react';\nimport { View, Button, ScrollView } from 'react-native';\nimport { useForm } from 'react-hook-form';\nimport { zodResolver } from '@hookform/resolvers/zod';\nimport RHFInput from './components/RHFInput';\nimport DateOfBirthInput from './components/DateOfBirthInput';\nimport { userSchema, UserFormData } from './schemas/userSchema';\nimport Icon from 'react-native-vector-icons/Ionicons';\n\nconst SignupForm = () => {\n  const { control, handleSubmit, formState: { errors } } = useForm<UserFormData>({\n    resolver: zodResolver(userSchema),\n  });\n\n  const onSubmit = (data: UserFormData) => {\n    console.log('Form data:', data);\n    // Submit to API\n  };\n\n  return (\n    <ScrollView style={{ padding: 16 }}>\n      <RHFInput\n        control={control}\n        name=\"username\"\n        label=\"Username\"\n        placeholder=\"Enter username\"\n        left={<Icon name=\"person-outline\" size={20} color=\"#666\" />}\n      />\n      \n      <RHFInput\n        control={control}\n        name=\"email\"\n        label=\"Email\"\n        placeholder=\"Enter email\"\n        keyboardType=\"email-address\"\n        autoCapitalize=\"none\"\n        left={<Icon name=\"mail-outline\" size={20} color=\"#666\" />}\n      />\n      \n      <RHFInput\n        control={control}\n        name=\"phone\"\n        label=\"Phone Number\"\n        placeholder=\"10 digit phone number\"\n        keyboardType=\"phone-pad\"\n        left={<Icon name=\"call-outline\" size={20} color=\"#666\" />}\n      />\n      \n      <DateOfBirthInput control={control} name=\"dateOfBirth\" />\n      \n      <Button title=\"Create Account\" onPress={handleSubmit(onSubmit)} />\n    </ScrollView>\n  );\n};\n\nexport default SignupForm;"
+    },
+    "dynamic_fields_with_field_array": {
+      "description": "Dynamic form fields using useFieldArray",
+      "code": "import { useForm, useFieldArray } from 'react-hook-form';\nimport { zodResolver } from '@hookform/resolvers/zod';\nimport { z } from 'zod';\n\nconst lineItemSchema = z.object({\n  description: z.string().min(1, 'Description required'),\n  quantity: z.number().min(1),\n  price: z.number().gt(0.01),\n});\n\nconst invoiceSchema = z.object({\n  customerName: z.string().min(1),\n  lineItems: z.array(lineItemSchema).min(1, 'At least one item required'),\n});\n\ntype InvoiceFormData = z.infer<typeof invoiceSchema>;\n\nconst InvoiceForm = () => {\n  const { control, handleSubmit } = useForm<InvoiceFormData>({\n    resolver: zodResolver(invoiceSchema),\n    defaultValues: {\n      lineItems: [{ description: '', quantity: 1, price: 0 }],\n    },\n  });\n\n  const { fields, append, remove } = useFieldArray({\n    control,\n    name: 'lineItems',\n  });\n\n  return (\n    <View>\n      {fields.map((field, index) => (\n        <View key={field.id}>\n          <RHFInput\n            control={control}\n            name={`lineItems.${index}.description`}\n            placeholder=\"Item description\"\n          />\n          <Button title=\"Remove\" onPress={() => remove(index)} />\n        </View>\n      ))}\n      <Button\n        title=\"Add Item\"\n        onPress={() => append({ description: '', quantity: 1, price: 0 })}\n      />\n    </View>\n  );\n};"
+    }
+  },
+  "architecture_patterns": {
+    "container_presentational": {
+      "description": "Separate form logic (container) from UI (presentational)",
+      "pattern": "Container components manage state and logic, presentational components focus on rendering",
+      "benefits": [
+        "Better code organization",
+        "Easier testing",
+        "Improved reusability",
+        "Clear separation of concerns"
+      ],
+      "example_structure": "containers/SignupFormContainer.tsx handles useForm, validation, submission. components/SignupFormView.tsx renders UI with passed props"
+    },
+    "custom_hooks": {
+      "description": "Extract form logic into custom hooks",
+      "pattern": "Create hooks like useSignupForm() that encapsulate form setup, validation, and submission logic",
+      "benefits": [
+        "Reusable form logic across components",
+        "Easier unit testing",
+        "Cleaner component code",
+        "Single responsibility principle"
+      ],
+      "example": "const useSignupForm = () => { const form = useForm({...}); const onSubmit = async (data) => {...}; return { ...form, onSubmit }; }"
+    },
+    "generic_input_components": {
+      "description": "Type-safe reusable input components using TypeScript generics",
+      "pattern": "Use Path<T> from react-hook-form to ensure field names match schema",
+      "benefits": [
+        "Type safety prevents typos",
+        "Autocomplete for field names",
+        "Compile-time error detection",
+        "DRY principle"
+      ],
+      "example": "interface InputProps<T extends FieldValues> { control: Control<T>; name: Path<T>; }"
+    },
+    "schema_first_development": {
+      "description": "Define validation schema first, derive types from it",
+      "pattern": "Create Zod schema, use z.infer<> for types, share schema between client and server",
+      "benefits": [
+        "Single source of truth",
+        "Types always match validation",
+        "No type drift",
+        "Reusable across frontend/backend"
+      ],
+      "example": "const schema = z.object({...}); type FormData = z.infer<typeof schema>;"
+    },
+    "file_structure": {
+      "recommended_structure": "src/\n  features/\n    auth/\n      components/\n        SignupForm.tsx (presentational)\n        LoginForm.tsx\n      hooks/\n        useSignupForm.ts (logic)\n        useLoginForm.ts\n      schemas/\n        authSchemas.ts (Zod schemas)\n  components/\n    forms/\n      RHFInput.tsx (reusable)\n      RHFDatePicker.tsx\n      RHFSelect.tsx\n  utils/\n    validation/\n      commonSchemas.ts (reusable schemas)"
+    }
+  },
+  "performance_tips": {
+    "react_hook_form_optimization": [
+      "Use uncontrolled components (default in RHF)",
+      "Avoid controlled components in React Native when possible",
+      "Use Controller component for React Native inputs",
+      "Minimize re-renders by isolating input subscriptions",
+      "Use defaultValues to prevent undefined controlled component warnings",
+      "Leverage shouldUnregister for dynamic forms",
+      "Use mode: 'onBlur' or 'onChange' strategically based on UX needs"
+    ],
+    "styling_optimization": [
+      "Define StyleSheet.create outside components",
+      "Use design tokens for consistency",
+      "Avoid inline styles that recreate objects",
+      "Use useMemo for computed styles if needed"
+    ],
+    "validation_optimization": [
+      "Use Zod for fastest validation",
+      "Validate only on blur for better UX (less intrusive)",
+      "Use schema caching for complex validations",
+      "Debounce async validations",
+      "Use resolver for schema validation (faster than manual)"
+    ],
+    "bundle_size_optimization": [
+      "Choose libraries with zero dependencies (Zod, React Hook Form)",
+      "Tree-shake unused code",
+      "Use dynamic imports for heavy components if needed",
+      "Monitor bundle size with bundlephobia.com"
+    ]
+  },
+  "migration_guide": {
+    "from_formik_to_react_hook_form": {
+      "strategy": "Incremental migration - new forms use RHF, gradually migrate old ones",
+      "key_changes": [
+        "Change from Formik component to useForm hook",
+        "Replace Field with Controller for React Native",
+        "Change validation from Yup (if used) can stay or migrate to Zod",
+        "Update form submission handling",
+        "Change error handling from formik.errors to errors from formState"
+      ],
+      "benefits": "6x smaller bundle, better performance, modern approach"
+    },
+    "from_yup_to_zod": {
+      "strategy": "Can migrate incrementally, schema by schema",
+      "key_changes": [
+        "Change import from yup to zod",
+        "Update schema syntax (similar but different)",
+        "Use z.infer<> instead of manual type definitions",
+        "Update resolver from yupResolver to zodResolver"
+      ],
+      "benefits": "Better TypeScript support, zero dependencies, faster validation, automatic type inference"
+    }
+  },
+  "testing_recommendations": {
+    "unit_testing": [
+      "Test custom hooks with @testing-library/react-hooks",
+      "Test validation schemas independently",
+      "Test reusable components in isolation",
+      "Mock useForm for component tests"
+    ],
+    "integration_testing": [
+      "Test complete form flows",
+      "Test error states",
+      "Test submission handling",
+      "Use @testing-library/react-native"
+    ],
+    "tools": [
+      "@testing-library/react-native",
+      "@testing-library/react-hooks",
+      "jest",
+      "react-native-testing-library"
+    ]
+  },
+  "accessibility_considerations": [
+    "Add proper labels to all inputs",
+    "Use accessibilityLabel for React Native components",
+    "Ensure error messages are announced by screen readers",
+    "Maintain proper focus order",
+    "Use accessibilityRole appropriately",
+    "Test with VoiceOver (iOS) and TalkBack (Android)",
+    "Ensure sufficient color contrast for error states",
+    "Provide clear instructions for complex inputs like date pickers"
+  ],
+  "final_recommendations_2025_2026": {
+    "recommended_stack": {
+      "form_management": "React Hook Form",
+      "validation": "Zod (TypeScript projects) or Yup (JavaScript projects)",
+      "resolver": "@hookform/resolvers",
+      "date_picker_unified_ui": "react-native-date-picker",
+      "date_picker_native_ui": "@react-native-community/datetimepicker",
+      "date_picker_modal": "react-native-modal-datetime-picker (wraps community package)"
+    },
+    "installation_command": "npm install react-hook-form @hookform/resolvers zod react-native-date-picker",
+    "why_this_stack": [
+      "Best performance (minimal re-renders, fast mounting)",
+      "Smallest bundle sizes (8.6KB for RHF, zero dependencies)",
+      "Best TypeScript support (automatic type inference)",
+      "Best security (zero dependencies = no vulnerabilities)",
+      "Most modern approach for 2025-2026",
+      "Strong community adoption and growth",
+      "Excellent documentation",
+      "Cross-platform compatibility (React + React Native)",
+      "Future-proof (supports new RN architecture)"
+    ],
+    "key_principles": [
+      "Schema-first development with Zod",
+      "Separation of concerns (logic vs UI)",
+      "Reusable components with TypeScript generics",
+      "Uncontrolled components for performance",
+      "Type safety throughout form lifecycle",
+      "Server-side validation as source of truth",
+      "Performance optimization from the start"
+    ]
+  },
+  "additional_resources": {
+    "documentation": [
+      "React Hook Form: https://react-hook-form.com/",
+      "Zod: https://zod.dev/",
+      "@hookform/resolvers: https://www.npmjs.com/package/@hookform/resolvers",
+      "react-native-date-picker: https://github.com/henninghall/react-native-date-picker",
+      "@react-native-community/datetimepicker: https://github.com/react-native-datetimepicker/datetimepicker"
+    ],
+    "tutorials": [
+      "Building Reusable React Native Input Components: https://blog.arnabxd.me/building-a-reusable-react-native-input-component-with-react-hook-form",
+      "Expo + React Hook Form + Zod: https://dev.to/birolaydin/expo-react-hook-form-typescript-zod-4oac",
+      "React Hook Form Validation with Zod: https://www.contentful.com/blog/react-hook-form-validation-zod/"
+    ],
+    "github_examples": [
+      "rn-zod-react-hook-form: https://github.com/tarikfp/rn-zod-react-hook-form"
+    ]
+  }
+}

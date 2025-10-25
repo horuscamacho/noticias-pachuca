@@ -237,11 +237,27 @@ export class SocialMediaPublishingService {
       // ✅ FIX: Construir URL canónica
       const canonicalUrl = `https://${site.domain}/${noticia.slug}`;
 
+      // 🔍 DEBUG: Log COMPLETO de socialMediaCopies para diagnosticar
+      this.logger.debug(`🔍 [DEBUG] socialMediaCopies.facebook COMPLETO:
+${JSON.stringify(aiContent.socialMediaCopies.facebook, null, 2)}`);
+
       // Publicar en cada página de Facebook
       for (const page of facebookPages) {
         try {
-          // ✅ FIX: Usar socialMediaCopy mejorado + URL canónica
-          const postContent = `${aiContent.socialMediaCopies.facebook.copy}\n\n${canonicalUrl}`;
+          // ✅ Publicar SOLO el campo 'copy' con emojis + hashtag + URL
+          const { copy, emojis, hashtag } = aiContent.socialMediaCopies.facebook;
+
+          // 🔍 DEBUG: Log de campos individuales
+          this.logger.debug(`🔍 [DEBUG] Facebook fields:
+  - copy: "${copy}"
+  - emojis: ${JSON.stringify(emojis)}
+  - hashtag: "${hashtag}" (${hashtag ? 'EXISTS' : 'UNDEFINED'})`);
+
+          const emojiString = emojis && emojis.length > 0 ? emojis.join(' ') + ' ' : '';
+          const hashtagString = hashtag ? `\n\n${hashtag}` : '';
+          const postContent = `${emojiString}${copy}${hashtagString}\n\n${canonicalUrl}`;
+
+          this.logger.debug(`🔍 [DEBUG] Facebook postContent final:\n${postContent}`);
 
           // Crear post en la base de datos
           const facebookPost = await this.facebookPostModel.create({
@@ -344,42 +360,44 @@ export class SocialMediaPublishingService {
       // ✅ FIX: Construir URL canónica
       const canonicalUrl = `https://${site.domain}/${noticia.slug}`;
 
+      // 🔍 DEBUG: Log COMPLETO de socialMediaCopies para diagnosticar
+      this.logger.debug(`🔍 [DEBUG] socialMediaCopies.twitter COMPLETO:
+${JSON.stringify(aiContent.socialMediaCopies.twitter, null, 2)}`);
+
       // Publicar en cada cuenta de Twitter
       for (const account of twitterAccounts) {
         try {
-          // ✅ ESTRATEGIA VIRAL 2025-2026: Hook emocional + contexto breve + URL
-          // Si el tweet original es muy largo, usar solo el hook + URL
-          const originalTweet = aiContent.socialMediaCopies.twitter.tweet;
-          const hook = aiContent.socialMediaCopies.twitter.hook;
+          // ✅ Publicar SOLO el campo 'tweet' con emojis + hashtags (SIN URL en el texto)
+          // La URL se pasará en platformSpecificData.url para que no consuma caracteres
+          const { tweet, emojis, hashtags } = aiContent.socialMediaCopies.twitter;
+
+          // 🔍 DEBUG: Log de campos individuales
+          this.logger.debug(`🔍 [DEBUG] Twitter fields:
+  - tweet: "${tweet}"
+  - emojis: ${JSON.stringify(emojis)}
+  - hashtags: ${JSON.stringify(hashtags)} (${hashtags ? 'EXISTS' : 'UNDEFINED'})`);
+
+          const emojiString = emojis && emojis.length > 0 ? emojis.join(' ') + ' ' : '';
+          const hashtagsString = hashtags && hashtags.length > 0 ? ' ' + hashtags.join(' ') : '';
+
+          // Construir tweet: emojis + tweet + hashtags (SIN URL)
+          // Twitter cuenta URLs como 23 caracteres, pero usando platformSpecificData.url no consume caracteres
+          const fullTweet = `${emojiString}${tweet}${hashtagsString}`;
+
+          this.logger.debug(`🔍 [DEBUG] Twitter fullTweet (SIN URL):\n${fullTweet}`);
 
           let tweetContent: string;
 
-          // Intentar primero con tweet completo
-          const fullTweet = `${originalTweet}\n\n${canonicalUrl}`;
-
           if (fullTweet.length <= 280) {
-            // ✅ Cabe completo - usar tweet original
+            // ✅ Cabe completo
             tweetContent = fullTweet;
-          } else if (hook) {
-            // ✅ No cabe completo - usar solo hook + URL (más viral)
-            const hookTweet = `${hook}\n\n${canonicalUrl}`;
-
-            if (hookTweet.length <= 280) {
-              tweetContent = hookTweet;
-              this.logger.log(`📱 Using hook-only format for Twitter (more viral)`);
-            } else {
-              // Hook también es muy largo - truncar hook
-              const maxHookLength = 280 - canonicalUrl.length - 5; // -5 para "\n\n" y "..."
-              const truncatedHook = hook.substring(0, maxHookLength) + '...';
-              tweetContent = `${truncatedHook}\n\n${canonicalUrl}`;
-              this.logger.warn(`⚠️ Hook too long, truncating...`);
-            }
           } else {
-            // No hay hook - truncar tweet original
-            this.logger.warn(`⚠️ Tweet content exceeds 280 characters, truncating...`);
-            const maxCopyLength = 280 - canonicalUrl.length - 5;
-            const truncatedCopy = originalTweet.substring(0, maxCopyLength) + '...';
-            tweetContent = `${truncatedCopy}\n\n${canonicalUrl}`;
+            // No cabe - truncar tweet pero mantener emojis y hashtags
+            this.logger.warn(`⚠️ Tweet exceeds 280 characters, truncating...`);
+            const fixedLength = emojiString.length + hashtagsString.length + 3; // +3 para "..."
+            const maxTweetLength = 280 - fixedLength;
+            const truncatedTweet = tweet.substring(0, maxTweetLength) + '...';
+            tweetContent = `${emojiString}${truncatedTweet}${hashtagsString}`;
           }
 
           // Crear tweet en la base de datos
@@ -398,12 +416,13 @@ export class SocialMediaPublishingService {
             status: 'scheduled',
           });
 
-          // ✅ NUEVO: Publicar tweet con accountId, username y apiKey directamente
+          // ✅ NUEVO: Publicar tweet con accountId, username, apiKey y canonical URL
           const publishResult = await this.twitterPublishingService.publishTweet(
             twitterPost,
             account.accountId,
             account.username,
-            getLateApiKey
+            getLateApiKey,
+            canonicalUrl  // 🆕 Pasar URL canónica para platformSpecificData
           );
 
           results.push({

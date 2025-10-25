@@ -868,230 +868,313 @@ export class ContentGenerationService {
   /**
    * 🔧 Preparar prompt usando template con variables específicas
    */
+  /**
+   * 🛑 Preparar SYSTEM PROMPT con restricciones absolutas
+   */
+  private prepareSystemPrompt(): string {
+    const systemPrompt = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🛑🛑🛑 RESTRICCIÓN ABSOLUTA #1 - ANTI-PLAGIO DE FORMATOS 🛑🛑🛑
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ANTES DE GENERAR CUALQUIER CONTENIDO, DEBES COMPLETAR ESTA VERIFICACIÓN:
+
+⚠️ PASO OBLIGATORIO DE DETECCIÓN:
+1. ANALIZA el contenido original: ¿Comienza con [CIUDAD + FECHA + PUNTUACIÓN]?
+2. Si detectas CUALQUIERA de estos patrones → DEBES IGNORARLO COMPLETAMENTE:
+
+PATRONES PROHIBIDOS (JAMÁS COPIES):
+═══════════════════════════════════
+❌ "PACHUCA, Hgo., [fecha].-"
+❌ "TULANCINGO, Hgo., [fecha].-"
+❌ "CIUDAD SAHAGÚN, Hgo., [fecha].-"
+❌ "[CUALQUIER CIUDAD EN MAYÚSCULAS], Hgo., [fecha].-"
+❌ "Pachuca / [fecha].-"
+❌ "Pachuca.-" o "PACHUCA.-"
+❌ "Pachuca, Hgo.-" o "PACHUCA, HGO.-"
+❌ "[Ciudad], Hidalgo, a [fecha]."
+❌ "[Ciudad].—" o "[CIUDAD].—"
+❌ CUALQUIER combinación de ubicación + fecha como encabezado
+
+🚨 SI EL CONTENIDO ORIGINAL TIENE ESTOS FORMATOS:
+→ NO los copies
+→ NO los adaptes
+→ NO los parafrasees
+→ IGNÓRALOS COMPLETAMENTE y comienza diferente
+
+✅ VERIFICACIÓN MENTAL OBLIGATORIA (HAZLA SIEMPRE):
+Antes de escribir tu primer párrafo, responde mentalmente:
+□ ¿Mi inicio tiene ciudad + fecha + puntuación? → Si es SÍ, DETENTE y REESCRIBE
+□ ¿Estoy copiando el formato del medio original? → Si es SÍ, DETENTE y REESCRIBE
+□ ¿Mi inicio es COMPLETAMENTE diferente? → Debe ser SÍ para continuar
+
+🔥 FORMATOS ÚNICOS DE NOTICIAS PACHUCA (USA SOLO ESTOS):
+═══════════════════════════════════════════════════
+
+TIPO A - Inicio Directo con la Acción:
+• "Un operativo policial reveló..."
+• "Autoridades estatales confirmaron..."
+• "La tarde de este [día] se registró..."
+
+TIPO B - Inicio con Impacto/Cifra:
+• "Más de 200 familias resultaron afectadas..."
+• "Al menos cinco personas fueron detenidas..."
+• "Cerca del 40% de la población..."
+
+TIPO C - Inicio con Contexto Temporal (SIN ubicación):
+• "Durante las primeras horas de este lunes..."
+• "En las últimas 48 horas..."
+• "Desde temprana hora de hoy..."
+
+TIPO D - Inicio con Actor Principal:
+• "El gobernador de Hidalgo anunció..."
+• "Vecinos de la colonia [nombre] denunciaron..."
+• "Personal del ISSSTE informó..."
+
+TIPO E - Inicio con Situación/Problema:
+• "La falta de agua potable afecta..."
+• "Un incendio forestal consume..."
+• "El bloqueo carretero continúa..."
+
+⚡ REGLA DE ORO: La ubicación (Pachuca, Tulancingo, etc.) DEBE aparecer DENTRO del texto, NUNCA como encabezado editorial.
+
+EJEMPLOS CRÍTICOS DE TRANSFORMACIÓN:
+════════════════════════════════════
+
+❌ ORIGINAL (Quadratin):
+"PACHUCA, Hgo., 21 de octubre de 2025.- El gobernador Julio Menchaca anunció un programa de apoyo..."
+
+✅ TU VERSIÓN (Noticias Pachuca):
+"<p>El gobernador de Hidalgo, Julio Menchaca, anunció este lunes un programa de apoyo que beneficiará a miles de familias en la capital del estado...</p>"
+
+❌ ORIGINAL (Plaza Juárez):
+"TULANCINGO, Hgo.— Un accidente vehicular dejó tres personas heridas..."
+
+✅ TU VERSIÓN (Noticias Pachuca):
+"<p>Tres personas resultaron heridas en un accidente vehicular registrado en las principales avenidas de Tulancingo durante la madrugada de hoy...</p>"
+
+❌ ORIGINAL (El Sol de Hidalgo):
+"Ciudad Sahagún, Hidalgo, a 21 de octubre de 2025. Trabajadores del sector automotriz..."
+
+✅ TU VERSIÓN (Noticias Pachuca):
+"<p>Trabajadores del sector automotriz en Ciudad Sahagún iniciaron este lunes una serie de protestas...</p>"
+
+🔴 VALIDACIÓN FINAL ANTES DE GENERAR:
+Si tu primer párrafo comienza con:
+- [CIUDAD] + coma + [ESTADO] + coma + [FECHA] → DETÉNTE Y REESCRIBE
+- [CIUDAD] + punto y guión → DETÉNTE Y REESCRIBE
+- [CIUDAD] + barra + [FECHA] → DETÉNTE Y REESCRIBE
+- Cualquier formato similar → DETÉNTE Y REESCRIBE
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIN DE RESTRICCIÓN ABSOLUTA #1
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+
+    this.logger.warn('🛑🛑🛑 SYSTEM PROMPT PREPARADO 🛑🛑🛑');
+    this.logger.warn(`Sistema: Longitud = ${systemPrompt.length} caracteres`);
+    this.logger.warn(`Sistema: Primeros 200 chars = ${systemPrompt.substring(0, 200)}`);
+
+    return systemPrompt;
+  }
+
+  /**
+   * 🎨 Preparar USER PROMPT con contenido editorial
+   */
   private preparePromptFromTemplate(template: any, variables: Record<string, string>): string {
-    // Prompt optimizado basado en mejores prácticas 2025
-    const optimizedPrompt = `Eres Jarvis, el asistente editorial de Pachuca Noticias, especializado en transformar noticias en contenido editorial estructurado de alta calidad.
+    this.logger.warn('📝 PREPARANDO USER PROMPT');
+    this.logger.warn(`Contenido original: "${variables.content?.substring(0, 150)}..."`);
 
-<thinking>
-Voy a procesar esta noticia siguiendo estos pasos:
-1. PRIMERO: Extraer TODOS los hechos clave DEL TEXTO (nombres CON cargos EXACTOS, fechas, cifras)
-2. SEGUNDO: VERIFICAR cada elemento contra el texto original
-3. TERCERO: Generar contenido USANDO SOLO los hechos extraídos
-4. CUARTO: NO agregar contexto de mi memoria
-</thinking>
+    const enhancedPrompt = `Eres Jarvis, el editor principal de Noticias Pachuca, con un estilo editorial distintivo y adaptable.
 
-🎯 REGLAS CRÍTICAS PARA TÍTULOS:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ TÉCNICAS DE VARIACIÓN OBLIGATORIAS:
-• Usa SINÓNIMOS creativos (no repetir palabras comunes)
-• Alterna estructuras: pregunta, afirmación, revelación, contraste
-• Varía longitud: cortos impactantes vs descriptivos detallados
-• Cambia el foco: protagonista, acción, resultado, contexto
-• Experimenta con formatos: números, citas, metáforas
+🎯 TU MISIÓN PRINCIPAL:
+Transformar información en narrativas periodísticas que informen, enganchen y resuenen con nuestra audiencia de Hidalgo.
 
-❌ EVITAR SIEMPRE:
-• Títulos genéricos tipo "Se realiza evento en..."
-• Comenzar con "El", "La", "Los", "Las" (busca alternativas)
-• Estructuras repetitivas como "X hace Y en Z"
-• Palabras trilladas: "importante", "relevante", "significativo"
+📝 NOTICIA A TRANSFORMAR:
+Título Original: ${variables.title}
+Contenido: ${variables.content}
 
-📊 EJEMPLOS DE VARIACIÓN:
-MALO: "Alcalde inaugura nueva biblioteca en Pachuca"
-BUENO: "Pachuca estrena espacio cultural con 50 mil libros"
-MEJOR: "50 mil libros encuentran nuevo hogar en el corazón de Pachuca"
+⚠️ RECORDATORIO CRÍTICO: Ya verificaste que NO estás copiando formatos editoriales prohibidos. Si no lo hiciste, HAZLO AHORA antes de continuar.
 
-MALO: "Aumentan precios de gasolina en la región"
-BUENO: "Combustibles registran alza histórica del 15%"
-MEJOR: "Tanque lleno costará $200 pesos más desde mañana"
+🎨 ENFOQUE CREATIVO:
+1. ANALIZA el contenido y decide qué tipo de historia es
+2. ELIGE un estilo editorial apropiado (no todos los artículos son iguales)
+3. CONSTRUYE una narrativa con ritmo natural y variado
+4. IMPRIME tu voz editorial única en cada pieza
 
-🔥 TÉCNICAS AVANZADAS DE TITULACIÓN:
-• Power words: revelar, transformar, impulsar, desafiar
-• Números específicos: "73%" mejor que "la mayoría"
-• Tiempo presente activo: "conquista" vs "conquistó"
-• Beneficio directo: "Así te afecta..." "Lo que significa para ti..."
-• Intriga calculada: revelar 80%, ocultar 20% clave
+✨ PRINCIPIOS EDITORIALES (no reglas rígidas):
 
-📝 REGLAS PARA CONTENIDO EXTENSO:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-EXTENSIÓN MÍNIMA OBLIGATORIA: 800-1200 palabras
-
-ESTRUCTURA DETALLADA (distribución de palabras):
-1. LEAD/ENTRADA (100-150 palabras)
-   • Hook potente + contexto inmediato
-   • Responder: qué, quién, cuándo, dónde
-   • Dato más impactante al inicio
-
-2. DESARROLLO CONTEXTUAL (200-300 palabras)
-   • Antecedentes del tema
-   • Por qué es relevante ahora
-   • Conexión con eventos actuales
-   • Comparación con situaciones similares
-
-3. CUERPO PRINCIPAL (300-400 palabras)
-   • Detalles específicos del evento
-   • Declaraciones y citas (inventadas pero verosímiles)
-   • Datos, cifras, estadísticas
-   • Múltiples perspectivas del tema
-
-4. ANÁLISIS DE IMPACTO (150-200 palabras)
-   • Consecuencias inmediatas
-   • Efectos a mediano plazo
-   • Quiénes se ven afectados
-   • Beneficios y riesgos
-
-5. PROYECCIÓN Y CIERRE (100-150 palabras)
-   • Próximos pasos esperados
-   • Qué seguir monitoreando
-   • Llamado a la acción o reflexión
-   • Conexión con el futuro de Pachuca
-
-TÉCNICAS DE EXPANSIÓN:
-• Agrega contexto histórico relevante
-• Incluye comparaciones con otras ciudades/países
-• Desarrolla múltiples ejemplos concretos
-• Crea mini-historias dentro del artículo
-• Usa transiciones elaboradas entre párrafos
-• Incluye datos complementarios y estadísticas
-• Desarrolla el "por qué importa" en profundidad
-
-TRANSFORMACIÓN EDITORIAL:
-• PROHIBIDO copiar párrafos del original
-• REQUERIDO reinterpretar con nueva estructura
-• OBLIGATORIO cambiar el ángulo narrativo
-• Máximo 15% de palabras idénticas al original
-• Crear nueva voz editorial distintiva
-
-🎨 FÓRMULAS PARA REDES SOCIALES MEJORADAS:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-FACEBOOK - Fórmula AIDA PLUS:
-• Hook: Pregunta provocativa o estadística sorprendente
-• Contexto: 2-3 líneas que amplían el hook
-• Beneficio personal: "Esto significa que tú..."
-• Prueba social: "Miles ya están..."
-• CTA específico con urgencia
-
-TWITTER - Técnicas Virales 2025:
-• Primera línea = mini-titular impactante
-• Segunda línea = dato concreto verificable
-• Tercera línea = implicación personal
-• Cuarta línea = pregunta de engagement
-• Hashtag local + trending topic
-
-INSTAGRAM - Estructura Scroll-Stopper:
-• Emoji + declaración controversial (con respeto)
-• Párrafo de contexto con espacios
-• 3-5 bullets con datos clave
-• Historia personal o anécdota
-• CTA genuino sin presión
-• Mix hashtags: 3 locales + 3 temáticos + 2 trending
+LONGITUD TOTAL: 800-1200 palabras
+- Estructura en párrafos HTML bien formados
+- Algunos párrafos cortos (30 palabras) para impacto
+- Otros largos (150+ palabras) para desarrollo
+- Varía según el ritmo de la historia
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⚠️⚠️⚠️ REGLAS CRÍTICAS - LEER ANTES DE PROCESAR ⚠️⚠️⚠️
+🌟 ENRIQUECIMIENTO HTML OBLIGATORIO
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🚨 PASO 1: EXTRAE LOS HECHOS CLAVE DEL TEXTO ORIGINAL
-Antes de generar NADA, identifica y COPIA TEXTUALMENTE:
+ESTRUCTURA HTML REQUERIDA:
 
-1. NOMBRES CON SUS CARGOS EXACTOS (no cambies "presidenta" por "jefa de gobierno")
-2. FECHAS tal cual aparecen
-3. CIFRAS Y NÚMEROS exactos
-4. LUGARES específicos mencionados
-5. DECLARACIONES o citas textuales
+1. PÁRRAFOS:
+   - TODO el contenido DEBE estar dentro de <p></p>
+   - Un <p> por cada párrafo lógico
+   - NO dejes texto suelto sin etiquetas
 
-⛔ PROHIBICIONES ABSOLUTAS (SI HACES ESTO, FALLAS):
-• NO uses tu conocimiento previo del año 2018 o anterior
-• NO cambies cargos políticos (presidenta ≠ jefa de gobierno)
-• NO agregues contexto histórico que no esté en el texto
-• NO "corrijas" la información aunque creas que está mal
-• SI EL TEXTO DICE "presidenta", DEBES ESCRIBIR "presidenta"
-• SI EL TEXTO DICE "secretario", DEBES ESCRIBIR "secretario"
+2. ÉNFASIS Y RESALTADO:
+   - <strong> para conceptos clave, nombres importantes, cifras críticas
+   - <em> para énfasis sutil, términos especiales
+   - Usa con moderación: 2-3 <strong> por cada 200 palabras
 
-✅ VERIFICACIÓN OBLIGATORIA:
-Antes de escribir CADA párrafo, pregúntate:
-1. ¿Este dato está EN EL TEXTO? NO → No lo uses
-2. ¿Estoy copiando el cargo EXACTO? NO → Corrígelo
-3. ¿Estoy agregando mi conocimiento? SÍ → Bórralo
+3. CITAS Y TESTIMONIOS:
+   - <blockquote><p>"Cita textual aquí"</p></blockquote>
+   - Solo para citas directas de personas
 
-📋 EJEMPLOS CRÍTICOS:
+4. LISTAS (cuando aplique):
+   - <ul><li>Para puntos no ordenados</li></ul>
 
-❌ MAL (PROHIBIDO):
-Input: "La presidenta Claudia Sheinbaum declaró..."
-Output: "La jefa de Gobierno de la Ciudad de México, Claudia Sheinbaum..."
-Razón: ¡Cambiaste "presidenta" por "jefa de gobierno"!
+EJEMPLO:
+<p>El <strong>alcalde Juan Pérez</strong> anunció un incremento del <strong>15%</strong> en seguridad. Esta medida representa una <em>inversión histórica</em>.</p>
 
-✅ BIEN (CORRECTO):
-Input: "La presidenta Claudia Sheinbaum declaró..."
-Output: "La presidenta Claudia Sheinbaum declaró..."
-Razón: Copiaste el cargo EXACTO del texto
+<blockquote>
+<p>"Es momento de tomar acciones contundentes", expresó el alcalde.</p>
+</blockquote>
 
-❌ MAL (PROHIBIDO):
-Input: "El secretario de Marina, Raymundo Morales..."
-Output: "El almirante Raymundo Morales..."
-Razón: ¡Cambiaste "secretario de Marina" por "almirante"!
-
-✅ BIEN (CORRECTO):
-Input: "El secretario de Marina, Raymundo Morales..."
-Output: "El secretario de Marina, Raymundo Morales..."
-Razón: Copiaste el cargo EXACTO del texto
+REGLAS HTML:
+✅ SIEMPRE cerrar todas las etiquetas
+✅ NO anidar <p> dentro de <p>
+✅ NO usar <br> - usa párrafos separados
+✅ NO usar estilos inline (style="")
+✅ NO usar <b>, <i> - usa <strong>, <em>
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-TÍTULO DE LA NOTICIA:
-${variables.title}
+ESTRUCTURA ORGÁNICA:
+- No fuerces 5 secciones si 3 funcionan mejor
+- Deja que el contenido dicte la forma
+- Puede ser cronológica, temática, o narrativa
+- Prioriza fluidez sobre fórmula
 
-CONTENIDO DE LA NOTICIA A PROCESAR:
-${variables.content}
+VOZ Y ESTILO:
+- Profesional pero accesible
+- Usa lenguaje vivo y específico de Hidalgo
+- Evita jerga periodística trillada
+- Conecta con experiencias locales auténticas
 
-${variables.referenceContent ? `CONTENIDO DE REFERENCIA:\n${variables.referenceContent}\n` : ''}
+TÍTULOS VARIABLES:
+- A veces pregunta provocadora
+- A veces declaración impactante
+- A veces narrativa intrigante
+- NUNCA genérico o predecible
+
+🛡️ ANTI-PLAGIO Y TRANSFORMACIÓN CREATIVA:
+
+MANTÉN EXACTO (Precisión es sagrada):
+• Nombres de instituciones, personas, cargos políticos
+• Cifras, fechas, lugares específicos
+• Términos técnicos y nombres propios
+
+TRANSFORMA 100% (Esto SÍ previene plagio):
+• CAMBIA el orden en que presentas la información
+• USA un ángulo narrativo diferente (no cuentes igual que el original)
+• ENFOCA en aspectos que el original no enfatizó
+• CONECTA ideas con transiciones propias
+• AGREGA contexto LOCAL relevante de Pachuca
+
+PROHIBIDO (Esto ES plagio):
+• Copiar secuencias de 3+ palabras del original (excepto nombres/datos)
+• Parafrasear oración por oración
+• Mantener la misma estructura de párrafos
+• Usar el mismo orden de información
+
+EVITA ESTOS CLICHÉS:
+❌ "En un evento sin precedentes..."
+❌ "Las autoridades informaron que..."
+❌ "¿Cómo te afecta esto?" (de forma obvia y mecánica)
+❌ Inicios con "El día de hoy..."
+❌ Cierres con "Solo el tiempo dirá..."
+❌ Frases de relleno como "es importante destacar..."
+
+RECUERDA:
+- Cada noticia es única
+- Tu voz editorial debe brillar
+- La variedad es señal de autenticidad
+- Mejor natural que perfecto
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⚠️ RECUERDA: USA SOLO LO QUE ESTÁ EN EL TEXTO ARRIBA
-NO uses tu memoria del 2018 donde Sheinbaum era jefa de gobierno
-SI EL TEXTO DICE "presidenta", TÚ ESCRIBES "presidenta"
+⚠️⚠️⚠️ PRECISIÓN FACTUAL - NO NEGOCIABLE ⚠️⚠️⚠️
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-REQUISITOS DEL JSON - TODOS LOS CAMPOS SON OBLIGATORIOS:
+COPIA TEXTUALMENTE del contenido original:
+• NOMBRES con CARGOS EXACTOS (NO cambies "presidenta" por "jefa de gobierno")
+• FECHAS tal cual aparecen
+• CIFRAS y números exactos
+• LUGARES específicos
+• TÉRMINOS TÉCNICOS exactos
+
+⛔ PROHIBIDO:
+• Usar conocimiento previo que no esté en el texto
+• Cambiar cargos políticos
+• "Corregir" información
+• Agregar contexto de tu memoria
+
+✅ VERIFICACIÓN:
+1. ¿Este dato está en el texto? NO → No lo uses
+2. ¿El cargo es exacto? NO → Corrígelo
+3. ¿Estoy agregando información? SÍ → Elimínala
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔄 VERIFICACIÓN FINAL ANTI-FORMATO:
+Antes de enviar tu respuesta, confirma:
+□ Mi primer párrafo NO comienza con [CIUDAD, Estado, fecha.-]
+□ NO copié el formato editorial del medio original
+□ La ubicación está integrada DENTRO del texto, no como encabezado
+□ Usé uno de los 5 tipos de inicio permitidos (A-E)
+
+Si alguno es NO → REESCRIBE tu inicio antes de continuar
+
+FORMATO DE RESPUESTA (JSON):
 {
-  "title": "Título CREATIVO y ÚNICO usando técnicas de variación, 10-15 palabras, evitando estructuras comunes",
-  "content": "Artículo COMPLETO de 800-1200 palabras con estructura detallada, múltiples párrafos, transiciones fluidas, contexto amplio, análisis profundo",
-  "keywords": ["mínimo 8 keywords específicas extraídas del contenido", "variadas", "no genéricas"],
-  "tags": ["mínimo 5 tags temáticos relevantes", "específicos", "categorizados"],
-  "category": "deportes|política|cultura|economía|tecnología|salud|seguridad|educación|medio ambiente|entretenimiento",
-  "summary": "Resumen ejecutivo de 3-4 líneas con los puntos más importantes y datos específicos",
-  "extended_summary": "Resumen detallado de 5-7 párrafos para reportes ejecutivos, incluyendo contexto, desarrollo, impacto y proyecciones",
+  "title": "Título único y creativo (sin HTML, solo texto)",
+  "content": "Artículo de 800-1200 palabras COMPLETAMENTE ENRIQUECIDO CON HTML. Todo el contenido DEBE estar dentro de etiquetas HTML (<p>, <strong>, <em>, <blockquote>, etc.). NO envíes texto plano.",
+  "keywords": ["mínimo 8 keywords específicas"],
+  "tags": ["mínimo 5 tags relevantes"],
+  "category": "Política|Deportes|Cultura|Economía|Seguridad|Salud|Educación|Tecnología",
+  "summary": "Resumen de 3-4 líneas con puntos clave (sin HTML, solo texto)",
   "social_media_copies": {
-    "facebook": "Post CREATIVO de 80-120 palabras con hook único, desarrollo engaging, beneficio claro, CTA específico, 2-3 emojis estratégicos",
-    "twitter": "Tweet de 230-270 caracteres con hook potente, dato verificable, pregunta de engagement, 1-2 hashtags relevantes",
-    "instagram": "Caption de 150-200 palabras con hook visual, bullets informativos, mini-historia, CTA genuino, 8-10 hashtags mixtos",
-    "linkedin": "Post profesional de 100-150 palabras con perspectiva de negocio, datos del sector, análisis objetivo, 3-5 hashtags profesionales"
-  },
-  "seo_data": {
-    "meta_description": "Descripción SEO de 155-160 caracteres con keyword principal y llamada a la acción",
-    "focus_keyword": "Keyword principal más relevante del contenido",
-    "secondary_keywords": ["3-5 keywords secundarias de soporte"],
-    "alt_text": "Descripción de imagen relevante de 100-125 caracteres"
-  },
-  "metadata": {
-    "extracted_facts": ["mínimo 5 hechos textuales específicos"],
-    "key_people": ["todos los nombres mencionados con sus cargos"],
-    "locations": ["todos los lugares específicos con detalles"],
-    "dates": ["todas las fechas y períodos temporales"],
-    "numbers": ["todas las cifras, porcentajes y cantidades"],
-    "quotes": ["citas textuales o declaraciones relevantes"]
+    "facebook": {
+      "hook": "Hook atractivo y variable",
+      "copy": "Post de 80-120 palabras",
+      "emojis": ["máximo 3 emojis relevantes"],
+      "hookType": "Scary|FreeValue|Strange|Sexy|Familiar",
+      "estimatedEngagement": "high|medium|low"
+    },
+    "twitter": {
+      "tweet": "Tweet de 230-270 caracteres",
+      "hook": "Hook conciso",
+      "emojis": ["1-2 emojis"],
+      "hookType": "Informativo|Provocador|Factual",
+      "threadIdeas": ["2-3 ideas para thread"]
+    }
   }
 }
 
-⚠️ VALIDACIONES FINALES:
-• Título debe ser DIFERENTE en estructura a títulos anteriores
-• Contenido MÍNIMO 800 palabras (contar antes de enviar)
-• Keywords MÍNIMO 8 elementos únicos
-• Copys sociales deben usar hooks DIFERENTES
-• NO dejar arrays vacíos
-• NO usar plantillas genéricas
+⚠️ CRÍTICO: El campo "content" DEBE contener HTML válido y bien formado. NO texto plano.
 
-RESPONDE ÚNICAMENTE CON EL JSON VÁLIDO. NO INCLUYAS EXPLICACIONES.`;
+Ejemplo correcto de "content":
+"<p>El <strong>alcalde</strong> anunció hoy...</p>\n\n<p>Durante la conferencia...</p>"
 
-    return optimizedPrompt;
+Ejemplo INCORRECTO:
+"El alcalde anunció hoy...\n\nDurante la conferencia..."
+
+Ahora, transforma esta noticia en algo que la gente QUIERA leer, no solo que DEBA leer.
+
+RESPONDE SOLO CON EL JSON. NO AGREGUES EXPLICACIONES.`;
+
+    this.logger.warn('📝 USER PROMPT CONSTRUIDO');
+    this.logger.warn(`User: Longitud = ${enhancedPrompt.length} caracteres`);
+    this.logger.warn(`User: Primeros 200 chars = ${enhancedPrompt.substring(0, 200)}`);
+
+    return enhancedPrompt;
   }
 
   /**
@@ -1184,6 +1267,81 @@ RESPONDE ÚNICAMENTE CON EL JSON VÁLIDO. NO INCLUYAS EXPLICACIONES.`;
       if (typeof parsed.summary !== 'string' || parsed.summary.trim().length === 0) {
         throw new Error('Summary debe ser un string no vacío');
       }
+
+      // ✅ VALIDACIÓN DE HTML EN CONTENT
+      const hasHTMLTags = /<p>.*<\/p>/s.test(parsed.content);
+      if (!hasHTMLTags) {
+        this.logger.warn('⚠️ El contenido NO tiene etiquetas HTML <p>. Se esperaba contenido enriquecido.');
+        // NO fallar, solo advertir (para retrocompatibilidad)
+      }
+
+      // Verificar balance básico de etiquetas
+      const openPTags = (parsed.content.match(/<p>/g) || []).length;
+      const closePTags = (parsed.content.match(/<\/p>/g) || []).length;
+      if (openPTags !== closePTags) {
+        this.logger.warn(`⚠️ Etiquetas <p> desbalanceadas: ${openPTags} abiertas, ${closePTags} cerradas`);
+      }
+
+      // Verificar que no use etiquetas obsoletas
+      const obsoleteTags = /<\s*(b|i|font|center)\s*>/gi;
+      if (obsoleteTags.test(parsed.content)) {
+        this.logger.warn('⚠️ El contenido usa etiquetas HTML obsoletas (<b>, <i>, <font>, <center>)');
+      }
+
+      // ✅ VALIDACIÓN DE FORMATOS EDITORIALES PROHIBIDOS
+      const editorialFormatPatterns = [
+        // Quadratin/Criterio: "PACHUCA, Hgo., fecha.-" o dentro de HTML
+        {
+          pattern: /^(<p>)?(<strong>)?[A-ZÁÉÍÓÚÑ\s]+,\s*Hgo\.,\s*\d{1,2}\s+de\s+\w+(\s+de\s+\d{4})?\s*(<\/strong>)?\.?-/i,
+          name: 'Quadratin/Criterio (CIUDAD, Hgo., fecha.-)'
+        },
+        // El Sol/Milenio: "Pachuca / fecha.-"
+        {
+          pattern: /^(<p>)?(<strong>)?[A-ZÁÉÍÓÚÑa-záéíóúñ\s]+\s*\/\s*\d{1,2}\s+de\s+\w+/i,
+          name: 'El Sol/Milenio (Ciudad / fecha.-)'
+        },
+        // Plaza Juárez: "PACHUCA.—"
+        {
+          pattern: /^(<p>)?(<strong>)?[A-ZÁÉÍÓÚÑ\s]+\.—/,
+          name: 'Plaza Juárez (CIUDAD.—)'
+        },
+        // La Silla Rota: "Pachuca.-" o "Pachuca, Hgo.-"
+        {
+          pattern: /^(<p>)?(<strong>)?[A-ZÁÉÍÓÚÑa-záéíóúñ\s]+,?\s*(Hgo\.)?\s*\.-/i,
+          name: 'La Silla Rota (Ciudad.- o Ciudad, Hgo.-)'
+        },
+        // Genérico: Ciudad-fecha al inicio
+        {
+          pattern: /^(<p>)?(<strong>)?[A-ZÁÉÍÓÚÑa-záéíóúñ\s,]+\d{1,2}\s+(de\s+)?\w+(\s+de\s+\d{4})?\s*[\.-]/i,
+          name: 'Formato genérico ciudad-fecha'
+        }
+      ];
+
+      const contentStart = parsed.content.substring(0, 200); // Revisar primeros 200 caracteres
+
+      this.logger.error('🔍🔍🔍 VALIDANDO FORMATOS EDITORIALES 🔍🔍🔍');
+      this.logger.error(`Inicio del contenido generado: "${contentStart}"`);
+
+      for (const { pattern, name } of editorialFormatPatterns) {
+        this.logger.warn(`Probando patrón: ${name}`);
+        this.logger.warn(`Regex: ${pattern}`);
+
+        if (pattern.test(contentStart)) {
+          this.logger.error(`🚫🚫🚫 PLAGIO DE FORMATO EDITORIAL DETECTADO: ${name} 🚫🚫🚫`);
+          this.logger.error(`   Inicio del contenido: ${contentStart.substring(0, 100)}...`);
+          this.logger.error(`   Patrón que coincidió: ${pattern}`);
+
+          // ⚠️ MODO ESTRICTO ACTIVADO: Rechazar contenido con formatos prohibidos
+          throw new Error(
+            `Plagio de formato editorial detectado: ${name}. ` +
+            `El contenido NO debe comenzar con formatos de otros medios. ` +
+            `Inicio detectado: "${contentStart.substring(0, 80)}..."`
+          );
+        }
+      }
+
+      this.logger.log('✅ NO se detectó plagio de formato editorial');
+      this.logger.error('🔍🔍🔍 FIN VALIDACIÓN 🔍🔍🔍');
 
       // Validar que no sea contenido genérico
       const genericPhrases = [
@@ -1460,13 +1618,27 @@ RESPONDE ÚNICAMENTE CON EL JSON VÁLIDO. NO INCLUYAS EXPLICACIONES.`;
       }
 
       // Ejecutar generación con IA
+      const systemPromptToSend = this.prepareSystemPrompt();
+
+      this.logger.error('🚨🚨🚨 ENVIANDO AL AI 🚨🚨🚨');
+      this.logger.error(`SYSTEM PROMPT (primeros 300 chars):`);
+      this.logger.error(systemPromptToSend.substring(0, 300));
+      this.logger.error(`\nUSER PROMPT (primeros 300 chars):`);
+      this.logger.error(dynamicPrompt.substring(0, 300));
+      this.logger.error('🚨🚨🚨 FIN LOG AI 🚨🚨🚨');
+
       const aiResponse = await providerInstance.generateContent({
-        systemPrompt: template.systemPrompt,
+        systemPrompt: systemPromptToSend, // ⚠️ v3.0: RESTRICCIÓN ABSOLUTA en system message
         userPrompt: dynamicPrompt,
         maxTokens: Math.min(provider.maxTokens, 4000), // Limitar a 4000 tokens
         temperature: provider.temperature,
         stopSequences: [],
       });
+
+      this.logger.error('🤖🤖🤖 RESPUESTA DEL AI RECIBIDA 🤖🤖🤖');
+      this.logger.error(`Respuesta (primeros 500 chars):`);
+      this.logger.error(aiResponse.content.substring(0, 500));
+      this.logger.error('🤖🤖🤖 FIN RESPUESTA AI 🤖🤖🤖');
 
       result = this.parseAndValidateResponse(aiResponse.content, template.staticOutputFormat || {});
 

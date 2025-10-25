@@ -56,6 +56,18 @@ export class PublicContentController {
   }
 
   /**
+   * POST /api/public-content/categories/clear-cache
+   * Limpiar caché de categorías manualmente
+   * Útil después de actualizar categorías en la BD
+   */
+  @Post('categories/clear-cache')
+  @HttpCode(HttpStatus.OK)
+  async clearCategoriesCache(): Promise<{ message: string }> {
+    this.publicContentService.invalidateCache();
+    return { message: 'Caché de categorías invalidado exitosamente' };
+  }
+
+  /**
    * GET /api/public-content/categoria/:slug
    * Noticias por categoría (paginadas)
    *

@@ -4,9 +4,10 @@ import { getCategories } from '../features/public-content/server'
 import { OptimizedImage } from '../components/OptimizedImage'
 import { SubscribeForm } from '../components/newsletter/SubscribeForm'
 import { OpinionColumnsWidget, EditorialWidget, MOCK_COLUMNS, MOCK_EDITORIAL } from '../components/shared/OpinionWidgets'
-import { BreakingNewsBanner } from '../components/shared/BreakingNewsBanner'
 import { UniversalHeader } from '../components/shared/UniversalHeader'
 import { UniversalFooter } from '../components/shared/UniversalFooter'
+import { BreakingNewsBannerWrapper } from '../components/shared/BreakingNewsBannerWrapper'
+import { PachucaMural } from '../components/shared/PachucaMural'
 
 export const Route = createFileRoute('/')({
   component: HomePage,
@@ -19,6 +20,7 @@ export const Route = createFileRoute('/')({
         status: 'published',
         sortBy: 'publishedAt',
         sortOrder: 'desc',
+        isUrgent: false, // Excluir noticias urgentes (solo aparecen en cintillo)
       }
     })
 
@@ -176,8 +178,8 @@ function HomePage() {
       {/* Header Universal con categorías dinámicas */}
       <UniversalHeader categories={categories} />
 
-      {/* Breaking News Banner - Client-side interactive ticker */}
-      <BreakingNewsBanner />
+      {/* 🚨 Breaking News Banner - ÚLTIMO MOMENTO (data real de API) */}
+      <BreakingNewsBannerWrapper />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
@@ -222,8 +224,8 @@ function HomePage() {
                     </div>
                   </div>
 
-                  {featuredArticle.imageUrl && (
-                    <div className="relative">
+                  <div className="relative">
+                    {featuredArticle.imageUrl ? (
                       <img
                         src={featuredArticle.imageUrl}
                         alt={featuredArticle.imageAlt}
@@ -231,9 +233,13 @@ function HomePage() {
                         loading="eager"
                         decoding="async"
                       />
-                      <div className="absolute bottom-2 right-2 w-6 h-6 bg-[#FF0000] transform rotate-45"></div>
-                    </div>
-                  )}
+                    ) : (
+                      <div className="w-full h-64 md:h-full border-2 border-black overflow-hidden">
+                        <PachucaMural className="w-full h-full" />
+                      </div>
+                    )}
+                    <div className="absolute bottom-2 right-2 w-6 h-6 bg-[#FF0000] transform rotate-45"></div>
+                  </div>
                 </div>
               </article>
             )}
@@ -252,16 +258,8 @@ function HomePage() {
                       priority={false}
                     />
                   ) : (
-                    <div className="w-full h-40 bg-[#FFB22C] border-2 border-black mb-4 p-4 flex flex-col justify-between relative">
-                      <div className="absolute top-2 left-2 right-2 border-t-2 border-black"></div>
-                      <div className="absolute bottom-2 left-2 right-2 border-b-2 border-black"></div>
-                      <div className="flex-1 flex items-center justify-center px-2">
-                        <p className="text-black font-bold text-sm leading-tight text-center uppercase tracking-wider line-clamp-4">
-                          {article.summary || 'NOTICIA SIN EXTRACTO DISPONIBLE'}
-                        </p>
-                      </div>
-                      <div className="absolute top-1 right-1 w-4 h-4 bg-black transform rotate-45"></div>
-                      <div className="absolute bottom-1 left-1 w-4 h-4 bg-[#854836] transform rotate-45"></div>
+                    <div className="w-full h-40 border-2 border-black mb-4 relative overflow-hidden">
+                      <PachucaMural className="w-full h-full" />
                     </div>
                   )}
 

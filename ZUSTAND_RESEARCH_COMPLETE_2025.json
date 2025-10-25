@@ -1,0 +1,441 @@
+{
+  "search_summary": {
+    "research_date": "2025-10-25",
+    "platforms_searched": [
+      "GitHub",
+      "npm",
+      "Official Zustand Documentation",
+      "Stack Overflow",
+      "Medium",
+      "DEV Community"
+    ],
+    "repositories_analyzed": 5,
+    "docs_reviewed": 12,
+    "sources_from_2024_2025": true,
+    "latest_version_researched": "5.0.8"
+  },
+
+  "version_and_installation": {
+    "latest_version": "5.0.8",
+    "release_date": "2025-08-19",
+    "major_version": "v5",
+    "breaking_changes": {
+      "react_18_required": true,
+      "uses_native_useSyncExternalStore": true,
+      "use_sync_external_store_shim_removed": true
+    },
+    "installation": {
+      "command": "npm install zustand",
+      "yarn_command": "yarn add zustand",
+      "additional_dependencies": {
+        "typescript": "npm install --save-dev typescript",
+        "async_storage": "npx expo install @react-native-async-storage/async-storage",
+        "immer": "npm install immer",
+        "devtools": "npm install --save-dev @redux-devtools/extension"
+      }
+    },
+    "package_size": "~3KB",
+    "peer_dependencies": "None",
+    "github_stats": {
+      "stars": "55.3k",
+      "forks": "1.8k",
+      "community_adoption": "Very High"
+    }
+  },
+
+  "typescript_setup": {
+    "basic_pattern": {
+      "description": "Use curried create syntax with type annotation",
+      "code": "import { create } from 'zustand'\n\ninterface BearState {\n  bears: number\n  increase: (by: number) => void\n}\n\nconst useBearStore = create<BearState>()((set) => ({\n  bears: 0,\n  increase: (by) => set((state) => ({ bears: state.bears + by })),\n}))",
+      "key_points": [
+        "Use create<Type>()(...) double parentheses syntax",
+        "Define interface for state and actions",
+        "Type inference works automatically",
+        "No additional configuration needed"
+      ]
+    },
+    "with_state_creator": {
+      "description": "Extract store creator for testing and reusability",
+      "code": "import { create, StateCreator } from 'zustand'\n\nexport type CounterStore = {\n  count: number\n  inc: () => void\n}\n\nexport const counterStoreCreator: StateCreator<CounterStore> = (set) => ({\n  count: 1,\n  inc: () => set((state) => ({ count: state.count + 1 })),\n})\n\nexport const useCounterStore = create<CounterStore>()(counterStoreCreator)"
+    }
+  },
+
+  "react_native_specific_patterns": {
+    "async_storage_persistence": {
+      "description": "Complete setup for AsyncStorage persistence in React Native",
+      "installation": "npx expo install @react-native-async-storage/async-storage",
+      "code": "import { create } from 'zustand'\nimport { persist, createJSONStorage } from 'zustand/middleware'\nimport AsyncStorage from '@react-native-async-storage/async-storage'\n\ninterface UserStore {\n  user: User | null\n  token: string | null\n  setUser: (user: User) => void\n  logout: () => void\n}\n\nconst useUserStore = create<UserStore>()(\n  persist(\n    (set) => ({\n      user: null,\n      token: null,\n      setUser: (user) => set({ user, token: user.token }),\n      logout: () => set({ user: null, token: null }),\n    }),\n    {\n      name: 'user-storage',\n      storage: createJSONStorage(() => AsyncStorage),\n    }\n  )\n)",
+      "important_notes": [
+        "Hydration is ASYNC - store won't be ready on initial render",
+        "Only serializable values persist (no functions, Dates, etc)",
+        "Consider using onRehydrateStorage callback for loading states",
+        "Use getHasHydrated() to check hydration status"
+      ]
+    },
+    "performance_optimization": {
+      "description": "Fine-grained selectors to prevent unnecessary re-renders",
+      "problem": "Creating objects in selectors causes re-renders even when values haven't changed",
+      "solutions": [
+        {
+          "approach": "Multiple Independent Selectors",
+          "code": "// ✅ GOOD - Multiple selectors\nconst bears = useBearStore((state) => state.bears)\nconst increase = useBearStore((state) => state.increase)\n\n// Each subscription is independent"
+        },
+        {
+          "approach": "useShallow Hook",
+          "code": "import { useShallow } from 'zustand/react/shallow'\n\n// ✅ GOOD - Shallow comparison\nconst { bears, increase } = useBearStore(\n  useShallow((state) => ({ bears: state.bears, increase: state.increase }))\n)\n\n// Only re-renders if values change, not object reference"
+        },
+        {
+          "approach": "Direct Primitive Selection",
+          "code": "// ✅ BEST for primitives\nconst count = useCounterStore((state) => state.count)\n\n// Primitives are compared by value"
+        }
+      ]
+    },
+    "common_pitfalls": [
+      {
+        "mistake": "Overusing Global State",
+        "description": "Storing local UI state like checkbox, modal state in global store",
+        "solution": "Keep state local unless multiple components need it"
+      },
+      {
+        "mistake": "Creating New Objects in Selectors",
+        "description": "const data = useStore((s) => ({ a: s.a, b: s.b })) causes re-renders",
+        "solution": "Use useShallow or multiple selectors"
+      },
+      {
+        "mistake": "Storing Non-Serializable Data with Persist",
+        "description": "Functions, Date objects, class instances won't persist",
+        "solution": "Only store plain objects, arrays, primitives"
+      },
+      {
+        "mistake": "Not Handling Async Hydration",
+        "description": "Accessing persisted state before hydration completes",
+        "solution": "Use onRehydrateStorage or hasHydrated flag"
+      }
+    ]
+  },
+
+  "middleware_setup": {
+    "devtools": {
+      "description": "Redux DevTools integration",
+      "installation": "npm install --save-dev @redux-devtools/extension",
+      "code": "import { create } from 'zustand'\nimport { devtools } from 'zustand/middleware'\n\ninterface Store {\n  count: number\n  increase: () => void\n}\n\nconst useStore = create<Store>()(\n  devtools(\n    (set) => ({\n      count: 0,\n      increase: () => set((state) => ({ count: state.count + 1 }), false, 'counter/increase'),\n    }),\n    { name: 'CounterStore' }\n  )\n)",
+      "action_names": "Third parameter in set() defines action name in devtools"
+    },
+    "immer": {
+      "description": "Mutable state updates with Immer",
+      "installation": "npm install immer",
+      "code": "import { create } from 'zustand'\nimport { immer } from 'zustand/middleware/immer'\n\ninterface TodoStore {\n  todos: Todo[]\n  addTodo: (todo: Todo) => void\n  toggleTodo: (id: string) => void\n}\n\nconst useTodoStore = create<TodoStore>()(\n  immer((set) => ({\n    todos: [],\n    addTodo: (todo) => set((state) => {\n      state.todos.push(todo) // Direct mutation with Immer!\n    }),\n    toggleTodo: (id) => set((state) => {\n      const todo = state.todos.find(t => t.id === id)\n      if (todo) todo.completed = !todo.completed\n    }),\n  }))\n)",
+      "benefits": [
+        "Write mutable code that's converted to immutable updates",
+        "Cleaner nested state updates",
+        "Less boilerplate"
+      ]
+    },
+    "combining_middleware": {
+      "description": "Recommended order: devtools → persist → immer",
+      "code": "import { create } from 'zustand'\nimport { devtools, persist } from 'zustand/middleware'\nimport { immer } from 'zustand/middleware/immer'\nimport AsyncStorage from '@react-native-async-storage/async-storage'\n\ninterface AppStore {\n  count: number\n  increase: () => void\n}\n\nconst useAppStore = create<AppStore>()(\n  devtools(\n    persist(\n      immer((set) => ({\n        count: 0,\n        increase: () => set((state) => {\n          state.count += 1\n        }, false, 'app/increase'),\n      })),\n      {\n        name: 'app-storage',\n        storage: createJSONStorage(() => AsyncStorage),\n      }\n    ),\n    { name: 'AppStore' }\n  )\n)",
+      "middleware_order_rules": [
+        "devtools should be outermost (first)",
+        "persist in the middle",
+        "immer should be innermost (last)",
+        "Never apply middleware inside slices"
+      ]
+    }
+  },
+
+  "tab_state_management": {
+    "problem_statement": "Multiple tabs sharing same height, need independent scroll positions",
+    "architecture_decision": {
+      "recommendation": "Single store with slices pattern",
+      "rationale": [
+        "Tabs are related (same feature)",
+        "May need coordination between tabs",
+        "Easier to manage active tab state",
+        "Better for persistence"
+      ]
+    },
+    "implementation": {
+      "store_structure": "// File: /src/stores/useTabStore.ts\nimport { create } from 'zustand'\nimport { devtools, persist } from 'zustand/middleware'\nimport { immer } from 'zustand/middleware/immer'\nimport { createJSONStorage } from 'zustand/middleware'\nimport AsyncStorage from '@react-native-async-storage/async-storage'\n\n// Types\ninterface TabScrollPosition {\n  offset: number\n  contentHeight: number\n}\n\ninterface TabContent {\n  id: string\n  data: any[]\n  scrollPosition: TabScrollPosition\n  isRefreshing: boolean\n  lastUpdated: number | null\n}\n\ninterface TabStore {\n  // State\n  activeTabId: string\n  tabs: Record<string, TabContent>\n  \n  // Tab Management\n  setActiveTab: (tabId: string) => void\n  initializeTab: (tabId: string) => void\n  \n  // Scroll Position\n  updateScrollPosition: (tabId: string, offset: number, contentHeight: number) => void\n  getScrollPosition: (tabId: string) => TabScrollPosition\n  \n  // Tab Content\n  setTabData: (tabId: string, data: any[]) => void\n  appendTabData: (tabId: string, data: any[]) => void\n  clearTabData: (tabId: string) => void\n  \n  // Refresh State\n  setTabRefreshing: (tabId: string, isRefreshing: boolean) => void\n  \n  // Utilities\n  resetTab: (tabId: string) => void\n  resetAllTabs: () => void\n}\n\nconst DEFAULT_TAB_STATE: TabContent = {\n  id: '',\n  data: [],\n  scrollPosition: { offset: 0, contentHeight: 0 },\n  isRefreshing: false,\n  lastUpdated: null,\n}\n\nexport const useTabStore = create<TabStore>()(\n  devtools(\n    persist(\n      immer((set, get) => ({\n        // Initial State\n        activeTabId: 'generated',\n        tabs: {},\n        \n        // Tab Management\n        setActiveTab: (tabId) => set((state) => {\n          state.activeTabId = tabId\n          \n          // Initialize tab if it doesn't exist\n          if (!state.tabs[tabId]) {\n            state.tabs[tabId] = { ...DEFAULT_TAB_STATE, id: tabId }\n          }\n        }, false, 'tab/setActive'),\n        \n        initializeTab: (tabId) => set((state) => {\n          if (!state.tabs[tabId]) {\n            state.tabs[tabId] = { ...DEFAULT_TAB_STATE, id: tabId }\n          }\n        }, false, 'tab/initialize'),\n        \n        // Scroll Position Management\n        updateScrollPosition: (tabId, offset, contentHeight) => set((state) => {\n          if (!state.tabs[tabId]) {\n            state.tabs[tabId] = { ...DEFAULT_TAB_STATE, id: tabId }\n          }\n          \n          state.tabs[tabId].scrollPosition = { offset, contentHeight }\n        }, false, 'tab/updateScroll'),\n        \n        getScrollPosition: (tabId) => {\n          const tab = get().tabs[tabId]\n          return tab?.scrollPosition || { offset: 0, contentHeight: 0 }\n        },\n        \n        // Tab Content Management\n        setTabData: (tabId, data) => set((state) => {\n          if (!state.tabs[tabId]) {\n            state.tabs[tabId] = { ...DEFAULT_TAB_STATE, id: tabId }\n          }\n          \n          state.tabs[tabId].data = data\n          state.tabs[tabId].lastUpdated = Date.now()\n        }, false, 'tab/setData'),\n        \n        appendTabData: (tabId, data) => set((state) => {\n          if (!state.tabs[tabId]) {\n            state.tabs[tabId] = { ...DEFAULT_TAB_STATE, id: tabId }\n          }\n          \n          state.tabs[tabId].data.push(...data)\n          state.tabs[tabId].lastUpdated = Date.now()\n        }, false, 'tab/appendData'),\n        \n        clearTabData: (tabId) => set((state) => {\n          if (state.tabs[tabId]) {\n            state.tabs[tabId].data = []\n          }\n        }, false, 'tab/clearData'),\n        \n        // Refresh State\n        setTabRefreshing: (tabId, isRefreshing) => set((state) => {\n          if (!state.tabs[tabId]) {\n            state.tabs[tabId] = { ...DEFAULT_TAB_STATE, id: tabId }\n          }\n          \n          state.tabs[tabId].isRefreshing = isRefreshing\n        }, false, 'tab/setRefreshing'),\n        \n        // Utilities\n        resetTab: (tabId) => set((state) => {\n          state.tabs[tabId] = { ...DEFAULT_TAB_STATE, id: tabId }\n        }, false, 'tab/reset'),\n        \n        resetAllTabs: () => set((state) => {\n          state.tabs = {}\n          state.activeTabId = 'generated'\n        }, false, 'tab/resetAll'),\n      })),\n      {\n        name: 'tab-storage',\n        storage: createJSONStorage(() => AsyncStorage),\n        partialize: (state) => ({\n          activeTabId: state.activeTabId,\n          tabs: Object.fromEntries(\n            Object.entries(state.tabs).map(([id, tab]) => [\n              id,\n              {\n                ...tab,\n                // Don't persist data, only scroll positions\n                data: [],\n                isRefreshing: false,\n              },\n            ])\n          ),\n        }),\n      }\n    ),\n    { name: 'TabStore' }\n  )\n)",
+      "usage_in_component": "// File: /src/components/generated/GeneratedContentTab.tsx\nimport React, { useEffect, useRef } from 'react'\nimport { FlatList, View } from 'react-native'\nimport { useTabStore } from '@/src/stores/useTabStore'\nimport { useShallow } from 'zustand/react/shallow'\n\nexport function GeneratedContentTab() {\n  const flatListRef = useRef<FlatList>(null)\n  const tabId = 'generated'\n  \n  // Select only what this component needs with useShallow\n  const { scrollPosition, setScrollPosition, initializeTab } = useTabStore(\n    useShallow((state) => ({\n      scrollPosition: state.getScrollPosition(tabId),\n      setScrollPosition: (offset: number, height: number) =>\n        state.updateScrollPosition(tabId, offset, height),\n      initializeTab: () => state.initializeTab(tabId),\n    }))\n  )\n  \n  // Initialize tab on mount\n  useEffect(() => {\n    initializeTab()\n  }, [])\n  \n  // Restore scroll position when tab becomes visible\n  useEffect(() => {\n    if (scrollPosition.offset > 0) {\n      flatListRef.current?.scrollToOffset({\n        offset: scrollPosition.offset,\n        animated: false,\n      })\n    }\n  }, [scrollPosition.offset])\n  \n  // Track scroll position\n  const handleScroll = (event: any) => {\n    const offset = event.nativeEvent.contentOffset.y\n    const contentHeight = event.nativeEvent.contentSize.height\n    setScrollPosition(offset, contentHeight)\n  }\n  \n  return (\n    <FlatList\n      ref={flatListRef}\n      data={items}\n      onScroll={handleScroll}\n      scrollEventThrottle={100}\n      // ... other props\n    />\n  )\n}",
+      "selector_patterns": [
+        {
+          "pattern": "Direct Action Access",
+          "code": "// Get just actions (won't cause re-renders)\nconst setActiveTab = useTabStore((state) => state.setActiveTab)"
+        },
+        {
+          "pattern": "Computed Value",
+          "code": "// Get computed value for specific tab\nconst tabData = useTabStore((state) => state.tabs['generated']?.data || [])"
+        },
+        {
+          "pattern": "Multiple Values with useShallow",
+          "code": "import { useShallow } from 'zustand/react/shallow'\n\nconst { activeTabId, setActiveTab } = useTabStore(\n  useShallow((state) => ({\n    activeTabId: state.activeTabId,\n    setActiveTab: state.setActiveTab,\n  }))\n)"
+        }
+      ]
+    }
+  },
+
+  "architecture_patterns": {
+    "single_store_vs_multiple": {
+      "recommendation": "Start with single store + slices, split later if needed",
+      "decision_criteria": [
+        {
+          "use_single_store_when": [
+            "State is related or interrelated",
+            "Actions need to update multiple parts",
+            "You need coordination between states",
+            "Simpler mental model"
+          ]
+        },
+        {
+          "use_multiple_stores_when": [
+            "State domains are completely independent",
+            "Need better performance through scoped subscriptions",
+            "Large app with distinct features",
+            "Team wants clear boundaries"
+          ]
+        }
+      ],
+      "official_guidance": "Zustand encourages multiple small stores unlike Redux. However, coordination between stores is harder.",
+      "for_tabs": "Use single store with slices - tabs are related features"
+    },
+    "slice_pattern": {
+      "description": "Divide store into modular slices",
+      "basic_example": "// File: /src/stores/slices/createTabSlice.ts\nimport { StateCreator } from 'zustand'\n\nexport interface TabSlice {\n  activeTab: string\n  setActiveTab: (tab: string) => void\n}\n\nexport const createTabSlice: StateCreator<\n  TabSlice & OtherSlice,\n  [],\n  [],\n  TabSlice\n> = (set) => ({\n  activeTab: 'home',\n  setActiveTab: (tab) => set({ activeTab: tab }),\n})\n\n// File: /src/stores/slices/createUserSlice.ts\nexport interface UserSlice {\n  user: User | null\n  login: (user: User) => void\n}\n\nexport const createUserSlice: StateCreator<\n  TabSlice & UserSlice,\n  [],\n  [],\n  UserSlice\n> = (set) => ({\n  user: null,\n  login: (user) => set({ user }),\n})\n\n// File: /src/stores/useAppStore.ts\nimport { create } from 'zustand'\nimport { createTabSlice, TabSlice } from './slices/createTabSlice'\nimport { createUserSlice, UserSlice } from './slices/createUserSlice'\n\ntype AppStore = TabSlice & UserSlice\n\nexport const useAppStore = create<AppStore>()((...a) => ({\n  ...createTabSlice(...a),\n  ...createUserSlice(...a),\n}))",
+      "with_middleware": "// Apply middleware ONLY at store level, never in slices\nimport { devtools } from 'zustand/middleware'\n\nexport const useAppStore = create<AppStore>()(\n  devtools(\n    (...a) => ({\n      ...createTabSlice(...a),\n      ...createUserSlice(...a),\n    }),\n    { name: 'AppStore' }\n  )\n)",
+      "typescript_tips": [
+        "Include all slices in StateCreator type parameters",
+        "Use StateCreator<CombinedType, [], [], SliceType>",
+        "For middleware: StateCreator<Combined, [['zustand/devtools', never]], [], Slice>"
+      ]
+    }
+  },
+
+  "best_practices_2025": [
+    {
+      "practice": "Use Selectors Wisely",
+      "description": "Select only what you need to minimize re-renders",
+      "code": "// ❌ BAD - Selects entire store\nconst store = useStore()\n\n// ❌ BAD - Creates new object each render\nconst data = useStore(s => ({ name: s.name, age: s.age }))\n\n// ✅ GOOD - Multiple selectors\nconst name = useStore(s => s.name)\nconst age = useStore(s => s.age)\n\n// ✅ GOOD - useShallow for objects\nconst { name, age } = useStore(\n  useShallow(s => ({ name: s.name, age: s.age }))\n)"
+    },
+    {
+      "practice": "Keep Actions in Store",
+      "description": "Don't separate actions from state",
+      "code": "// ✅ GOOD\nconst useStore = create((set) => ({\n  count: 0,\n  increase: () => set(s => ({ count: s.count + 1 })),\n}))\n\n// ❌ BAD - External actions\nconst increase = () => useStore.setState(s => ({ count: s.count + 1 }))"
+    },
+    {
+      "practice": "Async Actions Inside Store",
+      "description": "Handle async operations in actions",
+      "code": "interface UserStore {\n  users: User[]\n  isLoading: boolean\n  fetchUsers: () => Promise<void>\n}\n\nconst useUserStore = create<UserStore>()((set) => ({\n  users: [],\n  isLoading: false,\n  fetchUsers: async () => {\n    set({ isLoading: true })\n    try {\n      const response = await fetch('/api/users')\n      const users = await response.json()\n      set({ users, isLoading: false })\n    } catch (error) {\n      set({ isLoading: false })\n    }\n  },\n}))"
+    },
+    {
+      "practice": "Don't Overuse Global State",
+      "description": "Keep local UI state local",
+      "examples": [
+        "❌ Modal open/closed state → use useState",
+        "❌ Form input values → use useState or form library",
+        "✅ User authentication → use Zustand",
+        "✅ Theme preference → use Zustand",
+        "✅ Tab navigation state → use Zustand"
+      ]
+    },
+    {
+      "practice": "Use Partial State Updates",
+      "description": "set() merges state automatically",
+      "code": "// Zustand merges state\nset({ count: 1 }) // Only updates count, keeps other state\n\n// For nested updates, use Immer or spread\nset(state => ({\n  nested: {\n    ...state.nested,\n    value: 42\n  }\n}))"
+    },
+    {
+      "practice": "Persist Carefully",
+      "description": "Don't persist everything",
+      "code": "persist(\n  (set) => ({ /* store */ }),\n  {\n    name: 'my-store',\n    partialize: (state) => ({\n      // Only persist what's needed\n      user: state.user,\n      theme: state.theme,\n      // Don't persist temporary UI state\n    }),\n  }\n)"
+    },
+    {
+      "practice": "Handle Hydration",
+      "description": "Check hydration status for persisted stores",
+      "code": "import { useEffect, useState } from 'react'\n\nfunction MyComponent() {\n  const [hydrated, setHydrated] = useState(false)\n  const user = useUserStore((s) => s.user)\n  \n  useEffect(() => {\n    // Wait for hydration\n    useUserStore.persist.rehydrate()\n    setHydrated(true)\n  }, [])\n  \n  if (!hydrated) return <Loading />\n  \n  return <div>{user?.name}</div>\n}"
+    }
+  ],
+
+  "react_native_performance_tips": [
+    {
+      "tip": "Throttle Scroll Updates",
+      "description": "Don't update scroll position on every frame",
+      "code": "// Use scrollEventThrottle\n<FlatList\n  onScroll={handleScroll}\n  scrollEventThrottle={100} // Update every 100ms max\n/>"
+    },
+    {
+      "tip": "Debounce Persistence",
+      "description": "Avoid excessive AsyncStorage writes",
+      "implementation": "Use persist middleware with custom storage that debounces writes"
+    },
+    {
+      "tip": "Separate Read/Write State",
+      "description": "High-frequency updates shouldn't trigger persistence",
+      "example": "Don't persist scroll offset - only persist tab selection"
+    },
+    {
+      "tip": "Use Transient Updates",
+      "description": "Updates that don't trigger subscribers",
+      "code": "// Use subscribe for transient updates\nuseStore.subscribe(\n  (state) => state.scrollOffset,\n  (offset) => {\n    // Handle scroll without re-rendering\n    updateNativeDriver(offset)\n  }\n)"
+    }
+  ],
+
+  "common_mistakes_to_avoid": [
+    {
+      "mistake": "Creating Objects in Selectors",
+      "problem": "const data = useStore(s => ({ a: s.a, b: s.b }))",
+      "why_bad": "Creates new object every render, causes unnecessary re-renders",
+      "solution": "Use useShallow or multiple selectors"
+    },
+    {
+      "mistake": "Storing Everything Globally",
+      "problem": "Putting modal state, form inputs in global store",
+      "why_bad": "Bloats store, couples components, unnecessary complexity",
+      "solution": "Use local state (useState) for local UI concerns"
+    },
+    {
+      "mistake": "Not Typing Actions",
+      "problem": "Actions without proper TypeScript types",
+      "why_bad": "Lose type safety, harder to refactor",
+      "solution": "Always define complete interface including actions"
+    },
+    {
+      "mistake": "Applying Middleware in Slices",
+      "problem": "persist(createMySlice())",
+      "why_bad": "Causes unexpected behavior, breaks middleware chain",
+      "solution": "Only apply middleware at store level"
+    },
+    {
+      "mistake": "Persisting Non-Serializable Data",
+      "problem": "Storing functions, Date objects, class instances",
+      "why_bad": "Data lost on rehydration, causes errors",
+      "solution": "Only persist plain objects, arrays, primitives"
+    },
+    {
+      "mistake": "Not Handling Hydration",
+      "problem": "Accessing persisted data immediately on mount",
+      "why_bad": "Data not yet loaded from AsyncStorage",
+      "solution": "Check hydration status or use onRehydrateStorage callback"
+    },
+    {
+      "mistake": "Mutating State Directly",
+      "problem": "state.todos.push(newTodo) without Immer",
+      "why_bad": "Breaks React's change detection",
+      "solution": "Use Immer middleware or immutable updates"
+    },
+    {
+      "mistake": "Not Initializing Tabs",
+      "problem": "Accessing tab state before initialization",
+      "why_bad": "Undefined errors, inconsistent state",
+      "solution": "Initialize tabs when component mounts or use default values"
+    }
+  ],
+
+  "implementation_recommendations": [
+    {
+      "scenario": "Tab Navigation with Independent Scroll",
+      "recommended_solution": "Single store with tab slices, persist only active tab ID",
+      "rationale": "Tabs are related, need coordination, scroll doesn't need persistence"
+    },
+    {
+      "scenario": "User Authentication",
+      "recommended_solution": "Separate auth store with persistence",
+      "rationale": "Independent concern, needs to persist across sessions"
+    },
+    {
+      "scenario": "Theme/Settings",
+      "recommended_solution": "Settings store with full persistence",
+      "rationale": "Simple state, needs persistence, rarely changes"
+    },
+    {
+      "scenario": "Temporary Form State",
+      "recommended_solution": "Local useState, not Zustand",
+      "rationale": "Local to component, doesn't need global access"
+    },
+    {
+      "scenario": "Real-time Notifications",
+      "recommended_solution": "Zustand store without persistence",
+      "rationale": "Global access needed, but ephemeral data"
+    }
+  ],
+
+  "code_examples": {
+    "complete_tab_store": "/Users/sinhuecamacho/Desktop/work/noticias-pachuca/packages/mobile-expo/src/stores/useTabStore.ts",
+    "tab_component_usage": "/Users/sinhuecamacho/Desktop/work/noticias-pachuca/packages/mobile-expo/src/components/generated/GeneratedContentTab.tsx",
+    "installation_guide": "See 'version_and_installation' section",
+    "middleware_examples": "See 'middleware_setup' section"
+  },
+
+  "migration_strategy": {
+    "current_state": "Local useState in GeneratedContentTab component",
+    "target_state": "Zustand store managing all tab states",
+    "steps": [
+      {
+        "step": 1,
+        "action": "Install dependencies",
+        "commands": [
+          "cd /Users/sinhuecamacho/Desktop/work/noticias-pachuca/packages/mobile-expo",
+          "npm install zustand@5.0.8 immer",
+          "npx expo install @react-native-async-storage/async-storage"
+        ]
+      },
+      {
+        "step": 2,
+        "action": "Create store directory structure",
+        "commands": [
+          "mkdir -p src/stores",
+          "mkdir -p src/stores/slices"
+        ]
+      },
+      {
+        "step": 3,
+        "action": "Create useTabStore.ts",
+        "file": "src/stores/useTabStore.ts",
+        "content": "See 'tab_state_management.implementation.store_structure'"
+      },
+      {
+        "step": 4,
+        "action": "Update GeneratedContentTab.tsx",
+        "changes": [
+          "Import useTabStore",
+          "Replace useState with Zustand selectors",
+          "Add scroll position tracking",
+          "Initialize tab on mount"
+        ]
+      },
+      {
+        "step": 5,
+        "action": "Test and verify",
+        "verifications": [
+          "Tab switching preserves scroll position",
+          "No re-renders on inactive tabs",
+          "Persistence works across app restarts",
+          "DevTools shows all actions"
+        ]
+      }
+    ]
+  },
+
+  "additional_resources": {
+    "official_docs": "https://zustand.docs.pmnd.rs",
+    "github": "https://github.com/pmndrs/zustand",
+    "typescript_guide": "https://zustand.docs.pmnd.rs/guides/typescript",
+    "slice_pattern": "https://zustand.docs.pmnd.rs/guides/slices-pattern",
+    "persist_middleware": "https://zustand.docs.pmnd.rs/integrations/persisting-store-data",
+    "npm_package": "https://www.npmjs.com/package/zustand",
+    "community_discussions": [
+      "https://github.com/pmndrs/zustand/discussions",
+      "https://stackoverflow.com/questions/tagged/zustand"
+    ]
+  },
+
+  "citations": [
+    "[1] pmndrs/zustand. 'Bear necessities for state management in React.' GitHub, v5.0.8. https://github.com/pmndrs/zustand",
+    "[2] Zustand. 'TypeScript Guide.' Official Documentation, 2025. https://zustand.docs.pmnd.rs/guides/typescript",
+    "[3] Zustand. 'Persisting Store Data.' Official Documentation, 2025. https://zustand.docs.pmnd.rs/integrations/persisting-store-data",
+    "[4] Zustand. 'Slices Pattern.' Official Documentation, 2025. https://zustand.docs.pmnd.rs/guides/slices-pattern",
+    "[5] npm. 'zustand package.' npm Registry, v5.0.8. https://www.npmjs.com/package/zustand",
+    "[6] pmndrs. 'Announcing Zustand v5.' Poimandres Blog, 2025. https://pmnd.rs/blog/announcing-zustand-v5",
+    "[7] Multiple Authors. 'Zustand React Native Examples.' Medium, DEV.to, 2024-2025.",
+    "[8] GitHub Discussions. 'Best Practices for TypeScript + Slice Pattern + Immer + Devtools.' zustand#2070, 2024.",
+    "[9] Stack Overflow. 'React Native with Zustand Persist.' Multiple answers, 2024-2025.",
+    "[10] Frontend Masters. 'State Management with Zustand - Intermediate React Native.' Course materials, 2024."
+  ]
+}

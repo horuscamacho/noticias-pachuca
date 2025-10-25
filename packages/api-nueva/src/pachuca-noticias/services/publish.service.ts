@@ -168,7 +168,7 @@ export class PublishService {
         slug,
         title: generatedContent.generatedTitle,
         content: generatedContent.generatedContent,
-        summary: (generatedContent.generatedSummary || '').substring(0, 300),
+        summary: (generatedContent.generatedSummary || '').substring(0, 400),
         extendedSummary: generatedContent.extendedSummary,
         featuredImage,
         category: generatedContent.generatedCategory?.toLowerCase() || 'general',
@@ -489,6 +489,7 @@ export class PublishService {
       category,
       isFeatured,
       isBreaking,
+      isUrgent,
       search,
       sortBy = 'publishedAt',
       sortOrder = 'desc',
@@ -515,6 +516,17 @@ export class PublishService {
 
     if (search) {
       filter.$text = { $search: search };
+    }
+
+    // Filtro para noticias urgentes
+    // Si isUrgent === true, mostrar SOLO noticias urgentes
+    // Si isUrgent === false o undefined, EXCLUIR noticias urgentes (usar $ne: true)
+    // Esto maneja correctamente documentos donde isUrgent no existe, es null, o es false
+    if (isUrgent === true) {
+      filter.isUrgent = true;
+    } else {
+      // Para false o undefined, excluir urgentes (incluye: undefined, null, false)
+      filter.isUrgent = { $ne: true };
     }
 
     // Ordenamiento

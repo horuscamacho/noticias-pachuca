@@ -13,6 +13,7 @@ import { GeneratorProJob, GeneratorProJobSchema } from './schemas/generator-pro-
 import { GeneratorProFacebookPost, FacebookPostSchema } from './schemas/facebook-post.schema'; // ✅ FIX: Usar nuevo nombre
 import { TwitterPost, TwitterPostSchema } from './schemas/twitter-post.schema';
 import { ContentAgent, ContentAgentSchema } from './schemas/content-agent.schema';
+import { UserGeneratedContent, UserGeneratedContentSchema } from './schemas/user-generated-content.schema';
 import { ExtractedUrlTracking, ExtractedUrlTrackingSchema } from './schemas/extracted-url-tracking.schema';
 import { UrlExtractionLog, UrlExtractionLogSchema } from './schemas/url-extraction-log.schema';
 
@@ -32,6 +33,8 @@ import { SocialMediaCopyGeneratorService } from './services/social-media-copy-ge
 import { GeneratorProSchedulerService } from './services/generator-pro-scheduler.service';
 import { UrlExtractionService } from './services/url-extraction.service';
 import { SmartExtractionSchedulerService } from './services/smart-extraction-scheduler.service';
+import { UserContentService } from './services/user-content.service';
+import { UrgentContentSchedulerService } from './services/urgent-content-scheduler.service';
 
 // Controllers
 import { GeneratorProController } from './controllers/generator-pro.controller';
@@ -49,8 +52,8 @@ import { ExtractionProcessor } from './processors/extraction.processor';
 // External schemas - Solo schemas, EventEmitter2 para comunicación con otros módulos
 import { ExtractedNoticia, ExtractedNoticiaSchema } from '../noticias/schemas/extracted-noticia.schema';
 import { AIContentGeneration, AIContentGenerationSchema } from '../content-ai/schemas/ai-content-generation.schema';
+import { PublishedNoticia, PublishedNoticiaSchema } from '../pachuca-noticias/schemas/published-noticia.schema';
 import { Site, SiteSchema } from '../pachuca-noticias/schemas/site.schema';
-import { PromptTemplate, PromptTemplateSchema } from '../content-ai/schemas/prompt-template.schema';
 
 /**
  * 🤖 Módulo Generator Pro - Sistema automatizado completo
@@ -81,14 +84,15 @@ import { PromptTemplate, PromptTemplateSchema } from '../content-ai/schemas/prom
       { name: GeneratorProFacebookPost.name, schema: FacebookPostSchema }, // ✅ FIX: Nuevo nombre para evitar conflicto
       { name: TwitterPost.name, schema: TwitterPostSchema }, // 🐦 FASE 10: Twitter posts
       { name: ContentAgent.name, schema: ContentAgentSchema },
+      { name: UserGeneratedContent.name, schema: UserGeneratedContentSchema }, // 📝 FASE 1: User Generated Content (Manual)
       { name: ExtractedUrlTracking.name, schema: ExtractedUrlTrackingSchema }, // 🔍 Smart URL Extraction: Tracking
       { name: UrlExtractionLog.name, schema: UrlExtractionLogSchema }, // 🔍 Smart URL Extraction: Logs
 
       // Schemas de módulos existentes
       { name: ExtractedNoticia.name, schema: ExtractedNoticiaSchema },
       { name: AIContentGeneration.name, schema: AIContentGenerationSchema },
+      { name: PublishedNoticia.name, schema: PublishedNoticiaSchema }, // 📝 FASE 3: Para UserContentService
       { name: Site.name, schema: SiteSchema }, // 🌐 FASE 9: Agregar Site schema
-      { name: PromptTemplate.name, schema: PromptTemplateSchema },
     ]),
 
     // 🔄 CONFIGURACIÓN DE COLAS BULL QUEUE
@@ -161,6 +165,10 @@ import { PromptTemplate, PromptTemplateSchema } from '../content-ai/schemas/prom
     // 🔍 SMART URL EXTRACTION SYSTEM
     UrlExtractionService,
     SmartExtractionSchedulerService,
+
+    // 📝 USER GENERATED CONTENT (Manual Content Creation)
+    UserContentService,
+    UrgentContentSchedulerService, // ⏰ Auto-cierre de contenido urgent después de 2 horas
 
     // 🔄 PROCESSOR - Solo extracción de contenido
     ExtractionProcessor,

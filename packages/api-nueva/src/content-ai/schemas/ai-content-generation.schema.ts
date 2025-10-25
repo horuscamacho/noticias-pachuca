@@ -31,6 +31,19 @@ export class AIContentGeneration {
   @Prop({ type: Types.ObjectId, ref: 'AIProvider', required: true })
   providerId: Types.ObjectId; // Proveedor de IA utilizado
 
+  // ========================================
+  // 🚨 CAMPOS PARA CONTENIDO URGENT (Breaking News)
+  // ========================================
+
+  @Prop({ default: false })
+  urgent?: boolean; // Flag que indica si es contenido de última hora
+
+  @Prop({
+    type: String,
+    enum: ['aggressive', 'normal'],
+  })
+  urgentCopyStyle?: 'aggressive' | 'normal'; // Estilo de copys para redes sociales
+
   @Prop({ required: true, trim: true })
   generatedTitle: string; // Título generado
 
@@ -58,13 +71,20 @@ export class AIContentGeneration {
       hook: string;
       copy: string;
       emojis: string[];
+      hashtag?: string; // 🆕 Hashtag único para Facebook (optimización 2025)
       hookType: 'Scary' | 'FreeValue' | 'Strange' | 'Sexy' | 'Familiar';
       estimatedEngagement: 'high' | 'medium' | 'low';
+      cta?: string; // 🆕 Call-to-action específico
+      localAngle?: string; // 🆕 Ángulo local (Pachuca/Hidalgo)
+      trustSignal?: string; // 🆕 Señal de confianza (fuente, estudio, etc)
+      urgencySignal?: string; // 🆕 Señal de urgencia (para breaking news)
+      credibilitySource?: string; // 🆕 Fuente de credibilidad (PC, SSP, etc)
     };
     twitter?: {
       tweet: string;
       hook: string;
       emojis: string[];
+      hashtags?: string[]; // 🆕 Hashtags para Twitter (1-2 máximo, optimización 2025)
       hookType: string;
       threadIdeas: string[];
     };

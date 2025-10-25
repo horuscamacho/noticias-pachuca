@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -15,6 +15,8 @@ import { ExtractedNoticiaDocument } from '../../noticias/schemas/extracted-notic
  */
 @Injectable()
 export class GeneratorProPromptBuilderService {
+  private readonly logger = new Logger(GeneratorProPromptBuilderService.name);
+
   constructor(
     @InjectModel(ContentAgent.name)
     private readonly agentModel: Model<ContentAgentDocument>,
@@ -69,6 +71,21 @@ export class GeneratorProPromptBuilderService {
       writingStyle: agent.writingStyle,
     };
 
+    // 🚨 LOGS DE DEBUGGING
+    this.logger.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    this.logger.warn('🛑 SYSTEM PROMPT CONSTRUIDO:');
+    this.logger.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    this.logger.warn(`Longitud: ${systemPrompt.length} caracteres`);
+    this.logger.warn(`Primeros 500 caracteres:`);
+    this.logger.warn(systemPrompt.substring(0, 500));
+    this.logger.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    this.logger.warn('📝 USER PROMPT CONSTRUIDO:');
+    this.logger.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    this.logger.warn(`Longitud: ${userPrompt.length} caracteres`);
+    this.logger.warn(`Contenido original (primeros 300 chars):`);
+    this.logger.warn(input.content.substring(0, 300));
+    this.logger.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
     // Emitir evento de construcción de prompt
     this.eventEmitter.emit('generator-pro.prompt.built', {
       agentId: params.agentId,
@@ -88,15 +105,76 @@ export class GeneratorProPromptBuilderService {
    * Construir System Prompt con personalidad del agente + instrucciones copys sociales
    */
   private buildSystemPrompt(agent: ContentAgentDocument): string {
+    const antiFormatRestriction = this.buildAntiFormatRestriction();
     const agentPersonalitySection = this.buildAgentPersonalitySection(agent);
     const enrichedGuidelines = this.buildEnrichedGuidelines();
     const socialMediaInstructions = this.buildSocialMediaInstructions();
 
-    return `${agentPersonalitySection}
+    return `${antiFormatRestriction}
+
+${agentPersonalitySection}
 
 ${enrichedGuidelines}
 
 ${socialMediaInstructions}`;
+  }
+
+  /**
+   * 🛑 RESTRICCIÓN ABSOLUTA #1: ANTI-PLAGIO DE FORMATOS EDITORIALES
+   */
+  private buildAntiFormatRestriction(): string {
+    return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🛑🛑🛑 RESTRICCIÓN ABSOLUTA #1 - ANTI-PLAGIO DE FORMATOS 🛑🛑🛑
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ PASO OBLIGATORIO ANTES DE GENERAR CONTENIDO:
+
+1. ANALIZA el contenido original: ¿Comienza con [CIUDAD + FECHA + PUNTUACIÓN]?
+2. Si detectas CUALQUIERA de estos patrones → IGNÓRALOS COMPLETAMENTE:
+
+PATRONES PROHIBIDOS (JAMÁS COPIES):
+❌ "PACHUCA, Hgo., [fecha].-"
+❌ "TULANCINGO, Hgo., [fecha].-"
+❌ "CIUDAD SAHAGÚN, Hgo., [fecha].-"
+❌ "MINERAL DE LA REFORMA, Hgo., [fecha].-"
+❌ "[CIUDAD], Hgo., [fecha].-"
+❌ "[Ciudad], Hidalgo, a [fecha]."
+❌ "[CIUDAD].—"
+❌ "[Ciudad].–"
+
+3. GENERA tu propio inicio SIEMPRE con formato único de "Noticias Pachuca":
+   ✅ Comenzar directo con el lead informativo
+   ✅ Primer párrafo con la información más relevante
+   ✅ SIN incluir ciudad/fecha/puntuación al inicio
+
+EJEMPLOS DE INICIO CORRECTO:
+✅ "Las autoridades estatales anunciaron hoy..."
+✅ "Un grupo de vecinos de la colonia..."
+✅ "El gobierno municipal presentó el nuevo programa..."
+✅ "Durante la sesión de cabildo se aprobó..."
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔒 VERIFICACIÓN DE 3 CAPAS (OBLIGATORIA):
+
+CAPA 1 - DETECCIÓN:
+□ ¿El contenido original comienza con [CIUDAD + FECHA]?
+□ Si SÍ → Marcar como "formato editorial ajeno" y NO copiarlo
+
+CAPA 2 - GENERACIÓN:
+□ ¿Tu contenido generado comienza con [CIUDAD + FECHA]?
+□ Si SÍ → REINICIAR y generar un inicio diferente
+□ Debe comenzar directo con el lead informativo
+
+CAPA 3 - VALIDACIÓN FINAL:
+□ Lee los primeros 100 caracteres de tu contenido generado
+□ ¿Contiene algún patrón prohibido?
+□ Si SÍ → RECHAZAR y volver a generar
+□ Si NO → Aprobar para envío
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ ESTA RESTRICCIÓN ES ABSOLUTA Y NO ADMITE EXCEPCIONES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+`;
   }
 
   /**
@@ -122,68 +200,40 @@ Eres un periodista humano con criterio, no un bot ni un redactor automático.`;
   }
 
   /**
-   * SECCIÓN 2: Instrucciones enriquecidas y adaptativas
+   * SECCIÓN 2: Instrucciones MINIMALISTAS (anti-robotización)
    */
   private buildEnrichedGuidelines(/* agentType: string */): string {
     return `
-🧠 DIRECTRICES ADAPTATIVAS DE REDACCIÓN
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🎯 OBJETIVO:
-Transforma el texto fuente en una versión NUEVA, ORIGINAL y ENRIQUECIDA, sin copiar estructuras ni frases del original.
+REESCRIBE ESTO COMO TÚ LO CONTARÍAS:
 
-💡 ESTILO SEGÚN TIPO DE CONTENIDO:
-- **reportero** → Prioriza hechos, contexto y testimonio directo. Usa ritmo natural, párrafos variados y precisión informativa.
-- **columnista** → Argumenta con voz propia, reflexión y matices analíticos. Varía estructuras narrativas, agrega comparaciones y citas conceptuales.
-- **trascendido** → Juega con el misterio, fuentes veladas y ritmo pausado. Usa tono confidencial, pero siempre con sutileza periodística.
-- **seo-specialist** → Fluidez conversacional con optimización natural. Inserta keywords sin rigidez y prioriza legibilidad humana.
-
-✨ ENRIQUECIMIENTO SEMÁNTICO:
-• Reformula siempre con lenguaje propio, sin copiar frases ni estructuras.
-• Emplea sinónimos, cambios sintácticos, giros idiomáticos y reformulación conceptual.
-• Incluye contexto, consecuencias, antecedentes y reacciones, según convenga.
-• Usa conectores naturales ("sin embargo", "aun así", "por otra parte", "no obstante").
-• Introduce ocasionalmente frases reflexivas o humanizadas: <em>“porque al final, toda historia tiene su trasfondo humano”</em>.
-• Mantén coherencia narrativa: evita saltos bruscos o párrafos inconexos.
-
-📜 USO INTELIGENTE DE FORMATO HTML:
-• <strong> → Palabras clave o ideas relevantes.
-• <em> → Reflexiones, modismos, o énfasis emocional.
-• <blockquote> → Solo para citas textuales o testimoniales:
-   <blockquote><p>"La situación nos tomó por sorpresa", expresó un funcionario local.</p></blockquote>
-
-• No dividas por secciones artificiales (<h2>/<h3>) salvo 1 o 2 si es natural.
-• Combina párrafos cortos y largos para un ritmo fluido, sin patrón fijo.
-
-🚫 PROHIBIDO:
-• Copiar texto o estructura del contenido original.
-• Mantener mismo orden de párrafos o frases.
-• Repetir inicios de párrafo o estructuras gramaticales iguales.
-• Crear artículos mecánicos o monótonos.
-
-✅ OBLIGATORIO:
-• Mínimo 800 palabras con desarrollo real.
-• Fluidez, voz humana y riqueza lingüística.
-• Contenido totalmente original en expresión.`;
+Reglas básicas:
+- Empieza directo, sin rodeos
+- Párrafos de longitud DIFERENTE (unos cortos, otros largos)
+- Si mencionas fuentes, hazlo casual: "según me comentaron" o "documentos a los que tuve acceso"
+- PROHIBIDO usar: "expertos señalan", "analistas indican", "en resumen", "en síntesis", "cabe mencionar"
+- Termina cuando ya dijiste lo importante, no cuando "debas concluir"
+- Si usas HTML, que sea mínimo: <p> para párrafos, <strong> solo para nombres propios la primera vez
+- Longitud: Lo que necesites para contar la historia bien (puede ser 400 palabras o 800, tú decides)`;
   }
 
   /**
-   * SECCIÓN 3: Instrucciones para redes sociales
+   * SECCIÓN 3: Copys de redes sociales (minimalista)
    */
   private buildSocialMediaInstructions(): string {
     return `
-📱 DIRECTRICES DE COPYS PARA REDES
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-FACEBOOK (40-80 palabras):
-• Hook con tu tono (informativo, emocional, crítico o irónico).
-• Estructura: Hook → Contexto → Valor → CTA.
-• Adapta emojis y ritmo a tu estilo.
+COPYS DE REDES SOCIALES:
 
-TWITTER (200-240 caracteres):
-• Tuit con voz distintiva y mensaje directo.
-• Usa tono coherente con tu personalidad periodística.
-• Evita hashtags genéricos, prioriza naturalidad.
+Facebook (40-80 palabras):
+- Hook interesante con datos específicos
+- OBLIGATORIO incluir campo "hashtag": un hashtag único como #TemaPachuca2025
+- 2-3 emojis relevantes al inicio
 
-💬 Cada copy debe reflejar TU voz, no sonar genérico ni publicitario.`;
+Twitter (200-240 caracteres):
+- Tweet directo con lo más importante
+- OBLIGATORIO incluir campo "hashtags": array de 1-2 hashtags como ["#Tema", "#Hidalgo"]
+- 1-2 emojis máximo
+
+IMPORTANTE: Los campos hashtag (Facebook) y hashtags (Twitter) son OBLIGATORIOS en el JSON.`;
   }
 
   /**
@@ -193,84 +243,23 @@ TWITTER (200-240 caracteres):
     input: { title: string; content: string; referenceContent?: string },
     agentType: string,
   ): string {
-    const styleNote =
-      agentType === 'reportero'
-        ? 'Enfócate en hechos, testimonios y contexto.'
-        : agentType === 'columnista'
-          ? 'Prioriza análisis, interpretación y tono personal.'
-          : agentType === 'trascendido'
-            ? 'Usa tono reservado y enigmático con ritmo pausado.'
-            : 'Redacta con naturalidad y optimización SEO sin sonar artificial.';
+    let prompt = `Tengo esto:
 
-    let prompt = `Procesa el siguiente contenido y créalo de nuevo desde cero, con lenguaje original y enriquecido:
+"${input.title}"
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📰 TÍTULO ORIGINAL:
-${input.title}
-
-📄 CONTENIDO ORIGINAL:
 ${input.content}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 `;
 
     if (input.referenceContent) {
-      prompt += `
-📚 CONTENIDO DE REFERENCIA:
-${input.referenceContent}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-`;
+      prompt += `\n(Referencia adicional: ${input.referenceContent})\n`;
     }
 
     prompt += `
-🎯 MISIÓN:
-Genera un nuevo artículo basado en la información, pero con redacción 100% original.
-${styleNote}
+Reescríbelo completamente a tu manera. Mantén los hechos, pero cambia TODO lo demás.
 
-🧩 REGLAS FUNDAMENTALES:
-- NO copies frases ni reformules párrafos literales.
-- Cambia el orden narrativo y las estructuras sintácticas.
-- Usa expresiones equivalentes, pero NO idénticas.
-- Mantén precisión en los hechos.
-- Enriquece el texto con contexto, antecedentes y consecuencias.
-- Varía ritmo, longitud y tono de párrafos naturalmente.
+Categoría (elige UNA): Política | Deportes | Cultura | Economía | Seguridad | Salud | Educación | Tecnología
 
-🏷️ CATEGORIZACIÓN - ¡MUY IMPORTANTE!:
-- La categoría DEBE ser EXACTAMENTE UNA de estas 8 opciones:
-  ✅ Política
-  ✅ Deportes
-  ✅ Cultura
-  ✅ Economía
-  ✅ Seguridad
-  ✅ Salud
-  ✅ Educación
-  ✅ Tecnología
-
-- 🚫 PROHIBIDO usar estas categorías genéricas:
-  ❌ "Noticias"
-  ❌ "General"
-  ❌ "Actualidad"
-  ❌ "Información"
-  ❌ "Municipios"
-  ❌ "Local"
-
-- EJEMPLOS DE CLASIFICACIÓN CORRECTA:
-  • Exalcalde condenado por corrupción → "Política" o "Seguridad"
-  • Brigadas médicas del IMSS → "Salud"
-  • Tormenta afecta municipio → "Seguridad"
-  • Inauguración de museo → "Cultura"
-  • Inversión empresarial → "Economía"
-  • Torneo de fútbol → "Deportes"
-  • Nueva universidad → "Educación"
-  • Aplicación móvil → "Tecnología"
-
-🧠 DETALLES:
-- Usa HTML (<p>, <strong>, <em>, <blockquote>, <ul>/<ol>) de forma orgánica.
-- <blockquote> solo para citas reales de personas.
-- Crea una lectura fluida, tipo artículo periodístico.
-- No uses subtítulos innecesarios (máximo 1-2 <h2> si es natural).
-- Mínimo 800 palabras de desarrollo.
-
-📦 RESPUESTA FINAL - JSON PURO (sin markdown, sin comillas adicionales):
+Responde con JSON:
 
 {
   "title": "Nuevo título creativo y original para este artículo",
@@ -278,7 +267,7 @@ ${styleNote}
   "keywords": ["Palabras clave relevantes (3-5 keywords)"],
   "tags": ["Etiquetas contextuales (4-6 tags)"],
   "category": "OBLIGATORIO: Política | Deportes | Cultura | Economía | Seguridad | Salud | Educación | Tecnología",
-  "summary": "Resumen conciso en 3-4 líneas",
+  "summary": "Resumen conciso en 3-4 líneas (MÁXIMO 300 caracteres)",
   "socialMediaCopies": {
     "facebook": {
       "hook": "Hook único en tu tono",

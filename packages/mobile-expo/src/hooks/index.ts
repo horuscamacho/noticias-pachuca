@@ -65,3 +65,19 @@ export { useImproveCopy } from './useImproveCopy'
 
 // Hooks de Image Bank
 export { useUploadImages } from './useUploadImages'
+
+// Hooks de User Generated Content (Manual Content Creation)
+export {
+  useActiveUrgentList,
+  useUserContentDetail,
+  useCreateUrgentContent,
+  useCreateNormalContent,
+  useUpdateUrgentContent,
+  useCloseUrgentContent,
+  useFileUpload,
+  useUrgentTimeRemaining,
+  userContentKeys,
+} from './useUserContent'
+
+// Hooks de UI y Animaciones
+export { useCollapsibleHeader } from './useCollapsibleHeader'

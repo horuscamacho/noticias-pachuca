@@ -88,6 +88,7 @@ export interface GetNoticiasParams {
   status?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+  isUrgent?: boolean;
 }
 
 export interface PaginationMetadata {

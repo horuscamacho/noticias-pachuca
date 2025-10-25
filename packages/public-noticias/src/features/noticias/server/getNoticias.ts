@@ -46,6 +46,10 @@ export const getNoticias = createServerFn({ method: 'GET' }).handler(
         queryParams.set('sortOrder', params.sortOrder);
       }
 
+      if (params.isUrgent !== undefined) {
+        queryParams.set('isUrgent', params.isUrgent.toString());
+      }
+
       const url = `${API_BASE_URL}/pachuca-noticias?${queryParams.toString()}`;
 
       console.log(`[getNoticias] Fetching: ${url}`);

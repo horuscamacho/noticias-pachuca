@@ -43,8 +43,8 @@ export class PublishedNoticia {
   @Prop({ required: true })
   content: string; // Contenido HTML completo (sanitizado)
 
-  @Prop({ required: true, trim: true, maxlength: 300 })
-  summary: string; // Resumen corto (2-3 líneas)
+  @Prop({ required: true, trim: true, maxlength: 400 })
+  summary: string; // Resumen corto (2-3 líneas, max 400 caracteres)
 
   @Prop({ trim: true })
   extendedSummary?: string; // Resumen ejecutivo detallado (4-6 párrafos)
@@ -167,6 +167,10 @@ export class PublishedNoticia {
 
   @Prop({ default: false })
   isNoticia: boolean; // Es noticia (DEPRECADO: usar contentType)
+
+  // 🆕 CAMPO PARA CONTENIDO URGENT (Breaking News de última hora)
+  @Prop({ default: false, index: true })
+  isUrgent: boolean; // Contenido de última hora (creado manualmente por usuario)
 
   // 🆕 COMMUNITY MANAGER: Tipo de contenido (FASE 0)
   @Prop({
@@ -316,6 +320,9 @@ PublishedNoticiaSchema.index({ category: 1, publishedAt: -1 });
 PublishedNoticiaSchema.index({ status: 1, category: 1, publishedAt: -1 });
 PublishedNoticiaSchema.index({ isFeatured: 1, publishedAt: -1 });
 PublishedNoticiaSchema.index({ isBreaking: 1, publishedAt: -1 });
+
+// 🆕 ÍNDICE PARA CONTENIDO URGENT (Breaking News de última hora)
+PublishedNoticiaSchema.index({ isUrgent: 1, publishedAt: -1 });
 
 // 🆕 COMMUNITY MANAGER: Índice para contentType (FASE 0)
 PublishedNoticiaSchema.index({ contentType: 1, publishedAt: -1 });

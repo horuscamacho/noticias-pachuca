@@ -15,6 +15,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Public } from '../../auth/guards/jwt-auth.guard';
 
 import { GeneratorProOrchestratorService } from '../services/generator-pro-orchestrator.service';
 import { NewsWebsiteService } from '../services/news-website.service';
@@ -26,6 +27,7 @@ import { GeneratorProPromptBuilderService } from '../services/generator-pro-prom
 import { DirectorEditorialPromptBuilderService } from '../services/director-editorial-prompt-builder.service';
 import { SocialMediaCopyGeneratorService } from '../services/social-media-copy-generator.service';
 import { GeneratorProSchedulerService } from '../services/generator-pro-scheduler.service';
+import { UserContentService } from '../services/user-content.service';
 import { ProviderFactoryService } from '../../content-ai/services/provider-factory.service';
 
 import {
@@ -49,6 +51,14 @@ import {
   ExtractedContentResponseDto,
   GeneratedContentResponseDto,
 } from '../dto';
+
+import {
+  CreateUrgentContentDto,
+  CreateNormalContentDto,
+  UpdateUrgentContentDto,
+  UserGeneratedContentResponseDto,
+  ActiveUrgentContentResponseDto,
+} from '../dto/user-generated-content.dto';
 
 import {
   CreateContentAgentDto,
@@ -119,6 +129,7 @@ export class GeneratorProController {
     private readonly providerFactory: ProviderFactoryService,
     private readonly eventEmitter: EventEmitter2,
     private readonly socketGateway: SocketGateway,
+    private readonly userContentService: UserContentService, // 📝 FASE 5: Manual Content Creation
   ) {
     this.logger.log('🤖 Generator Pro Controller initialized');
   }
@@ -2315,6 +2326,16 @@ export class GeneratorProController {
         // 5. Generar contenido con IA usando prompts del GeneratorProPromptBuilder
         const startTime = Date.now();
 
+        // 🚨 LOG ANTES DE ENVIAR AL AI
+        this.logger.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        this.logger.error('🚨🚨🚨 ENVIANDO AL AI 🚨🚨🚨');
+        this.logger.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        this.logger.error(`SYSTEM PROMPT (primeros 500 chars):`);
+        this.logger.error(promptData.systemPrompt.substring(0, 500));
+        this.logger.error(`\nUSER PROMPT (primeros 500 chars):`);
+        this.logger.error(promptData.userPrompt.substring(0, 500));
+        this.logger.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
         const aiResponse = await provider.generateContent({
           systemPrompt: promptData.systemPrompt,
           userPrompt: promptData.userPrompt,
@@ -2325,6 +2346,15 @@ export class GeneratorProController {
         });
 
         const processingTime = Date.now() - startTime;
+
+        // 🚨 LOG DESPUÉS DE RECIBIR RESPUESTA DEL AI
+        this.logger.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        this.logger.error('🤖🤖🤖 RESPUESTA DEL AI RECIBIDA 🤖🤖🤖');
+        this.logger.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        this.logger.error(`Respuesta (primeros 500 chars):`);
+        this.logger.error(aiResponse.content.substring(0, 500));
+        this.logger.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
         this.logger.log(`✅ AI generation completed in ${processingTime}ms`);
 
         // 6. Parsear respuesta JSON de IA
@@ -2355,6 +2385,9 @@ export class GeneratorProController {
           if (!mockAIResponse.title || !mockAIResponse.content) {
             throw new Error('Parsed JSON missing required fields');
           }
+
+          // 🛑 VALIDAR FORMATO EDITORIAL ANTES DE CONTINUAR
+          this.validateEditorialFormat(mockAIResponse.content);
 
         } catch (parseError) {
           this.logger.error(`Failed to parse AI response as JSON: ${parseError.message}`);
@@ -3207,5 +3240,370 @@ export class GeneratorProController {
 
       throw new HttpException('Failed to force schedule jobs', HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  // ===================================
+  // 📝 USER GENERATED CONTENT (Manual Content Creation)
+  // ===================================
+
+  /**
+   * 🚨 Crear contenido URGENT (Breaking News / Última Hora)
+   * - Se publica automáticamente
+   * - Redacción corta (300-500 palabras)
+   * - Copys agresivos para redes sociales
+   * - Auto-cierre después de 2 horas sin actualización
+   */
+  @Post('user-content/urgent')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Crear contenido URGENT (última hora)' })
+  @ApiResponse({
+    status: 201,
+    description: 'Contenido urgent creado y publicado automáticamente',
+    type: UserGeneratedContentResponseDto
+  })
+  @ApiResponse({ status: 400, description: 'Datos de entrada inválidos' })
+  @ApiResponse({ status: 500, description: 'Error interno del servidor' })
+  async createUrgentContent(
+    @Body() dto: CreateUrgentContentDto,
+    @CurrentUser('userId') userId: string,
+  ): Promise<{ content: UserGeneratedContentResponseDto }> {
+    this.logger.log(`🚨 Creating URGENT content by user: ${userId}`);
+    this.logger.log(`Title: ${dto.originalTitle}`);
+
+    try {
+      const content = await this.userContentService.createUrgentContent(dto, userId);
+
+      const response: UserGeneratedContentResponseDto = {
+        id: (content._id as Types.ObjectId).toString(),
+        originalTitle: content.originalTitle,
+        mode: content.mode,
+        status: content.status,
+        isUrgent: content.isUrgent,
+        urgentAutoCloseAt: content.urgentAutoCloseAt,
+        createdAt: content.createdAt,
+        updatedAt: content.updatedAt,
+      };
+
+      this.logger.log(`✅ URGENT content created and published: ${response.id}`);
+      return { content: response };
+
+    } catch (error) {
+      this.logger.error(`❌ Failed to create urgent content: ${error.message}`, error.stack);
+
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new HttpException(
+        'Failed to create urgent content',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * 📝 Crear contenido NORMAL (Publicación Manual)
+   * - Usuario decide tipo de publicación (breaking/noticia/blog)
+   * - Redacción normal (500-700 palabras)
+   * - Copys normales para redes sociales
+   * - NO se auto-cierra
+   */
+  @Post('user-content/normal')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Crear contenido NORMAL (publicación manual)' })
+  @ApiResponse({
+    status: 201,
+    description: 'Contenido normal creado exitosamente',
+    type: UserGeneratedContentResponseDto
+  })
+  @ApiResponse({ status: 400, description: 'Datos de entrada inválidos' })
+  @ApiResponse({ status: 500, description: 'Error interno del servidor' })
+  async createNormalContent(
+    @Body() dto: CreateNormalContentDto,
+    @CurrentUser('userId') userId: string,
+  ): Promise<{ content: UserGeneratedContentResponseDto }> {
+    this.logger.log(`📝 Creating NORMAL content by user: ${userId}`);
+    this.logger.log(`Title: ${dto.originalTitle}, Type: ${dto.publicationType}`);
+
+    try {
+      const content = await this.userContentService.createNormalContent(dto, userId);
+
+      const response: UserGeneratedContentResponseDto = {
+        id: (content._id as Types.ObjectId).toString(),
+        originalTitle: content.originalTitle,
+        mode: content.mode,
+        status: content.status,
+        isUrgent: content.isUrgent,
+        createdAt: content.createdAt,
+        updatedAt: content.updatedAt,
+      };
+
+      this.logger.log(`✅ NORMAL content created: ${response.id}`);
+      return { content: response };
+
+    } catch (error) {
+      this.logger.error(`❌ Failed to create normal content: ${error.message}`, error.stack);
+
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new HttpException(
+        'Failed to create normal content',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * ✏️ Actualizar contenido URGENT
+   * - Reemplaza el contenido existente
+   * - Re-procesa con IA
+   * - Re-publica
+   * - REINICIA el timer de 2 horas
+   */
+  @Put('user-content/urgent/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Actualizar contenido URGENT (reinicia timer)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Contenido urgent actualizado y timer reiniciado',
+    type: UserGeneratedContentResponseDto
+  })
+  @ApiResponse({ status: 404, description: 'Contenido no encontrado' })
+  @ApiResponse({ status: 400, description: 'Solo contenido URGENT puede ser actualizado' })
+  @ApiResponse({ status: 500, description: 'Error interno del servidor' })
+  async updateUrgentContent(
+    @Param('id') id: string,
+    @Body() dto: UpdateUrgentContentDto,
+    @CurrentUser('userId') userId: string,
+  ): Promise<{ content: UserGeneratedContentResponseDto }> {
+    this.logger.log(`✏️ Updating URGENT content: ${id}`);
+
+    try {
+      const content = await this.userContentService.updateUrgentContent(id, dto, userId);
+
+      const response: UserGeneratedContentResponseDto = {
+        id: (content._id as Types.ObjectId).toString(),
+        originalTitle: content.originalTitle,
+        mode: content.mode,
+        status: content.status,
+        isUrgent: content.isUrgent,
+        urgentAutoCloseAt: content.urgentAutoCloseAt,
+        createdAt: content.createdAt,
+        updatedAt: content.updatedAt,
+      };
+
+      this.logger.log(`✅ URGENT content updated and timer restarted: ${response.id}`);
+      return { content: response };
+
+    } catch (error) {
+      this.logger.error(`❌ Failed to update urgent content: ${error.message}`, error.stack);
+
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new HttpException(
+        'Failed to update urgent content',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * 🔒 Cerrar contenido URGENT manualmente
+   * - Usuario decide cerrar antes de las 2 horas
+   * - Se remueve del cintillo "ÚLTIMO MOMENTO"
+   * - NO se agrega párrafo de cierre automático
+   */
+  @Post('user-content/close/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Cerrar contenido URGENT manualmente' })
+  @ApiResponse({
+    status: 200,
+    description: 'Contenido urgent cerrado exitosamente',
+    type: UserGeneratedContentResponseDto
+  })
+  @ApiResponse({ status: 404, description: 'Contenido no encontrado' })
+  @ApiResponse({ status: 400, description: 'Solo contenido URGENT puede ser cerrado' })
+  @ApiResponse({ status: 500, description: 'Error interno del servidor' })
+  async closeUrgentContent(
+    @Param('id') id: string,
+    @CurrentUser('userId') userId: string,
+  ): Promise<{ content: UserGeneratedContentResponseDto }> {
+    this.logger.log(`🔒 Closing URGENT content manually: ${id}`);
+
+    try {
+      const content = await this.userContentService.closeUrgentContent(id, 'user', userId);
+
+      const response: UserGeneratedContentResponseDto = {
+        id: (content._id as Types.ObjectId).toString(),
+        originalTitle: content.originalTitle,
+        mode: content.mode,
+        status: content.status,
+        isUrgent: content.isUrgent,
+        urgentAutoCloseAt: content.urgentAutoCloseAt,
+        createdAt: content.createdAt,
+        updatedAt: content.updatedAt,
+      };
+
+      this.logger.log(`✅ URGENT content closed manually: ${response.id}`);
+      return { content: response };
+
+    } catch (error) {
+      this.logger.error(`❌ Failed to close urgent content: ${error.message}`, error.stack);
+
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new HttpException(
+        'Failed to close urgent content',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * 📋 Listar contenido URGENT activo (PÚBLICO - para cintillo)
+   * - isUrgent: true
+   * - urgentClosed: false
+   * - status: 'published'
+   * Ordenado por urgentCreatedAt DESC
+   */
+  @Public()
+  @Get('user-content/urgent/active')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Listar contenido URGENT activo' })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de contenido urgent activo',
+    type: ActiveUrgentContentResponseDto
+  })
+  @ApiResponse({ status: 500, description: 'Error interno del servidor' })
+  async getActiveUrgentContent(): Promise<ActiveUrgentContentResponseDto> {
+    this.logger.log('📋 Getting active URGENT content...');
+
+    try {
+      const activeContent = await this.userContentService.getActiveUrgentContent();
+
+      const contentList: UserGeneratedContentResponseDto[] = activeContent.map(content => {
+        // Extraer datos de PublishedNoticia populated
+        const publishedNoticia = content.publishedNoticiaId as any;
+
+        return {
+          id: (content._id as Types.ObjectId).toString(),
+          originalTitle: content.originalTitle,
+          mode: content.mode,
+          status: content.status,
+          isUrgent: content.isUrgent,
+          urgentAutoCloseAt: content.urgentAutoCloseAt,
+          createdAt: content.createdAt,
+          updatedAt: content.updatedAt,
+          // Agregar datos de PublishedNoticia para el cintillo
+          publishedNoticiaId: publishedNoticia?._id?.toString(),
+          slug: publishedNoticia?.slug,
+          title: publishedNoticia?.title,
+        };
+      });
+
+      this.logger.log(`✅ Found ${contentList.length} active URGENT content items`);
+
+      return {
+        content: contentList,
+        total: contentList.length,
+      };
+
+    } catch (error) {
+      this.logger.error(`❌ Failed to get active urgent content: ${error.message}`, error.stack);
+
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new HttpException(
+        'Failed to get active urgent content',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * 📤 Upload de archivos (imágenes/videos)
+   * TODO FASE 6: Implementar con FileManagementService
+   * Por ahora retorna placeholder
+   */
+  @Post('user-content/upload')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Upload de archivos para contenido manual (TODO FASE 6)' })
+  @ApiResponse({
+    status: 201,
+    description: 'Archivos subidos exitosamente',
+  })
+  async uploadContentFiles(
+    @CurrentUser('userId') userId: string,
+  ): Promise<{ urls: string[]; message: string }> {
+    this.logger.warn('⚠️ Upload endpoint not fully implemented yet (TODO FASE 6)');
+
+    // TODO FASE 6: Implementar con FileManagementService y @UseInterceptors(FilesInterceptor('files', 10))
+    // Por ahora retornamos placeholder
+
+    return {
+      urls: [],
+      message: 'Upload endpoint not implemented yet - will be completed in FASE 6',
+    };
+  }
+
+  // ===================================
+  // 🛑 VALIDACIÓN ANTI-PLAGIO DE FORMATOS EDITORIALES
+  // ===================================
+
+  /**
+   * Validar que el contenido generado NO copie formatos editoriales de medios ajenos
+   * @throws HttpException si se detecta plagio de formato editorial
+   */
+  private validateEditorialFormat(generatedContent: string): void {
+    this.logger.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    this.logger.warn('🔍 VALIDANDO FORMATOS EDITORIALES');
+    this.logger.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+    // Extraer primeros 200 caracteres para validar
+    const contentStart = generatedContent.substring(0, 200).trim();
+    this.logger.warn(`Inicio del contenido generado (200 chars):`);
+    this.logger.warn(contentStart);
+
+    // Patrones de formatos editoriales prohibidos
+    const editorialFormatPatterns = [
+      { pattern: /^PACHUCA,\s*Hgo\.,.*?\.[-—–]/i, name: 'Quadratín Pachuca (PACHUCA, Hgo., fecha.-)' },
+      { pattern: /^TULANCINGO,\s*Hgo\.,.*?\.[-—–]/i, name: 'Quadratín Tulancingo' },
+      { pattern: /^CIUDAD SAHAGÚN,\s*Hgo\.,.*?\.[-—–]/i, name: 'Quadratín Ciudad Sahagún' },
+      { pattern: /^MINERAL DE LA REFORMA,\s*Hgo\.,.*?\.[-—–]/i, name: 'Quadratín Mineral de la Reforma' },
+      { pattern: /^[A-ZÁÉÍÓÚÑ\s]+,\s*Hgo\.,.*?\.[-—–]/i, name: 'Formato Quadratín genérico' },
+      { pattern: /^[A-Z][a-záéíóúñ]+,\s*Hidalgo,\s*a\s+\d{1,2}\s+de\s+[a-z]+\s+de\s+\d{4}\./i, name: 'El Sol de Hidalgo (Ciudad, Hidalgo, a fecha.)' },
+      { pattern: /^[A-ZÁÉÍÓÚÑ\s]+\.[-—–]/i, name: 'Plaza Juárez (CIUDAD.—)' },
+      { pattern: /^[A-Z][a-záéíóúñ]+\.[-—–]/i, name: 'Formato con ciudad y guion largo' },
+    ];
+
+    // Validar contra cada patrón
+    for (const { pattern, name } of editorialFormatPatterns) {
+      this.logger.warn(`Probando patrón: ${name}`);
+
+      if (pattern.test(contentStart)) {
+        this.logger.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        this.logger.error(`🚫🚫🚫 PLAGIO DE FORMATO EDITORIAL DETECTADO: ${name}`);
+        this.logger.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        this.logger.error(`Contenido rechazado: "${contentStart}"`);
+        this.logger.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+        throw new HttpException(
+          `Plagio de formato editorial detectado: ${name}. El contenido debe comenzar con un lead informativo original, sin copiar formatos de medios externos.`,
+          HttpStatus.UNPROCESSABLE_ENTITY
+        );
+      }
+    }
+
+    this.logger.log('✅ Validación de formato editorial APROBADA - No se detectó plagio');
+    this.logger.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   }
 }

@@ -1114,44 +1114,54 @@ export class ContentAIController {
   /**
    * 📱 Mejorar copy de redes sociales con agente especializado
    * Se usa antes de publicar en redes sociales para optimizar hooks y copys
+   *
+   * ⚠️ DESACTIVADO TEMPORALMENTE (2025-10-21)
+   * Razón: Según análisis PROMPT_ANALYSIS_CONTENT_GENERATION.md, este servicio
+   * está EMPEORANDO el contenido al homogenizar aún más los copys.
+   * El nuevo prompt (v2.0) ya genera copys de alta calidad directamente.
+   *
+   * Beneficios de desactivar:
+   * - Reducción de 40% en latencia
+   * - Reducción de 50% en costos de API
+   * - Mayor variación natural en copys
    */
-  @Post('improve-copy')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Mejorar copy de redes sociales con IA',
-    description: 'Mejora los copys de Facebook y Twitter de un contenido generado usando un agente especializado. Agrega URL canónica y optimiza hooks.'
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Copy mejorado exitosamente',
-    type: ImprovedCopyResponseDto
-  })
-  @ApiResponse({ status: 404, description: 'Contenido no encontrado' })
-  @ApiResponse({ status: 400, description: 'Datos inválidos' })
-  async improveSocialMediaCopy(
-    @Body(ValidationPipe) dto: ImproveCopyDto
-  ): Promise<{
-    success: boolean;
-    message: string;
-    data: ImprovedCopyResponseDto;
-  }> {
-    this.logger.log(`📱 Improving social media copy for content ${dto.contentId}`);
+  // @Post('improve-copy')
+  // @HttpCode(HttpStatus.OK)
+  // @ApiOperation({
+  //   summary: 'Mejorar copy de redes sociales con IA',
+  //   description: 'Mejora los copys de Facebook y Twitter de un contenido generado usando un agente especializado. Agrega URL canónica y optimiza hooks.'
+  // })
+  // @ApiResponse({
+  //   status: 200,
+  //   description: 'Copy mejorado exitosamente',
+  //   type: ImprovedCopyResponseDto
+  // })
+  // @ApiResponse({ status: 404, description: 'Contenido no encontrado' })
+  // @ApiResponse({ status: 400, description: 'Datos inválidos' })
+  // async improveSocialMediaCopy(
+  //   @Body(ValidationPipe) dto: ImproveCopyDto
+  // ): Promise<{
+  //   success: boolean;
+  //   message: string;
+  //   data: ImprovedCopyResponseDto;
+  // }> {
+  //   this.logger.log(`📱 Improving social media copy for content ${dto.contentId}`);
 
-    try {
-      const improvedCopy = await this.copyImproverService.improveSocialMediaCopy(
-        dto.contentId,
-        dto.canonicalUrl
-      );
+  //   try {
+  //     const improvedCopy = await this.copyImproverService.improveSocialMediaCopy(
+  //       dto.contentId,
+  //       dto.canonicalUrl
+  //     );
 
-      return {
-        success: true,
-        message: 'Copy mejorado exitosamente',
-        data: improvedCopy
-      };
+  //     return {
+  //       success: true,
+  //       message: 'Copy mejorado exitosamente',
+  //       data: improvedCopy
+  //     };
 
-    } catch (error) {
-      this.logger.error(`❌ Error improving copy: ${error.message}`, error.stack);
-      throw error;
-    }
-  }
+  //   } catch (error) {
+  //     this.logger.error(`❌ Error improving copy: ${error.message}`, error.stack);
+  //     throw error;
+  //   }
+  // }
 }
